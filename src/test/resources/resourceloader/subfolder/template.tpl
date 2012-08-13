@@ -1,0 +1,1 @@
+AAA{{macro test}}test macro result{{/macro}}BBB

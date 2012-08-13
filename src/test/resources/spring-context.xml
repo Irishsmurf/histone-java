@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
+
+    <bean id="gsonBuilder" class="com.google.gson.GsonBuilder">
+        <!-- GsonBuilder properties and initializations here -->
+    </bean>
+
+    <bean id="gson" class="com.google.gson.Gson" factory-bean="gsonBuilder" factory-method="create"/>
+
+    <bean id="histoneBuilder" class="ru.histone.HistoneBuilder">
+        <property name="gson" ref="gson"/>
+        <property name="resourceLoader">
+            <bean class="ru.histone.spring.stubs.ResourceLoaderStub"/>
+        </property>
+        <property name="globalFunctions">
+            <set>
+                <bean class="ru.histone.spring.stubs.GlobalUserFunction_A">
+                    <!-- GlobalUserFunction_A properties and initializations here -->
+                </bean>
+                <bean class="ru.histone.spring.stubs.GlobalUserFunction_B">
+                    <!-- GlobalUserFunction_B properties and initializations here -->
+                </bean>
+            </set>
+        </property>
+        <property name="nodeFunctions">
+            <map key-type="java.lang.Class">
+                <entry key="ru.histone.evaluator.nodes.NumberNode">
+                    <set>
+                        <bean class="ru.histone.spring.stubs.NumberNodeUserFunction_A">
+                            <!-- NumberNodeUserFunction_A properties and initializations here -->
+                        </bean>
+                        <bean class="ru.histone.spring.stubs.NumberNodeUserFunction_B">
+                            <!-- NumberNodeUserFunction_B properties and initializations here -->
+                        </bean>
+                    </set>
+                </entry>
+                <entry key="ru.histone.evaluator.nodes.StringNode">
+                    <set>
+                        <bean class="ru.histone.spring.stubs.StringNodeUserFunction_A">
+                            <!-- StringNodeUserFunction_A properties and initializations here -->
+                        </bean>
+                        <bean class="ru.histone.spring.stubs.StringNodeUserFunction_B">
+                            <!-- StringNodeUserFunction_B properties and initializations here -->
+                        </bean>
+                    </set>
+                </entry>
+                <!-- Other node type user-functions initializations here -->
+            </map>
+        </property>
+        <property name="globalProperties">
+            <map key-type="ru.histone.GlobalProperty" value-type="java.lang.String">
+                <entry key="BASE_URI" value="dummy://some/folder/"/>
+                <entry key="CLIENT_TYPE" value="java"/>
+                <entry key="USER_AGENT" value="MSIE"/>
+            </map>
+        </property>
+    </bean>
+
+    <bean name="histone" factory-bean="histoneBuilder" factory-method="build" scope="singleton" />
+
+</beans>

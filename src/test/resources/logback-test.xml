@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration  scan="true" scanPeriod="30 seconds">
+
+	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} %-5level %logger{36} - %-10X{testCaseName} - %msg%n</pattern>
+        </encoder>
+	</appender>
+
+	<logger name="ru.histone.tokenizer.Tokenizer">
+		<level value="error" />
+	</logger>
+	<logger name="ru.histone.parser.Parser">
+		<level value="error" />
+	</logger>
+
+	<logger name="ru.histone.tokenizer.TokensMap">
+		<level value="error" />
+	</logger>
+    <logger name="ru.histone.evaluator.Evaluator">
+        <level value="error" />
+    </logger>
+    <logger name="ru.histone.acceptance.EvaluatorAcceptanceTest">
+        <level value="error" />
+    </logger>
+
+	<root>
+		<level value="error" />
+		<appender-ref ref="STDOUT" />
+	</root>
+</configuration>
