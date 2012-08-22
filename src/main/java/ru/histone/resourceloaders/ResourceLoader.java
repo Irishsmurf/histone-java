@@ -31,7 +31,7 @@ public interface ResourceLoader {
      * @throws ResourceLoadException if errors occur
      */
     // TODO: We need to implement some algorithm to reload cache or check if cached resource should be loaded from resource loader again
-    public Boolean isCacheable(String href, String baseHref) throws ResourceLoadException;
+//    public Boolean isCacheable(String href, String baseHref) throws ResourceLoadException;
 
     /**
      * Load resource using specified href, baseHref and arguments

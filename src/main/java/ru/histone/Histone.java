@@ -75,10 +75,10 @@ public class Histone {
     }
 
 
-    public JsonArray parseTemplateToAST(Reader templateContent) throws HistoneException {
+    public JsonArray parseTemplateToAST(Reader templateReader) throws HistoneException {
         String inputString = null;
         try {
-            inputString = IOUtils.toString(templateContent);
+            inputString = IOUtils.toString(templateReader);
         } catch (IOException e) {
             log.error("Error reading input Reader", e);
             throw new HistoneException("Error reading input Reader", e);
@@ -106,8 +106,8 @@ public class Histone {
         return evaluator.process(templateAST, context);
     }
 
-    public void evaluateAST(JsonArray templateAST, Writer output) throws HistoneException {
-        evaluateAST(templateAST, JsonNull.INSTANCE, output);
+    public void evaluateAST(JsonArray templateAST, Writer outputWriter) throws HistoneException {
+        evaluateAST(templateAST, JsonNull.INSTANCE, outputWriter);
     }
 
     public void evaluateAST(JsonArray templateAST, JsonElement context, Writer output) throws HistoneException {
@@ -138,14 +138,14 @@ public class Histone {
         return evaluator.process(templateContent, context);
     }
 
-    public void evaluate(Reader templateContent, Writer output) throws HistoneException {
-        evaluate(templateContent, JsonNull.INSTANCE, output);
+        public void evaluate(Reader templateReader, Writer outputWriter) throws HistoneException {
+        evaluate(templateReader, JsonNull.INSTANCE, outputWriter);
     }
 
-    public void evaluate(Reader templateContent, JsonElement context, Writer output) throws HistoneException {
-        String result = evaluate(templateContent, context);
+    public void evaluate(Reader templateReader, JsonElement context, Writer outputWriter) throws HistoneException {
+        String result = evaluate(templateReader, context);
         try {
-            output.write(result);
+            outputWriter.write(result);
         } catch (IOException e) {
             throw new HistoneException("Error writing to output Writer", e);
         }

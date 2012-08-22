@@ -59,11 +59,6 @@ public class ResourceLoaderSubtype_A implements ResourceLoader {
 //    }
 
     @Override
-    public Boolean isCacheable(String href, String baseHref) throws ResourceLoadException {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
     public Resource load(String href, String baseHref, Node... args) throws ResourceLoadException {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }

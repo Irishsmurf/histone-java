@@ -16,6 +16,7 @@
 package ru.histone;
 
 import java.io.ByteArrayInputStream;
+import java.io.StringBufferInputStream;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
@@ -27,8 +28,6 @@ import java.util.Set;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import org.junit.Before;
 import org.junit.Test;
 import ru.histone.evaluator.functions.global.GlobalFunction;
@@ -105,11 +104,6 @@ public class HistoneBuilderTest {
         };
         resourceLoader1 = new ResourceLoader() {
             @Override
-            public Boolean isCacheable(String href, String baseHref) throws ResourceLoadException {
-                return false;
-            }
-
-            @Override
             public Resource load(String href, String baseHref, Node... args) throws ResourceLoadException {
                 if (!href.equals("r1:/test.txt")) {
                     throw new ResourceLoadException("Resource not found");
@@ -128,11 +122,6 @@ public class HistoneBuilderTest {
             }
         };
         resourceLoader2 = new ResourceLoader() {
-            @Override
-            public Boolean isCacheable(String href, String baseHref) throws ResourceLoadException {
-                return false;
-            }
-
             @Override
             public Resource load(String href, String baseHref, Node... args) throws ResourceLoadException {
                 if (!href.equals("r2:/test.txt")) {
@@ -305,9 +294,9 @@ public class HistoneBuilderTest {
     @Test
     public void globalNamespace() throws URISyntaxException, HistoneException {
         HistoneBuilder builder = new HistoneBuilder();
-        builder.addGlobalProperty(GlobalProperty.BASE_URI, new URI("dummy://some/folder/").toString());
-        builder.addGlobalProperty(GlobalProperty.CLIENT_TYPE, "java");
-        builder.addGlobalProperty(GlobalProperty.USER_AGENT, "MSIE");
+        builder.setGlobalProperty(GlobalProperty.BASE_URI, new URI("dummy://some/folder/").toString());
+        builder.setGlobalProperty(GlobalProperty.CLIENT_TYPE, "java");
+        builder.setGlobalProperty(GlobalProperty.USER_AGENT, "MSIE");
 
         Histone histone = builder.build();
 
@@ -316,5 +305,13 @@ public class HistoneBuilderTest {
         String output = histone.evaluate(input);
 
         assertEquals(expected, output);
+    }
+
+    @Test
+    public void tttttt() throws HistoneException {
+        HistoneBuilder builder = new HistoneBuilder();
+
+
+
     }
 }

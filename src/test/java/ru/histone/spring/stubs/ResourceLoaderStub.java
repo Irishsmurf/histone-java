@@ -25,11 +25,6 @@ import java.io.ByteArrayInputStream;
 
 public class ResourceLoaderStub implements ResourceLoader {
     @Override
-    public Boolean isCacheable(String href, String baseHref) throws ResourceLoadException {
-        return false;
-    }
-
-    @Override
     public Resource load(String href, String baseHref, Node... args) throws ResourceLoadException {
         if (href.equals("dummyA:/text.txt")) {
             return new StreamResource(new ByteArrayInputStream("resolver_a_result".getBytes()), "dummyA:/text.txt");

@@ -171,7 +171,7 @@ public class HistoneBuilder {
      * @param property property name
      * @param value    property value
      */
-    public void addGlobalProperty(GlobalProperty property, String value) {
+    public void setGlobalProperty(GlobalProperty property, String value) {
         globalProperties.put(property, StringNode.create(value));
     }
 
@@ -180,13 +180,13 @@ public class HistoneBuilder {
      *
      * @param property property name
      * @param value    property value
-     * @see #addGlobalProperty(GlobalProperty, Long)
-     * @see #addGlobalProperty(GlobalProperty, BigDecimal)
-     * @see #addGlobalProperty(GlobalProperty, String)
-     * @see #addGlobalProperty(GlobalProperty, Boolean)
-     * @see #addGlobalProperty(GlobalProperty, JsonElement)
+     * @see #setGlobalProperty
+     * @see #setGlobalProperty
+     * @see #setGlobalProperty
+     * @see #setGlobalProperty
+     * @see #setGlobalProperty
      */
-    public void addGlobalProperty(GlobalProperty property, Integer value) {
+    public void setGlobalProperty(GlobalProperty property, Integer value) {
         globalProperties.put(property, NumberNode.create(value));
     }
 
@@ -195,13 +195,13 @@ public class HistoneBuilder {
      *
      * @param property property name
      * @param value    property value
-     * @see #addGlobalProperty(GlobalProperty, Integer)
-     * @see #addGlobalProperty(GlobalProperty, BigDecimal)
-     * @see #addGlobalProperty(GlobalProperty, String)
-     * @see #addGlobalProperty(GlobalProperty, Boolean)
-     * @see #addGlobalProperty(GlobalProperty, JsonElement)
+     * @see #setGlobalProperty
+     * @see #setGlobalProperty
+     * @see #setGlobalProperty
+     * @see #setGlobalProperty
+     * @see #setGlobalProperty
      */
-    public void addGlobalProperty(GlobalProperty property, Long value) {
+    public void setGlobalProperty(GlobalProperty property, Long value) {
         globalProperties.put(property, NumberNode.create(value));
     }
 
@@ -210,13 +210,13 @@ public class HistoneBuilder {
      *
      * @param property property name
      * @param value    property value
-     * @see #addGlobalProperty(GlobalProperty, Integer)
-     * @see #addGlobalProperty(GlobalProperty, Long)
-     * @see #addGlobalProperty(GlobalProperty, String)
-     * @see #addGlobalProperty(GlobalProperty, Boolean)
-     * @see #addGlobalProperty(GlobalProperty, JsonElement)
+     * @see #setGlobalProperty
+     * @see #setGlobalProperty
+     * @see #setGlobalProperty
+     * @see #setGlobalProperty
+     * @see #setGlobalProperty
      */
-    public void addGlobalProperty(GlobalProperty property, BigDecimal value) {
+    public void setGlobalProperty(GlobalProperty property, BigDecimal value) {
         globalProperties.put(property, NumberNode.create(value));
     }
 
@@ -225,13 +225,13 @@ public class HistoneBuilder {
      *
      * @param property property name
      * @param value    property value
-     * @see #addGlobalProperty(GlobalProperty, Integer)
-     * @see #addGlobalProperty(GlobalProperty, Long)
-     * @see #addGlobalProperty(GlobalProperty, BigDecimal)
-     * @see #addGlobalProperty(GlobalProperty, String)
-     * @see #addGlobalProperty(GlobalProperty, JsonElement)
+     * @see #setGlobalProperty
+     * @see #setGlobalProperty
+     * @see #setGlobalProperty
+     * @see #setGlobalProperty
+     * @see #setGlobalProperty
      */
-    public void addGlobalProperty(GlobalProperty property, Boolean value) {
+    public void setGlobalProperty(GlobalProperty property, Boolean value) {
         globalProperties.put(property, value ? BooleanNode.TRUE : BooleanNode.FALSE);
     }
 
@@ -247,13 +247,13 @@ public class HistoneBuilder {
      *
      * @param property property name
      * @param value    property value
-     * @see #addGlobalProperty(GlobalProperty, Integer)
-     * @see #addGlobalProperty(GlobalProperty, Long)
-     * @see #addGlobalProperty(GlobalProperty, BigDecimal)
-     * @see #addGlobalProperty(GlobalProperty, String)
-     * @see #addGlobalProperty(GlobalProperty, Boolean)
+     * @see #setGlobalProperty
+     * @see #setGlobalProperty
+     * @see #setGlobalProperty
+     * @see #setGlobalProperty
+     * @see #setGlobalProperty
      */
-    public void addGlobalProperty(GlobalProperty property, JsonElement value) {
+    public void setGlobalProperty(GlobalProperty property, JsonElement value) {
         if (value.isJsonArray()) {
             globalProperties.put(property, ObjectNode.create(value.getAsJsonArray()));
         } else if (value.isJsonObject()) {
@@ -281,7 +281,7 @@ public class HistoneBuilder {
     public void setGlobalProperties(Map<GlobalProperty, String> globalProperties) {
         this.globalProperties.clear();
         for (Map.Entry<GlobalProperty, String> entry : globalProperties.entrySet()) {
-            addGlobalProperty(entry.getKey(), entry.getValue());
+            this.setGlobalProperty(entry.getKey(), entry.getValue());
         }
     }
 

@@ -106,15 +106,15 @@ public class AstImportResolver {
                 return AstNodeFactory.createNode(AstNodeType.STRING, "");
             } else {
                 if (currentBaseURI == null) {
-                    if (!resourceLoader.isCacheable(path, null)) {
-                        String fullPath = resourceLoader.resolveFullPath(path, null);
-                        return AstNodeFactory.createNode(AstNodeType.IMPORT, fullPath);
-                    }
+//                    if (!resourceLoader.isCacheable(path, null)) {
+//                        String fullPath = resourceLoader.resolveFullPath(path, null);
+//                        return AstNodeFactory.createNode(AstNodeType.IMPORT, fullPath);
+//                    }
                 } else {
-                    if (!resourceLoader.isCacheable(currentBaseURI, path)) {
-                        String fullPath = resourceLoader.resolveFullPath(path, currentBaseURI);
-                        return AstNodeFactory.createNode(AstNodeType.IMPORT, fullPath);
-                    }
+//                    if (!resourceLoader.isCacheable(currentBaseURI, path)) {
+//                        String fullPath = resourceLoader.resolveFullPath(path, currentBaseURI);
+//                        return AstNodeFactory.createNode(AstNodeType.IMPORT, fullPath);
+//                    }
                 }
                 resource = resourceLoader.load(path, currentBaseURI);
 

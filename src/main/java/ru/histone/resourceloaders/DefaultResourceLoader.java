@@ -33,11 +33,6 @@ public class DefaultResourceLoader implements ResourceLoader {
     private static final Logger log = LoggerFactory.getLogger(DefaultResourceLoader.class);
 
     @Override
-    public Boolean isCacheable(String location, String baseLocation) {
-        return makeFullLocation(location, baseLocation).getScheme().equals("file");
-    }
-
-    @Override
     public String resolveFullPath(String location, String baseLocation) throws ResourceLoadException {
         log.debug("Trying to load resource from location={}, with baseLocation={}", new Object[]{location, baseLocation});
 

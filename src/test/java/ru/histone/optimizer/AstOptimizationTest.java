@@ -95,7 +95,7 @@ public class AstOptimizationTest {
 //        };
 //
 //        HistoneBuilder sb = new HistoneBuilder();
-//        sb.addGlobalProperty(GlobalProperty.BASE_URI, "tt:/");
+//        sb.setGlobalProperty(GlobalProperty.BASE_URI, "tt:/");
 //        ResourceLoader resolver = new ResourceLoader() {
 //            @Override
 //            public String getScheme() {
