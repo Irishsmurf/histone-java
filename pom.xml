@@ -201,12 +201,12 @@
         <repository>
             <id>histone</id>
             <name>weblab-histone-releases</name>
-            <url>http://weblab.megafon.ru/maven/histone-release</url>
+            <url>http://weblab.megafon.ru/maven/release</url>
         </repository>
         <snapshotRepository>
             <id>histone</id>
             <name>weblab-histone-snapshots</name>
-            <url>http://weblab.megafon.ru/maven/histone-snapshot</url>
+            <url>http://weblab.megafon.ru/maven/snapshot</url>
         </snapshotRepository>
     </distributionManagement>
 </project>
