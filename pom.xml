@@ -201,12 +201,28 @@
         <repository>
             <id>histone</id>
             <name>weblab-histone-releases</name>
-            <url>http://weblab.megafon.ru/maven/release</url>
+            <url>http://weblab.megafon.ru/maven/release-weblab</url>
         </repository>
         <snapshotRepository>
             <id>histone</id>
             <name>weblab-histone-snapshots</name>
-            <url>http://weblab.megafon.ru/maven/snapshot</url>
+            <url>http://weblab.megafon.ru/maven/snapshot-weblab</url>
         </snapshotRepository>
     </distributionManagement>
+    <repositories>
+        <repository>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+            <id>central</id>
+            <name>release</name>
+            <url>http://weblab.megafon.ru/maven/release</url>
+        </repository>
+        <repository>
+            <snapshots/>
+            <id>snapshots</id>
+            <name>snapshot</name>
+            <url>http://weblab.megafon.ru/maven/snapshot</url>
+        </repository>
+    </repositories>
 </project>
