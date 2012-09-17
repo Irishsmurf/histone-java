@@ -26,3 +26,11 @@ Distribution archive contents
     |- LICENSE.txt Apache v2.0 license file
     |- NOTICE.txt file with copyright info
     |- README.md this file
+    
+Important links
+--------------------------------------
+
+* [Project website](http://weblab.megafon.ru/histone/)
+* [Documentation](http://weblab.megafon.ru/histone/documentation/)
+* [Follow us on twitter](https://twitter.com/intent/follow?screen_name=MegafonWebLab)
+* [Contributors](http://weblab.megafon.ru/histone/contributors/#Java)
