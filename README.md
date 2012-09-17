@@ -3,11 +3,6 @@ Histone Java
 
 Histone Template Engine Java Implementation
 
-[Project web site](http://weblab.megafon.ru/histone/)
-[Documentation](http://weblab.megafon.ru/histone/documentation/)
-[For contributors](http://weblab.megafon.ru/histone/contributors/#Java)
-
-
 Sources tree
 ------------
 
