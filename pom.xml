@@ -219,13 +219,11 @@
     </scm>
     <distributionManagement>
         <repository>
-            <id>histone</id>
-            <name>weblab-histone-releases</name>
+            <id>weblab-release</id>
             <url>http://weblab.megafon.ru/maven/release-weblab</url>
         </repository>
         <snapshotRepository>
-            <id>histone</id>
-            <name>weblab-histone-snapshots</name>
+            <id>weblab-snapshot</id>
             <url>http://weblab.megafon.ru/maven/snapshot-weblab</url>
         </snapshotRepository>
     </distributionManagement>
