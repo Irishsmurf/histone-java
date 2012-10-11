@@ -229,18 +229,24 @@
     </distributionManagement>
     <repositories>
         <repository>
+            <id>hq-weblab-release</id>
+            <url>http://weblab.megafon.ru/maven/release</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
             <snapshots>
                 <enabled>false</enabled>
             </snapshots>
-            <id>central</id>
-            <name>release</name>
-            <url>http://weblab.megafon.ru/maven/release</url>
         </repository>
         <repository>
-            <snapshots/>
-            <id>snapshots</id>
-            <name>snapshot</name>
+            <id>hq-weblab-snapshot</id>
             <url>http://weblab.megafon.ru/maven/snapshot</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
         </repository>
     </repositories>
 </project>
