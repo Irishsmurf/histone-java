@@ -49,7 +49,7 @@ public class Histone {
     /**
      * Special logger for histone template syntax errors
      */
-    private static final Logger RUNTIME_LOG = LoggerFactory.getLogger(Histone.class + ".RUNTIME_LOG");
+    private static final Logger RUNTIME_LOG = LoggerFactory.getLogger(Histone.class.getName() + ".RUNTIME_LOG");
 
     /**
      * @deprecated (should be moved to GlobalProperties)
