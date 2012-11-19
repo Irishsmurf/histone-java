@@ -16,6 +16,7 @@
 package ru.histone.evaluator.nodes;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
@@ -67,6 +68,7 @@ public class NumberNode extends Node implements Comparable<NumberNode> {
 
     /**
      * Number type object value
+     *
      * @return object value
      */
     public BigDecimal getValue() {
@@ -110,13 +112,13 @@ public class NumberNode extends Node implements Comparable<NumberNode> {
     @Override
     public Node oper_div(Node right) {
         if (right.isNumber()) {
-            return NumberNode.create(value.divide(right.getAsNumber().getValue()));
+            return NumberNode.create(value.divide(right.getAsNumber().getValue(), 2, RoundingMode.HALF_UP));
         } else if (right.isString()) {
             if (right.getAsNumber().isUndefined()) {
                 Histone.runtime_log_warn("Number: for operation '/' can't cast right '{}' to number", right);
                 return Node.UNDEFINED;
             } else {
-                return NumberNode.create(value.divide(right.getAsNumber().getValue()));
+                return NumberNode.create(value.divide(right.getAsNumber().getValue(), 2, RoundingMode.HALF_UP));
             }
         } else {
             return commonMulDivSubMod(right);
