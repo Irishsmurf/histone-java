@@ -229,7 +229,7 @@
     </distributionManagement>
     <repositories>
         <repository>
-            <id>hq-weblab-release</id>
+            <id>weblab-release</id>
             <url>http://weblab.megafon.ru/maven/release</url>
             <releases>
                 <enabled>true</enabled>
@@ -239,7 +239,7 @@
             </snapshots>
         </repository>
         <repository>
-            <id>hq-weblab-snapshot</id>
+            <id>weblab-snapshot</id>
             <url>http://weblab.megafon.ru/maven/snapshot</url>
             <releases>
                 <enabled>false</enabled>
