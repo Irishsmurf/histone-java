@@ -17,12 +17,17 @@ package ru.histone.evaluator.functions.node.number;
 
 import ru.histone.evaluator.functions.node.NodeFunction;
 import ru.histone.evaluator.nodes.Node;
-import ru.histone.evaluator.nodes.NumberNode;
+import ru.histone.evaluator.nodes.NodeFactory;
+import ru.histone.evaluator.nodes.NumberHistoneNode;
 
 /**
  * Return absolute from target value
  */
-public class Abs implements NodeFunction<NumberNode> {
+public class Abs extends NodeFunction<NumberHistoneNode> {
+
+    public Abs(NodeFactory nodeFactory) {
+        super(nodeFactory);
+    }
 
     @Override
     public String getName() {
@@ -30,7 +35,7 @@ public class Abs implements NodeFunction<NumberNode> {
     }
 
     @Override
-    public Node execute(NumberNode target, Node... args) {
-        return NumberNode.create(target.getValue().abs());
+    public Node execute(NumberHistoneNode target, Node... args) {
+        return getNodeFactory().number(target.getValue().abs());
     }
 }

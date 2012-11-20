@@ -17,12 +17,18 @@ package ru.histone.evaluator.functions.node.object;
 
 import ru.histone.evaluator.functions.node.NodeFunction;
 import ru.histone.evaluator.nodes.Node;
-import ru.histone.evaluator.nodes.ObjectNode;
+import ru.histone.evaluator.nodes.NodeFactory;
+import ru.histone.evaluator.nodes.ObjectHistoneNode;
+import ru.histone.evaluator.nodes.ObjectHistoneNode;
 
 /**
  * Return array type object containing target object values
  */
-public class Values implements NodeFunction<ObjectNode> {
+public class Values extends NodeFunction<ObjectHistoneNode> {
+
+    public Values(NodeFactory nodeFactory) {
+        super(nodeFactory);
+    }
 
     @Override
     public String getName() {
@@ -30,7 +36,7 @@ public class Values implements NodeFunction<ObjectNode> {
     }
 
     @Override
-    public Node execute(ObjectNode target, Node... args) {
-        return ObjectNode.create(target.getElements().values());
+    public Node execute(ObjectHistoneNode target, Node... args) {
+        return getNodeFactory().object(target.getElements().values());
     }
 }

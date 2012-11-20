@@ -16,18 +16,34 @@
 package ru.histone.evaluator.functions.node;
 
 import ru.histone.evaluator.nodes.Node;
+import ru.histone.evaluator.nodes.NodeFactory;
 
 /**
  * Use this interface when you need to implement your own function for Histone type
  */
-public interface NodeFunction<T extends Node> {
+public abstract class NodeFunction<T extends Node> {
+
+    private NodeFactory nodeFactory;
+
+    public NodeFunction(NodeFactory nodeFactory) {
+        this.nodeFactory = nodeFactory;
+    }
+
+    /**
+     * Returns NodeFacotry instance
+     *
+     * @return NodeFactory instance
+     */
+    public NodeFactory getNodeFactory() {
+        return nodeFactory;
+    }
 
     /**
      * Return function name
      *
      * @return function name
      */
-    public String getName();
+    public abstract String getName();
 
 
     /**
@@ -38,5 +54,5 @@ public interface NodeFunction<T extends Node> {
      * @throws ru.histone.evaluator.functions.global.GlobalFunctionExecutionException
      *          if your function stops with error and you need to put details into log, then you should use this exception
      */
-    public Node execute(T target, Node... args) throws NodeFunctionExecutionException;
+    public abstract Node execute(T target, Node... args) throws NodeFunctionExecutionException;
 }

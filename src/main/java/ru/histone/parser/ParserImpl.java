@@ -15,16 +15,14 @@
  */
 package ru.histone.parser;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonNull;
-import com.google.gson.JsonPrimitive;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import ru.histone.evaluator.nodes.NodeFactory;
 import ru.histone.tokenizer.Token;
 import ru.histone.tokenizer.TokenType;
 import ru.histone.tokenizer.Tokenizer;
-import ru.histone.utils.GsonUtils;
 import ru.histone.utils.StringEscapeUtils;
 import ru.histone.utils.StringUtils;
 
@@ -38,14 +36,16 @@ public class ParserImpl {
 	private final static Logger log = LoggerFactory.getLogger(ParserImpl.class);
 
 	private Tokenizer tokenizer;
+    private NodeFactory nodeFactory;
 
     /**
      * Constructs parser with {@link ru.histone.tokenizer.Tokenizer} dependency
      *
      * @param tokenizer tokenizer factory
      */
-    public ParserImpl(Tokenizer tokenizer) {
+    public ParserImpl(Tokenizer tokenizer, NodeFactory nodeFactory) {
         this.tokenizer = tokenizer;
+        this.nodeFactory=nodeFactory;
 	}
 
     /**
@@ -54,16 +54,16 @@ public class ParserImpl {
      * @return JSON representation of AST
      * @throws ParserException in case of parse error
      */
-	public JsonArray parseTemplate() throws ParserException {
+	public ArrayNode parseTemplate() throws ParserException {
 		if(tokenizer == null){
 			throw new ParserException("Initialize tokenizer before parsing template");
 		}
 		return parse();
 	}
 
-	private JsonArray parse(TokenType... breakOn) throws ParserException {
+	private ArrayNode parse(TokenType... breakOn) throws ParserException {
 		log.trace("parse(TokenType): breakOn={}", new Object[] { breakOn });
-		JsonArray tree = new JsonArray();
+		ArrayNode tree = nodeFactory.jsonArray();
 
 		while (true) {
 			Token token = tokenizer.next();
@@ -86,7 +86,7 @@ public class ParserImpl {
 				if (tokenizer.next(TokenType.T_LITERAL_END) == null) {
 					throw expectedFound("%}}", tokenizer.next());
 				}
-				tree.add(new JsonPrimitive(sb.toString()));
+				tree.add(nodeFactory.jsonString(sb.toString()));
 				log.trace("parse(TokenType): literal block finished");
 			} else if (token.getType() == TokenType.T_BLOCK_START) {
 				log.trace("parse(TokenType): dive into block");
@@ -106,7 +106,7 @@ public class ParserImpl {
 						continue;// skip empty block
 					}
 
-					JsonElement block = parseBlock();
+					JsonNode block = parseBlock();
 					if (block != null) {
 						tree.add(block);
 					}
@@ -115,7 +115,7 @@ public class ParserImpl {
 			} else if (token.getType() == TokenType.T_BLOCK_END) {
 				// do nothing
 			} else if (token.getType() == TokenType.T_FRAGMENT) {
-				tree.add(new JsonPrimitive(token.getContent()));
+				tree.add(nodeFactory.jsonString(token.getContent()));
 			} else if (token.getType() == TokenType.T_EOF) {
 				// end of input reached, exit while loop
 				break;
@@ -129,8 +129,8 @@ public class ParserImpl {
 		return tree;
 	}
 
-	private JsonElement parseBlock() throws ParserException {
-		JsonElement tree = null;
+	private JsonNode parseBlock() throws ParserException {
+		JsonNode tree = null;
 
 		if (tokenizer.isNext(TokenType.EXPR_VAR)) {
 			tree = parseVar();
@@ -156,7 +156,7 @@ public class ParserImpl {
 		return tree;
 	}
 
-    private JsonElement parseImport() throws ParserException {
+    private JsonNode parseImport() throws ParserException {
         Token blockToken = tokenizer.next(TokenType.EXPRT_IMPORT);
         Token pathToken = tokenizer.next(TokenType.EXPR_STRING);
         if(pathToken == null) {
@@ -166,10 +166,10 @@ public class ParserImpl {
             throw expectedFound("}}", tokenizer.next());
         }
         String path = unescapeString(StringUtils.stripSuroundings(pathToken.getContent(), "'\""));
-        return AstNodeFactory.createNode(AstNodeType.IMPORT, path);
+        return nodeFactory.jsonArray(AstNodeType.IMPORT, path);
     }
 
-    private JsonElement parseCall() throws ParserException {
+    private JsonNode parseCall() throws ParserException {
 		log.trace("parseCall(): >>>");
 		Token blockToken = tokenizer.next(TokenType.EXPR_CALL);
 
@@ -177,13 +177,13 @@ public class ParserImpl {
 		if (nameToken == null) {
 			throw expectedFound("identifier", tokenizer.next());
 		}
-		JsonElement name = new JsonPrimitive(nameToken.getContent());
+		JsonNode name = nodeFactory.jsonString(nameToken.getContent());
 
-		JsonArray args = new JsonArray();
+		ArrayNode args = nodeFactory.jsonArray();
 		if (tokenizer.next(TokenType.EXPR_LPAREN) != null) {
 			if (tokenizer.next(TokenType.EXPR_RPAREN) == null) {
 				while (true) {
-					JsonElement expr = parseExpression();
+					JsonNode expr = parseExpression();
 					if (expr != null) {
 						args.add(expr);
 					}
@@ -201,21 +201,21 @@ public class ParserImpl {
 			throw expectedFound("}}", tokenizer.next());
 		}
 
-		JsonElement callBlock = AstNodeFactory.createNode(AstNodeType.STATEMENTS, parse(TokenType.EXPR_DIV));
+		JsonNode callBlock = nodeFactory.jsonArray(AstNodeType.STATEMENTS, parse(TokenType.EXPR_DIV));
 		args.add(callBlock);
 
 		if ((tokenizer.next(TokenType.EXPR_DIV) == null) || (tokenizer.next(TokenType.EXPR_CALL) == null) || (tokenizer.next(TokenType.T_BLOCK_END) == null)) {
 			throw expectedFound("{{/call}}", tokenizer.next());
 		}
 
-		JsonElement result = AstNodeFactory.createNode(AstNodeType.CALL, null, name, args);
+		JsonNode result = nodeFactory.jsonArray(AstNodeType.CALL, null, name, args);
 		// tree.setPos(blockToken.getPos());
 
 		log.trace("parseCall(): <<<");
 		return result;
 	}
 
-	private JsonElement parseVar() throws ParserException {
+	private JsonNode parseVar() throws ParserException {
 		log.trace("parseVar(): >>>");
 
 		// skip 'var' token
@@ -225,15 +225,15 @@ public class ParserImpl {
 		if (nameToken == null) {
 			throw expectedFound("identifier", tokenizer.next());
 		}
-		JsonPrimitive name = new JsonPrimitive(nameToken.getContent());
+		JsonNode name = nodeFactory.jsonString(nameToken.getContent());
 
-		JsonElement expression;
+		JsonNode expression;
 		if (tokenizer.next(TokenType.EXPR_ASSIGN) == null) {
 			if (tokenizer.next(TokenType.T_BLOCK_END) == null) {
 				throw expectedFound("}}", tokenizer.next());
 			}
 
-			expression = AstNodeFactory.createNode(AstNodeType.STATEMENTS, parse(TokenType.EXPR_DIV));
+			expression = nodeFactory.jsonArray(AstNodeType.STATEMENTS, parse(TokenType.EXPR_DIV));
 
 			if ((tokenizer.next(TokenType.EXPR_DIV) == null) || (tokenizer.next(TokenType.EXPR_VAR) == null) || (tokenizer.next(TokenType.T_BLOCK_END) == null)) {
 				throw expectedFound("{{/var}}", tokenizer.next());
@@ -247,7 +247,7 @@ public class ParserImpl {
 			}
 		}
 
-		JsonElement result = AstNodeFactory.createNode(AstNodeType.VAR, name, expression);
+		JsonNode result = nodeFactory.jsonArray(AstNodeType.VAR, name, expression);
 		// tree.setPos(blockToken.getPos());
 
 		log.trace("parseVar(): <<<");
@@ -255,7 +255,7 @@ public class ParserImpl {
 		return result;
 	}
 
-    private JsonElement parseMacro() throws ParserException {
+    private JsonNode parseMacro() throws ParserException {
 		log.trace("parseMacro(): >>>");
 
 		// skip 'macro' token
@@ -265,9 +265,9 @@ public class ParserImpl {
 		if (nameToken == null) {
 			throw expectedFound("identifier", tokenizer.next());
 		}
-		JsonPrimitive name = new JsonPrimitive(nameToken.getContent());
+		JsonNode name = nodeFactory.jsonString(nameToken.getContent());
 
-		JsonArray args = new JsonArray();
+		ArrayNode args = nodeFactory.jsonArray();
 		if (tokenizer.next(TokenType.EXPR_LPAREN) != null) {
 			if (tokenizer.next(TokenType.EXPR_RPAREN) == null) {
 				while (true) {
@@ -275,7 +275,7 @@ public class ParserImpl {
 						throw expectedFound("identifier", tokenizer.next());
 					}
 
-					args.add(new JsonPrimitive(tokenizer.next(TokenType.EXPR_IDENT).getContent()));
+					args.add(nodeFactory.jsonString(tokenizer.next(TokenType.EXPR_IDENT).getContent()));
 
 					if (tokenizer.next(TokenType.EXPR_COMMA) == null) {
 						break;
@@ -292,20 +292,20 @@ public class ParserImpl {
 			throw expectedFound("}}", tokenizer.next());
 		}
 
-		JsonArray macroBlock = parse(TokenType.EXPR_DIV);
+		ArrayNode macroBlock = parse(TokenType.EXPR_DIV);
 
 		if ((tokenizer.next(TokenType.EXPR_DIV) == null) || (tokenizer.next(TokenType.EXPR_MACRO) == null) || (tokenizer.next(TokenType.T_BLOCK_END) == null)) {
 			throw expectedFound("{{/macro}}", tokenizer.next());
 		}
 
-		JsonElement result = AstNodeFactory.createNode(AstNodeType.MACRO, name, args, macroBlock);
+		JsonNode result = nodeFactory.jsonArray(AstNodeType.MACRO, name, args, macroBlock);
 		// tree.setPos(blockToken.getPos());
 
 		log.trace("parseMacro(): <<<");
 		return result;
 	}
 
-	private JsonElement parseFor() throws ParserException {
+	private JsonNode parseFor() throws ParserException {
 		log.trace("parseFor(): >>>");
 		// skip 'for' token
 		Token blockToken = tokenizer.next(TokenType.EXPR_FOR);
@@ -328,15 +328,15 @@ public class ParserImpl {
 			throw expectedFound("in", tokenizer.next());
 		}
 
-		JsonElement expression = parseExpression();
+		JsonNode expression = parseExpression();
 
 		if (tokenizer.next(TokenType.T_BLOCK_END) == null) {
 			throw expectedFound("}}", tokenizer.next());
 		}
 
-		JsonArray forBlock = parse(TokenType.EXPR_DIV, TokenType.EXPR_ELSE);
+		ArrayNode forBlock = parse(TokenType.EXPR_DIV, TokenType.EXPR_ELSE);
 
-		JsonArray elseBlock = null;
+		ArrayNode elseBlock = null;
 		if (tokenizer.next(TokenType.EXPR_ELSE) != null) {
 			if (tokenizer.next(TokenType.T_BLOCK_END) == null) {
 				throw expectedFound("}}", tokenizer.next());
@@ -349,19 +349,19 @@ public class ParserImpl {
 			throw expectedFound("{{/for}}", tokenizer.next());
 		}
 
-		JsonArray iterator = new JsonArray();
-		iterator.add(new JsonPrimitive(valueToken.getContent()));
+		ArrayNode iterator = nodeFactory.jsonArray();
+		iterator.add(nodeFactory.jsonString(valueToken.getContent()));
 		if (keyToken != null) {
-			iterator.add(new JsonPrimitive(keyToken.getContent()));
+			iterator.add(nodeFactory.jsonString(keyToken.getContent()));
 		}
 
-		JsonArray statements = new JsonArray();
+		ArrayNode statements = nodeFactory.jsonArray();
 		statements.add(forBlock);
 		if (elseBlock != null) {
 			statements.add(elseBlock);
 		}
 
-		JsonElement result = AstNodeFactory.createNode(AstNodeType.FOR, iterator, expression, statements);
+		JsonNode result = nodeFactory.jsonArray(AstNodeType.FOR, iterator, expression, statements);
 		// tree.setPos(blockToken.getPos());
 
 		log.trace("parseFor(): <<<");
@@ -369,28 +369,28 @@ public class ParserImpl {
 		return result;
 	}
 
-	private JsonElement parseIf() throws ParserException {
+	private JsonNode parseIf() throws ParserException {
 		log.trace("parseIf(): >>>");
 		// skip 'var' token
 		Token blockToken = tokenizer.next(TokenType.EXPR_IF);
 
-		JsonArray conditions = new JsonArray();
+		ArrayNode conditions = nodeFactory.jsonArray();
 
 		while (true) {
 			if (tokenizer.isNext(TokenType.T_BLOCK_END)) {
 				throw expectedFound("expression", tokenizer.next());
 			}
 
-			JsonElement expression = parseExpression();
+			JsonNode expression = parseExpression();
 
             if (tokenizer.next(TokenType.T_BLOCK_END) == null) {
                 throw expectedFound("}}", tokenizer.next());
             }
 
-			JsonArray children = parse(TokenType.EXPR_DIV, TokenType.EXPR_ELSEIF, TokenType.EXPR_ELSE);
+			ArrayNode children = parse(TokenType.EXPR_DIV, TokenType.EXPR_ELSEIF, TokenType.EXPR_ELSE);
 
-			JsonArray condition = new JsonArray();
-			// condition.add(AstNodeFactory.createNode(AstNodeType.TRUE));
+			ArrayNode condition = nodeFactory.jsonArray();
+			// condition.add(nodeFactory.jsonArray(AstNodeType.TRUE));
 			condition.add(expression);
 			condition.add(children);
 
@@ -406,10 +406,10 @@ public class ParserImpl {
                 throw expectedFound("}}", tokenizer.next());
             }
 
-			JsonArray children = parse(TokenType.EXPR_DIV);
+			ArrayNode children = parse(TokenType.EXPR_DIV);
 
-			JsonArray condition = new JsonArray();
-			condition.add(AstNodeFactory.createNode(AstNodeType.TRUE));
+			ArrayNode condition = nodeFactory.jsonArray();
+			condition.add(nodeFactory.jsonArray(AstNodeType.TRUE));
 			condition.add(children);
 
 			conditions.add(condition);
@@ -419,75 +419,75 @@ public class ParserImpl {
 			throw expectedFound("{{/if}}", tokenizer.next());
 		}
 
-		JsonElement tree = AstNodeFactory.createNode(AstNodeType.IF, conditions);
+		JsonNode tree = nodeFactory.jsonArray(AstNodeType.IF, conditions);
 		// tree.setPos(blockToken.getPos());
 
 		log.trace("parseIf(): <<<");
 		return tree;
 	}
 
-	private JsonElement parseExpression() throws ParserException {
+	private JsonNode parseExpression() throws ParserException {
 		log.trace("parseExpression(): >>>");
-		JsonElement result = parseTernaryExpression();
+		JsonNode result = parseTernaryExpression();
 		log.trace("parseExpression(): result={}", result);
 		log.trace("parseExpression(): <<<");
 		return result;
 	}
 
-	private JsonElement parseTernaryExpression() throws ParserException {
+	private JsonNode parseTernaryExpression() throws ParserException {
 		// log.trace("parseTernaryExpression()");
 
-		JsonElement left = parseOrExpression();
-		JsonElement thenNode, elseNode;
+		JsonNode left = parseOrExpression();
+		JsonNode thenNode, elseNode;
 		while (tokenizer.next(TokenType.EXPR_QUERY) != null) {
 			thenNode = parseExpression();
             if (tokenizer.next(TokenType.EXPR_COLON) == null) {
                 //STE-61 we can skip part after colon
-                left = AstNodeFactory.createNode(AstNodeType.TERNARY, left, thenNode);
+                left = nodeFactory.jsonArray(AstNodeType.TERNARY, left, thenNode);
             } else {
                 elseNode = parseExpression();
-                left = AstNodeFactory.createNode(AstNodeType.TERNARY, left, thenNode, elseNode);
+                left = nodeFactory.jsonArray(AstNodeType.TERNARY, left, thenNode, elseNode);
             }
         }
 
         return left;
 	}
 
-	private JsonElement parseOrExpression() throws ParserException {
+	private JsonNode parseOrExpression() throws ParserException {
 		// log.trace("parseOrExpression()");
 
-		JsonElement left = parseAndExpression();
+		JsonNode left = parseAndExpression();
 		while (tokenizer.next(TokenType.EXPR_OR) != null) {
 			// int pos = left.getPos();
-			left = AstNodeFactory.createNode(AstNodeType.OR, left, parseAndExpression());
+			left = nodeFactory.jsonArray(AstNodeType.OR, left, parseAndExpression());
 			// left.setPos(pos);
 		}
 		return left;
 	}
 
-	private JsonElement parseAndExpression() throws ParserException {
+	private JsonNode parseAndExpression() throws ParserException {
 		// log.trace("parseAndExpression()");
 
-		JsonElement left = parseEqualityExpression();
+		JsonNode left = parseEqualityExpression();
 		while (tokenizer.next(TokenType.EXPR_AND) != null) {
 			// int pos = left.getPos();
-			left = AstNodeFactory.createNode(AstNodeType.AND, left, parseEqualityExpression());
+			left = nodeFactory.jsonArray(AstNodeType.AND, left, parseEqualityExpression());
 			// left.setPos(pos);
 		}
 		return left;
 	}
 
-	private JsonElement parseEqualityExpression() throws ParserException {
+	private JsonNode parseEqualityExpression() throws ParserException {
 		// log.trace("parseEqualityExpression()");
 
-		JsonElement left = parseRelationalExpression();
+		JsonNode left = parseRelationalExpression();
 		while (tokenizer.isNext(TokenType.EXPR_IS) || tokenizer.isNext(TokenType.EXPR_NOT_EQUAL)) {
 			// int pos = left.getPos();
 
 			if (tokenizer.next(TokenType.EXPR_IS) != null) {
-				left = AstNodeFactory.createNode(AstNodeType.EQUAL, left, parseRelationalExpression());
+				left = nodeFactory.jsonArray(AstNodeType.EQUAL, left, parseRelationalExpression());
 			} else if (tokenizer.next(TokenType.EXPR_NOT_EQUAL) != null) {
-				left = AstNodeFactory.createNode(AstNodeType.NOT_EQUAL, left, parseRelationalExpression());
+				left = nodeFactory.jsonArray(AstNodeType.NOT_EQUAL, left, parseRelationalExpression());
 			}
 			// left.setPos(pos);
 
@@ -495,22 +495,22 @@ public class ParserImpl {
 		return left;
 	}
 
-	private JsonElement parseRelationalExpression() throws ParserException {
+	private JsonNode parseRelationalExpression() throws ParserException {
 		// log.trace("parseRelationalExpression()");
 
-		JsonElement left = parseAdditiveExpression();
+		JsonNode left = parseAdditiveExpression();
 		while (tokenizer.isNext(TokenType.EXPR_LESS_OR_EQUAL) || tokenizer.isNext(TokenType.EXPR_LESS_THAN) || tokenizer.isNext(TokenType.EXPR_GREATER_OR_EQUAL)
 				|| tokenizer.isNext(TokenType.EXPR_GREATER_THAN)) {
 			// int pos = left.getPos();
 
 			if (tokenizer.next(TokenType.EXPR_LESS_OR_EQUAL) != null) {
-				left = AstNodeFactory.createNode(AstNodeType.LESS_OR_EQUAL, left, parseAdditiveExpression());
+				left = nodeFactory.jsonArray(AstNodeType.LESS_OR_EQUAL, left, parseAdditiveExpression());
 			} else if (tokenizer.next(TokenType.EXPR_LESS_THAN) != null) {
-				left = AstNodeFactory.createNode(AstNodeType.LESS_THAN, left, parseAdditiveExpression());
+				left = nodeFactory.jsonArray(AstNodeType.LESS_THAN, left, parseAdditiveExpression());
 			} else if (tokenizer.next(TokenType.EXPR_GREATER_OR_EQUAL) != null) {
-				left = AstNodeFactory.createNode(AstNodeType.GREATER_OR_EQUAL, left, parseAdditiveExpression());
+				left = nodeFactory.jsonArray(AstNodeType.GREATER_OR_EQUAL, left, parseAdditiveExpression());
 			} else if (tokenizer.next(TokenType.EXPR_GREATER_THAN) != null) {
-				left = AstNodeFactory.createNode(AstNodeType.GREATER_THAN, left, parseAdditiveExpression());
+				left = nodeFactory.jsonArray(AstNodeType.GREATER_THAN, left, parseAdditiveExpression());
 			}
 			// left.setPos(pos);
 
@@ -518,17 +518,17 @@ public class ParserImpl {
 		return left;
 	}
 
-	private JsonElement parseAdditiveExpression() throws ParserException {
+	private JsonNode parseAdditiveExpression() throws ParserException {
 		// log.trace("parseAdditiveExpression()");
 
-		JsonElement left = parseMultiplicativeExpression();
+		JsonNode left = parseMultiplicativeExpression();
 		while (tokenizer.isNext(TokenType.EXPR_ADD) || tokenizer.isNext(TokenType.EXPR_SUB)) {
 			// int pos = left.getPos();
 
 			if (tokenizer.next(TokenType.EXPR_ADD) != null) {
-				left = AstNodeFactory.createNode(AstNodeType.ADD, left, parseMultiplicativeExpression());
+				left = nodeFactory.jsonArray(AstNodeType.ADD, left, parseMultiplicativeExpression());
 			} else if (tokenizer.next(TokenType.EXPR_SUB) != null) {
-				left = AstNodeFactory.createNode(AstNodeType.SUB, left, parseMultiplicativeExpression());
+				left = nodeFactory.jsonArray(AstNodeType.SUB, left, parseMultiplicativeExpression());
 			}
 			// left.setPos(pos);
 
@@ -536,19 +536,19 @@ public class ParserImpl {
 		return left;
 	}
 
-	private JsonElement parseMultiplicativeExpression() throws ParserException {
+	private JsonNode parseMultiplicativeExpression() throws ParserException {
 		// log.trace("parseMultiplicativeExpression()");
 
-		JsonElement left = parseUnaryExpression();
+		JsonNode left = parseUnaryExpression();
 		while (tokenizer.isNext(TokenType.EXPR_MUL) || tokenizer.isNext(TokenType.EXPR_DIV) || tokenizer.isNext(TokenType.EXPR_MOD)) {
 			// int pos = left.getPos();
 
 			if (tokenizer.next(TokenType.EXPR_MUL) != null) {
-				left = AstNodeFactory.createNode(AstNodeType.MUL, left, parseUnaryExpression());
+				left = nodeFactory.jsonArray(AstNodeType.MUL, left, parseUnaryExpression());
 			} else if (tokenizer.next(TokenType.EXPR_DIV) != null) {
-				left = AstNodeFactory.createNode(AstNodeType.DIV, left, parseUnaryExpression());
+				left = nodeFactory.jsonArray(AstNodeType.DIV, left, parseUnaryExpression());
 			} else if (tokenizer.next(TokenType.EXPR_MOD) != null) {
-				left = AstNodeFactory.createNode(AstNodeType.MOD, left, parseUnaryExpression());
+				left = nodeFactory.jsonArray(AstNodeType.MOD, left, parseUnaryExpression());
 			}
 			// left.setPos(pos);
 
@@ -556,13 +556,13 @@ public class ParserImpl {
 		return left;
 	}
 
-	private JsonElement parseUnaryExpression() throws ParserException {
+	private JsonNode parseUnaryExpression() throws ParserException {
 		// log.trace("parseUnaryExpression()");
 
-		JsonElement tree;
+		JsonNode tree;
 
 		if ((tokenizer.next(TokenType.EXPR_NOT) != null)) {
-			tree = AstNodeFactory.createNode(AstNodeType.NOT, parseUnaryExpression());
+			tree = nodeFactory.jsonArray(AstNodeType.NOT, parseUnaryExpression());
 		} else {
 			tokenizer.next(TokenType.EXPR_ADD);
 			tree = parsePrimaryExpression();
@@ -571,12 +571,12 @@ public class ParserImpl {
 		return tree;
 	}
 
-	private JsonElement parsePrimaryExpression() throws ParserException {
+	private JsonNode parsePrimaryExpression() throws ParserException {
 		log.trace("parsePrimaryExpression(): >>>");
 
-		JsonElement left = null;
+		JsonNode left = null;
 		if ((tokenizer.next(TokenType.EXPR_SUB) != null)) {
-			left = AstNodeFactory.createNode(AstNodeType.NEGATE, parseSimpleExpression());
+			left = nodeFactory.jsonArray(AstNodeType.NEGATE, parseSimpleExpression());
 		} else {
 			left = parseSimpleExpression();
 		}
@@ -587,17 +587,17 @@ public class ParserImpl {
 					throw expectedFound("identifier", tokenizer.next());
 				}
 				if (!isType(AstNodeType.SELECTOR, left)) {
-					left = AstNodeFactory.createNode(AstNodeType.SELECTOR, AstNodeFactory.createArray(left));
+					left = nodeFactory.jsonArray(AstNodeType.SELECTOR, nodeFactory.jsonArray(left));
 				}
-				left.getAsJsonArray().get(1).getAsJsonArray().add(new JsonPrimitive(tokenizer.next().getContent()));
+				((ArrayNode)left.get(1)).add(nodeFactory.jsonString(tokenizer.next().getContent()));
 			} else if (tokenizer.next(TokenType.EXPR_LBRACKET) != null) {
 				if (tokenizer.next(TokenType.EXPR_RBRACKET) != null) {
 					throw expectedFound("expression", "[]");
 				}
 				if (!isType(AstNodeType.SELECTOR, left)) {
-					left = AstNodeFactory.createNode(AstNodeType.SELECTOR, AstNodeFactory.createArray(left));
+					left = nodeFactory.jsonArray(AstNodeType.SELECTOR, nodeFactory.jsonArray(left));
 				}
-				left.getAsJsonArray().get(1).getAsJsonArray().add(parseExpression());
+				((ArrayNode)left.get(1)).add(parseExpression());
 
 				if (tokenizer.next(TokenType.EXPR_RBRACKET) == null) {
 					throw expectedFound("]", tokenizer.next());
@@ -606,13 +606,13 @@ public class ParserImpl {
                 if(!isType(AstNodeType.SELECTOR, left)) {
                     throw expectedFound("}}", "(");
                 }
-                JsonArray leftArr = (JsonArray) left;
-                JsonElement name = GsonUtils.removeLast(leftArr.get(1).getAsJsonArray());
-                if (leftArr.get(1).getAsJsonArray().size() == 0) {
-                    left = JsonNull.INSTANCE;
+                ArrayNode leftArr = (ArrayNode) left;
+                JsonNode name = nodeFactory.removeLast((ArrayNode) leftArr.get(1));
+                if (leftArr.get(1).size() == 0) {
+                    left = nodeFactory.jsonNull();
                 }
 
-				JsonArray args = new JsonArray();
+				ArrayNode args = nodeFactory.jsonArray();
 				if (tokenizer.next(TokenType.EXPR_RPAREN) == null) {
 					while (true) {
 						args.add(parseExpression());
@@ -625,15 +625,15 @@ public class ParserImpl {
 					}
 				}
 
-                /*if(name.isJsonArray()) {
-                    JsonArray nameArr = name.getAsJsonArray();
-                    JsonElement nameFirstElement = nameArr.get(0);
+                /*if(name.isArrayNode()) {
+                    ArrayNode nameArr = name.getAsArrayNode();
+                    JsonNode nameFirstElement = nameArr.get(0);
                     if(nameFirstElement.isJsonPrimitive() && nameFirstElement.getAsJsonPrimitive().getAsNumber().equals(AstNodeType.STRING)) {
                         name = nameArr.get(1);
                     }
                 }*/
 
-				left = AstNodeFactory.createNode(AstNodeType.CALL, left, name, (args.size() == 0) ? JsonNull.INSTANCE : args);
+				left = nodeFactory.jsonArray(AstNodeType.CALL, left, name, (args.size() == 0) ? nodeFactory.jsonNull() : args);
 			} else {
 				break;
 			}
@@ -644,39 +644,39 @@ public class ParserImpl {
 		return left;
 	}
 
-	private boolean isType(int type, JsonElement elem) {
-		JsonArray leftArray = (JsonArray) elem;
-		int elemType = leftArray.get(0).getAsInt();
+	private boolean isType(int type, JsonNode elem) {
+		ArrayNode leftArray = (ArrayNode) elem;
+		int elemType = leftArray.get(0).intValue();
 		return type == elemType;
 	}
 
-	private JsonElement parseSimpleExpression() throws ParserException {
+	private JsonNode parseSimpleExpression() throws ParserException {
 		log.trace("parseSimpleExpression(): >>>");
 
-		JsonElement tree = null;
+		JsonNode tree = null;
 
 		if (tokenizer.next(TokenType.EXPR_NULL) != null) {
-			tree = AstNodeFactory.createNode(AstNodeType.NULL);
+			tree = nodeFactory.jsonArray(AstNodeType.NULL);
 		} else if ((tokenizer.next(TokenType.EXPR_TRUE) != null)) {
-			tree = AstNodeFactory.createNode(AstNodeType.TRUE);
+			tree = nodeFactory.jsonArray(AstNodeType.TRUE);
 		} else if ((tokenizer.next(TokenType.EXPR_FALSE) != null)) {
-			tree = AstNodeFactory.createNode(AstNodeType.FALSE);
+			tree = nodeFactory.jsonArray(AstNodeType.FALSE);
 		} else if (tokenizer.isNext(TokenType.EXPR_INTEGER)) {
 			Token token = tokenizer.next();
 			BigInteger val = new BigInteger(token.getContent());
-			tree = AstNodeFactory.createNode(AstNodeType.INT, val);
+			tree = nodeFactory.jsonArray(AstNodeType.INT, val);
 		} else if (tokenizer.isNext(TokenType.EXPR_DOUBLE)) {
 			Token token = tokenizer.next();
 			BigDecimal val = new BigDecimal(token.getContent());
-			tree = AstNodeFactory.createNode(AstNodeType.DOUBLE, val);
+			tree = nodeFactory.jsonArray(AstNodeType.DOUBLE, val);
 		} else if (tokenizer.isNext(TokenType.EXPR_STRING)) {
 			Token token = tokenizer.next();
 			String val = unescapeString(StringUtils.stripSuroundings(token.getContent(), "'\""));
-			tree = AstNodeFactory.createNode(AstNodeType.STRING, val);
+			tree = nodeFactory.jsonArray(AstNodeType.STRING, val);
         } else if (tokenizer.next(TokenType.EXPR_LBRACKET) != null) {
             tree = parseMap(tokenizer);
 //		} else if (tokenizer.next(TokenType.EXPR_ARRAY) != null) {
-//			JsonArray args = new JsonArray();
+//			ArrayNode args = nodeFactory.jsonArray();
 //			if (tokenizer.next(TokenType.EXPR_LPAREN) == null) {
 //				throw expectedFound("(", tokenizer.next());
 //			}
@@ -691,13 +691,13 @@ public class ParserImpl {
 //					throw expectedFound(")", tokenizer.next());
 //				}
 //			}
-//			tree = AstNodeFactory.createNode(AstNodeType.ARRAY, args);
+//			tree = nodeFactory.jsonArray(AstNodeType.ARRAY, args);
 //		} else if (tokenizer.next(TokenType.EXPR_OBJECT) != null) {
 //			if (tokenizer.next(TokenType.EXPR_LPAREN) == null) {
 //				throw expectedFound("(", tokenizer.next());
 //			}
 //
-//			JsonArray props = new JsonArray();
+//			ArrayNode props = nodeFactory.jsonArray();
 //			String key = null;
 //			if (tokenizer.next(TokenType.EXPR_RPAREN) == null) {
 //				while (true) {
@@ -714,7 +714,7 @@ public class ParserImpl {
 //						throw expectedFound(":", tokenizer.next());
 //					}
 //
-//					JsonArray prop = new JsonArray();
+//					ArrayNode prop = nodeFactory.jsonArray();
 //					prop.add(new JsonPrimitive(key));
 //					prop.add(parseExpression());
 //					props.add(prop);
@@ -728,12 +728,12 @@ public class ParserImpl {
 //				}
 //			}
 //
-//			tree = AstNodeFactory.createNode(AstNodeType.OBJECT, props);
+//			tree = nodeFactory.jsonArray(AstNodeType.OBJECT, props);
 		} else if (tokenizer.isNext(TokenType.EXPR_IDENT) || tokenizer.isNext(TokenType.EXPR_THIS) || tokenizer.isNext(TokenType.EXPR_SELF) || tokenizer.isNext(TokenType.EXPR_GLOBAL)) {
 			Token token = tokenizer.next();
-			JsonArray val = new JsonArray();
-			val.add(new JsonPrimitive(token.getContent()));
-			tree = AstNodeFactory.createNode(AstNodeType.SELECTOR, val);
+			ArrayNode val = nodeFactory.jsonArray();
+			val.add(nodeFactory.jsonString(token.getContent()));
+			tree = nodeFactory.jsonArray(AstNodeType.SELECTOR, val);
 		} else if (tokenizer.next(TokenType.EXPR_LPAREN) != null) {
 			if (tokenizer.isNext(TokenType.EXPR_RPAREN)) {
 				throw expectedFound("expression", "()");
@@ -751,10 +751,10 @@ public class ParserImpl {
 		return tree;
 	}
 
-    private JsonElement parseMap(Tokenizer tokenizer) throws ParserException {
+    private JsonNode parseMap(Tokenizer tokenizer) throws ParserException {
 
-        JsonArray items = new JsonArray();
-        JsonElement key, value;
+        ArrayNode items = nodeFactory.jsonArray();
+        JsonNode key, value;
 
         if (!tokenizer.isNext(TokenType.EXPR_RBRACKET)) {
             while (true) {
@@ -764,29 +764,29 @@ public class ParserImpl {
 
                 if (tokenizer.next(TokenType.EXPR_COLON) != null) {
 
-                    int value0 = value.getAsJsonArray().get(0).getAsInt();
+                    int value0 = value.get(0).intValue();
                     if (value0 != AstNodeType.STRING &&
                             value0 != AstNodeType.INT && (
                             value0 != AstNodeType.SELECTOR ||
-                                    value.getAsJsonArray().get(1).getAsJsonArray().size() != 1
+                                    value.get(1).size() != 1
                     )) {
                         throw expectedFound("identifier, string, number", "node of type '" + value0 + "'");
                     }
 
                     if (value0 != AstNodeType.SELECTOR) {
-                        key = value.getAsJsonArray().get(1);
+                        key = value.get(1);
                     } else {
-                        key = value.getAsJsonArray().get(1).getAsJsonArray().get(0);
+                        key = value.get(1).get(0);
                     }
 
                     value = parseExpression();
                 }
 
-                if (key != null && key.getAsJsonPrimitive().isNumber()) {
-                    key = new JsonPrimitive(key.getAsString());
+                if (key != null && key.isNumber()){
+                    key = nodeFactory.jsonString(key.asText());
                 }
 
-                JsonArray elem = AstNodeFactory.createArray(key, value);
+                ArrayNode elem = nodeFactory.jsonArray(key, value);
                 items.add(elem);
                 if (tokenizer.next(TokenType.EXPR_COMMA) == null) {
                     break;
@@ -796,7 +796,7 @@ public class ParserImpl {
         if (tokenizer.next(TokenType.EXPR_RBRACKET) == null) {
             throw expectedFound("]", tokenizer.next());
         }
-        return AstNodeFactory.createNode(AstNodeType.MAP, items);
+        return nodeFactory.jsonArray(AstNodeType.MAP, items);
     }
 
     private static String unescapeString(String val) {

@@ -17,14 +17,19 @@ package ru.histone.evaluator.functions.node.object;
 
 import ru.histone.evaluator.functions.node.NodeFunction;
 import ru.histone.evaluator.nodes.Node;
-import ru.histone.evaluator.nodes.ObjectNode;
-import ru.histone.evaluator.nodes.StringNode;
+import ru.histone.evaluator.nodes.NodeFactory;
+import ru.histone.evaluator.nodes.ObjectHistoneNode;
+import ru.histone.evaluator.nodes.StringHistoneNode;
 
 /**
  * Joins array elements to single string using specified separator<br/>
  * If separator isn't specified, then space symbol will be used instead
  */
-public class Join implements NodeFunction<ObjectNode> {
+public class Join extends NodeFunction<ObjectHistoneNode> {
+
+    public Join(NodeFactory nodeFactory) {
+        super(nodeFactory);
+    }
 
     @Override
     public String getName() {
@@ -32,7 +37,7 @@ public class Join implements NodeFunction<ObjectNode> {
     }
 
     @Override
-    public Node execute(ObjectNode target, Node... args) {
+    public Node execute(ObjectHistoneNode target, Node... args) {
         String separator = "";
         if (args.length > 0) {
             separator = args[0].getAsString().getValue();
@@ -46,6 +51,6 @@ public class Join implements NodeFunction<ObjectNode> {
             buffer.append(element.getAsString().getValue());
             addSeparator = true;
         }
-        return StringNode.create(buffer.toString());
+        return getNodeFactory().string(buffer.toString());
     }
 }

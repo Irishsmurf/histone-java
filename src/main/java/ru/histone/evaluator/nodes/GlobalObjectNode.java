@@ -18,13 +18,13 @@ package ru.histone.evaluator.nodes;
 /**
  * Special class representing 'global' object in Histone syntax
  */
-public class GlobalObjectNode extends ObjectNode {
-    public GlobalObjectNode() {
-        super();
+public class GlobalObjectNode extends ObjectHistoneNode {
+    public GlobalObjectNode(NodeFactory nodeFactory) {
+        super(nodeFactory);
     }
 
-    public GlobalObjectNode(ObjectNode node) {
-        super();
+    public GlobalObjectNode(NodeFactory nodeFactory, ObjectHistoneNode node) {
+        super(nodeFactory);
         if (node != null) {
             for (Object key : node.getElements().keySet()) {
                 this.add(key, node.getElements().get(key));

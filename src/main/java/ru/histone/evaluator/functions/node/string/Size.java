@@ -17,16 +17,18 @@ package ru.histone.evaluator.functions.node.string;
 
 import ru.histone.evaluator.functions.node.NodeFunction;
 import ru.histone.evaluator.nodes.Node;
-import ru.histone.evaluator.nodes.NumberNode;
-import ru.histone.evaluator.nodes.StringNode;
-
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import ru.histone.evaluator.nodes.NodeFactory;
+import ru.histone.evaluator.nodes.NumberHistoneNode;
+import ru.histone.evaluator.nodes.StringHistoneNode;
 
 /**
  * Check string against Regular Expression
  */
-public class Size implements NodeFunction<StringNode> {
+public class Size extends NodeFunction<StringHistoneNode> {
+
+    public Size(NodeFactory nodeFactory) {
+        super(nodeFactory);
+    }
 
     @Override
     public String getName() {
@@ -34,7 +36,7 @@ public class Size implements NodeFunction<StringNode> {
     }
 
     @Override
-    public Node execute(StringNode target, Node... args) {
-        return NumberNode.create(target.getValue().length());
+    public Node execute(StringHistoneNode target, Node... args) {
+        return getNodeFactory().number(target.getValue().length());
     }
 }

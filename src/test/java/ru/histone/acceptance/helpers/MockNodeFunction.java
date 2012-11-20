@@ -19,21 +19,21 @@ import java.math.BigDecimal;
 
 import ru.histone.evaluator.functions.node.NodeFunction;
 import ru.histone.evaluator.functions.node.NodeFunctionExecutionException;
-import ru.histone.evaluator.nodes.BooleanNode;
-import ru.histone.evaluator.nodes.Node;
-import ru.histone.evaluator.nodes.NumberNode;
-import ru.histone.evaluator.nodes.StringNode;
+import ru.histone.evaluator.nodes.*;
+import ru.histone.evaluator.nodes.BooleanHistoneNode;
+import ru.histone.evaluator.nodes.StringHistoneNode;
 
 /**
  *
  *
  */
-public class MockNodeFunction implements NodeFunction {
+public class MockNodeFunction extends NodeFunction {
     private String name;
     private String data;
     private String resultType;
 
-    public MockNodeFunction(String name, String resultType, String data) {
+    public MockNodeFunction(NodeFactory nodeFactory, String name, String resultType, String data) {
+        super(nodeFactory);
         this.name = name;
         this.resultType = resultType;
         this.data = data;
@@ -71,11 +71,11 @@ public class MockNodeFunction implements NodeFunction {
                 data = data.replace(":args:", sb.toString());
             }
 
-            node = StringNode.create(data);
+            node = getNodeFactory().string(data);
         } else if ("number".equals(resultType.toLowerCase())) {
-            node = NumberNode.create(new BigDecimal(data));
+            node = getNodeFactory().number(new BigDecimal(data));
         } else if ("boolean".equals(resultType.toLowerCase())) {
-            node = "true".equalsIgnoreCase(data) ? BooleanNode.TRUE : BooleanNode.FALSE;
+            node = "true".equalsIgnoreCase(data) ? getNodeFactory().TRUE : getNodeFactory().FALSE;
         } else {
             throw new RuntimeException();
         }

@@ -18,19 +18,24 @@ package ru.histone.spring.stubs;
 import ru.histone.evaluator.functions.node.NodeFunction;
 import ru.histone.evaluator.functions.node.NodeFunctionExecutionException;
 import ru.histone.evaluator.nodes.Node;
-import ru.histone.evaluator.nodes.StringNode;
+import ru.histone.evaluator.nodes.NodeFactory;
+import ru.histone.evaluator.nodes.StringHistoneNode;
 
 /**
  *
  */
-public class StringNodeUserFunction_B implements NodeFunction<StringNode> {
+public class StringNodeUserFunction_B extends NodeFunction<StringHistoneNode> {
+    public StringNodeUserFunction_B(NodeFactory nodeFactory) {
+        super(nodeFactory);
+    }
+
     @Override
     public String getName() {
         return "stringFunctionB";
     }
 
     @Override
-    public Node execute(StringNode target, Node... args) throws NodeFunctionExecutionException {
-        return StringNode.create("string_b_result");
+    public Node execute(StringHistoneNode target, Node... args) throws NodeFunctionExecutionException {
+        return getNodeFactory().string("string_b_result");
     }
 }

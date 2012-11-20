@@ -15,45 +15,36 @@
  */
 package ru.histone.optimizer;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonPrimitive;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import ru.histone.Histone;
-import ru.histone.HistoneException;
-import ru.histone.parser.AstNodeType;
-
 public class AstImportMarker {
-    private static final Logger log = LoggerFactory.getLogger(AstImportMarker.class);
+/*    private static final Logger log = LoggerFactory.getLogger(AstImportMarker.class);
 
-    public JsonArray mark(JsonArray ast) throws HistoneException {
+    public ArrayNode mark(ArrayNode ast) throws HistoneException {
         ImportResolverContext context = new ImportResolverContext();
         return markInternal(ast, context);
     }
 
-    private JsonArray markInternal(JsonArray ast, ImportResolverContext context) throws HistoneException {
-        JsonArray result = new JsonArray();
+    private ArrayNode markInternal(ArrayNode ast, ImportResolverContext context) throws HistoneException {
+        ArrayNode result = new ArrayNode();
 
-        for (JsonElement element : ast) {
-            JsonElement node = markNode(element, context);
+        for (JsonNode element : ast) {
+            JsonNode node = markNode(element, context);
             result.add(node);
         }
 
         return result;
     }
 
-    private JsonElement markNode(JsonElement element, ImportResolverContext context) throws HistoneException {
+    private JsonNode markNode(JsonNode element, ImportResolverContext context) throws HistoneException {
         if (isString(element)) {
             return element;
         }
 
-        if (!element.isJsonArray()) {
+        if (!element.isArrayNode()) {
             Histone.runtime_log_warn("Invalid JSON element! Neither 'string', nor 'array'. Element: '{}'", element.toString());
             return element;
         }
 
-        JsonArray astArray = element.getAsJsonArray();
+        ArrayNode astArray = element.getAsArrayNode();
 
         int nodeType = getNodeType(astArray);
         switch (nodeType) {
@@ -65,7 +56,7 @@ public class AstImportMarker {
         }
     }
 
-    private JsonElement markImport(JsonPrimitive name, ImportResolverContext context) throws HistoneException {
+    private JsonNode markImport(JsonPrimitive name, ImportResolverContext context) throws HistoneException {
 //        if (!isString(pathElement)) {
 //            Histone.runtime_log_warn("Invalid path to imported template: '{}'", pathElement.toString());
 //            return AstNodeFactory.createNode(AstNodeType.STRING, "");
@@ -91,12 +82,12 @@ public class AstImportMarker {
         throw new RuntimeException("UNIMPLEMENTED");
     }
 
-    private boolean isString(JsonElement element) {
+    private boolean isString(JsonNode element) {
         return element.isJsonPrimitive() && element.getAsJsonPrimitive().isString();
     }
 
-    private int getNodeType(JsonArray astArray) {
+    private int getNodeType(ArrayNode astArray) {
         return astArray.get(0).getAsJsonPrimitive().getAsInt();
     }
-
+     */
 }

@@ -15,136 +15,28 @@
  */
 package ru.histone.evaluator.nodes;
 
-import java.util.*;
-import java.util.Map.Entry;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
-import ru.histone.utils.StringUtils;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * Class representing Object type in Histone
  */
-public class ObjectNode extends Node {
+public class ObjectHistoneNode extends Node {
 //    private boolean globalObject = false;
 
     private int maxIdx = 0;
 
     private Map<Object, Node> elements = new LinkedHashMap<Object, Node>();
 
-    protected ObjectNode() {
+    protected ObjectHistoneNode(NodeFactory nodeFactory) {
+        super(nodeFactory);
     }
 
-    /**
-     * Creates empty src
-     *
-     * @return new src
-     */
-    public static ObjectNode create() {
-        return new ObjectNode();
-    }
-
-    /**
-     * Create src type src and fill it with items from specified ObjectNode src
-     *
-     * @param src source src ot use for copying items from
-     * @return created obejct
-     */
-    public static ObjectNode create(ObjectNode src) {
-        ObjectNode node = src.isGlobalObject() ? new GlobalObjectNode() : new ObjectNode();
-        for (Entry<Object, Node> entry : src.elements.entrySet()) {
-            node.add(entry.getKey(), entry.getValue());
-        }
-//        node.elements = new LinkedHashMap<Object, Node>(src.elements);
-        return node;
-    }
-
-    /**
-     * Create array node object and fill it with nodes from specified arguments
-     *
-     * @param elements node elements to use for creating new array object
-     * @return new array node object
-     */
-    public static ObjectNode create(Node... elements) {
-        if (elements == null) {
-            return create();
-        }
-        ObjectNode node = new ObjectNode();
-        for (Node item : elements) {
-            node.add(item);
-        }
-        return node;
-    }
-
-    /**
-     * Create array node object and fill it with nodes from specified arguments
-     *
-     * @param elements node elements to use for creating new array object
-     * @return new array node object
-     */
-    public static ObjectNode create(String... elements) {
-        if (elements == null) {
-            return create();
-        }
-        ObjectNode node = new ObjectNode();
-        for (String item : elements) {
-            node.add(StringNode.create(item));
-        }
-        return node;
-    }
-
-    public static Node create(Collection<Node> elements) {
-        if (elements == null) {
-            return create();
-        }
-        ObjectNode node = new ObjectNode();
-        for (Node item : elements) {
-            node.add(item);
-        }
-        return node;
-    }
-
-    public static Node create(JsonArray src) {
-        if (src == null) {
-            return create();
-        }
-        ObjectNode node = new ObjectNode();
-        for (JsonElement entry : src) {
-            node.add(jsonToNode(entry));
-        }
-        return node;
-    }
-
-
-    public static ObjectNode create(List<Node> src) {
-        if (src == null) {
-            return create();
-        }
-        ObjectNode node = new ObjectNode();
-        for (Node entry : src) {
-            node.add(entry);
-        }
-        return node;
-    }
-
-    /**
-     * Create src type src and fill it with items from specified JsonObject src
-     *
-     * @param src source src ot use for copying items from
-     * @return created obejct
-     */
-    public static ObjectNode create(JsonObject src) {
-        if (src == null) {
-            return create();
-        }
-        ObjectNode node = new ObjectNode();
-        for (Entry<String, JsonElement> entry : src.entrySet()) {
-            node.add(entry.getKey(), jsonToNode(entry.getValue()));
-        }
-        return node;
-    }
 
     /**
      * Check if this is special object named GlobalObject
@@ -190,7 +82,7 @@ public class ObjectNode extends Node {
 //     * @param key   key key
 //     * @param value value
 //     */
-//    public void put(JsonElement key, Node value) {
+//    public void put(JsonNode key, Node value) {
 //        if (key.isJsonNull()) {
 //            key = new JsonPrimitive("" + (elements.size()));
 //        }
@@ -267,8 +159,8 @@ public class ObjectNode extends Node {
     @Override
     public Node oper_add(Node right) {
         if (right.isObject()) {
-            ObjectNode result = ObjectNode.create();
-            ObjectNode rightObj = right.getAsObject();
+            ObjectHistoneNode result = getNodeFactory().object();
+            ObjectHistoneNode rightObj = right.getAsObject();
 
             //put all elements from left object
             for (Object key : this.elements.keySet()) {
@@ -281,14 +173,14 @@ public class ObjectNode extends Node {
             }
             return result;
         } else if (right.isNumber()) {
-            return Node.UNDEFINED;
+            return getNodeFactory().UNDEFINED;
         } else {
             return this.getAsString().oper_add(right.getAsString());
         }
     }
 
     private Node commonMulDivSubMod(Node right) {
-        return Node.UNDEFINED;
+        return getNodeFactory().UNDEFINED;
     }
 
     @Override
@@ -308,7 +200,7 @@ public class ObjectNode extends Node {
 
     @Override
     public Node oper_negate() {
-        return Node.UNDEFINED;
+        return getNodeFactory().UNDEFINED;
     }
 
     @Override
@@ -318,12 +210,12 @@ public class ObjectNode extends Node {
 
     @Override
     public Node oper_not() {
-        return Node.FALSE;
+        return getNodeFactory().FALSE;
     }
 
     @Override
     public Node oper_equal(Node right) {
-        return (right.getAsBoolean().getValue()) ? Node.TRUE : Node.FALSE;
+        return (right.getAsBoolean().getValue()) ? getNodeFactory().TRUE : getNodeFactory().FALSE;
     }
 
     @Override
@@ -347,18 +239,18 @@ public class ObjectNode extends Node {
     }
 
     @Override
-    public BooleanNode getAsBoolean() {
-        return Node.TRUE;
+    public BooleanHistoneNode getAsBoolean() {
+        return getNodeFactory().TRUE;
     }
 
     @Override
-    public NumberNode getAsNumber() {
-        return Node.UNDEFINED_NUMBER;
+    public NumberHistoneNode getAsNumber() {
+        return getNodeFactory().UNDEFINED_NUMBER;
     }
 
 
     @Override
-    public StringNode getAsString() {
+    public StringHistoneNode getAsString() {
         StringBuilder sb = new StringBuilder();
         for (Node value : this.elements.values()) {
             if (!value.isUndefined()) {
@@ -366,33 +258,33 @@ public class ObjectNode extends Node {
             }
         }
         String sbStr = (sb.length() > 0) ? sb.substring(0, sb.length() - 1) : "";
-        return StringNode.create(sbStr);
+        return getNodeFactory().string(sbStr);
     }
 
     @Override
-    public ObjectNode getAsObject() {
+    public ObjectHistoneNode getAsObject() {
         return this;
     }
 
     @Override
-    public JsonElement getAsJsonElement() {
+    public JsonNode getAsJsonNode() {
         //check if we have at least one element with string key
         if (maxIdx != elements.size()) {
-            JsonObject json = new JsonObject();
+            ObjectNode json = getNodeFactory().jsonObject();
 
             for (Entry<Object, Node> entry : elements.entrySet()) {
                 if (!entry.getValue().isUndefined()) {
-                    json.add(entry.getKey().toString(), entry.getValue().getAsJsonElement());
+                    json.put(entry.getKey().toString(), entry.getValue().getAsJsonNode());
                 } else {
-                    json.add(entry.getKey().toString(), new JsonObject());
+                    json.put(entry.getKey().toString(), getNodeFactory().jsonObject());
                 }
             }
             return json;
         } else {
-            JsonArray json = new JsonArray();
+            ArrayNode json = getNodeFactory().jsonArray();
 
             for (Entry<Object, Node> entry : elements.entrySet()) {
-                json.add(entry.getValue().getAsJsonElement());
+                json.add(entry.getValue().getAsJsonNode());
             }
 
             return json;

@@ -16,8 +16,6 @@
 package ru.histone;
 
 import java.io.ByteArrayInputStream;
-import java.io.StringBufferInputStream;
-import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -26,8 +24,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Before;
 import org.junit.Test;
 import ru.histone.evaluator.functions.global.GlobalFunction;
@@ -35,7 +32,8 @@ import ru.histone.evaluator.functions.global.GlobalFunctionExecutionException;
 import ru.histone.evaluator.functions.node.NodeFunction;
 import ru.histone.evaluator.functions.node.NodeFunctionExecutionException;
 import ru.histone.evaluator.nodes.Node;
-import ru.histone.evaluator.nodes.StringNode;
+import ru.histone.evaluator.nodes.NodeFactory;
+import ru.histone.evaluator.nodes.StringHistoneNode;
 import ru.histone.resourceloaders.Resource;
 import ru.histone.resourceloaders.ResourceLoadException;
 import ru.histone.resourceloaders.ResourceLoader;
@@ -44,42 +42,45 @@ import ru.histone.resourceloaders.StreamResource;
 import static org.junit.Assert.*;
 
 public class HistoneBuilderTest {
-    private NodeFunction<StringNode> nodeFunction1;
-    private NodeFunction<StringNode> nodeFunction2;
+    private NodeFunction<StringHistoneNode> nodeFunction1;
+    private NodeFunction<StringHistoneNode> nodeFunction2;
     private GlobalFunction globalFunction1;
     private GlobalFunction globalFunction2;
     private ResourceLoader resourceLoader1;
     private ResourceLoader resourceLoader2;
+    private NodeFactory nodeFactory;
+    private ObjectMapper jackson;
 
     @Before
     public void before() {
+        jackson = new ObjectMapper();
+        nodeFactory = new NodeFactory(jackson);
 
-
-        nodeFunction1 = new NodeFunction<StringNode>() {
+        nodeFunction1 = new NodeFunction<StringHistoneNode>(nodeFactory) {
             @Override
             public String getName() {
                 return "func1";
             }
 
             @Override
-            public Node execute(StringNode target, Node... args) throws NodeFunctionExecutionException {
-                return StringNode.create("111");
+            public Node execute(StringHistoneNode target, Node... args) throws NodeFunctionExecutionException {
+                return getNodeFactory().string("111");
             }
         };
 
-        nodeFunction2 = new NodeFunction<StringNode>() {
+        nodeFunction2 = new NodeFunction<StringHistoneNode>(nodeFactory) {
             @Override
             public String getName() {
                 return "func2";
             }
 
             @Override
-            public Node execute(StringNode target, Node... args) throws NodeFunctionExecutionException {
-                return StringNode.create("222");
+            public Node execute(StringHistoneNode target, Node... args) throws NodeFunctionExecutionException {
+                return getNodeFactory().string("222");
             }
         };
 
-        globalFunction1 = new GlobalFunction() {
+        globalFunction1 = new GlobalFunction(nodeFactory) {
             @Override
             public String getName() {
                 return "globalFunc1";
@@ -87,11 +88,11 @@ public class HistoneBuilderTest {
 
             @Override
             public Node execute(Node... args) throws GlobalFunctionExecutionException {
-                return StringNode.create("111");
+                return getNodeFactory().string("111");
             }
         };
 
-        globalFunction2 = new GlobalFunction() {
+        globalFunction2 = new GlobalFunction(nodeFactory) {
             @Override
             public String getName() {
                 return "globalFunc2";
@@ -99,7 +100,7 @@ public class HistoneBuilderTest {
 
             @Override
             public Node execute(Node... args) throws GlobalFunctionExecutionException {
-                return StringNode.create("222");
+                return getNodeFactory().string("222");
             }
         };
         resourceLoader1 = new ResourceLoader() {
@@ -144,20 +145,16 @@ public class HistoneBuilderTest {
 
     @Test
     public void commonTest() throws HistoneException {
-        GsonBuilder gsonBuilder = new GsonBuilder();
-        Gson gson = gsonBuilder.create();
-
         Set<GlobalFunction> globalFunctions = new HashSet<GlobalFunction>();
         globalFunctions.add(globalFunction1);
         globalFunctions.add(globalFunction2);
 
         Map<Class<? extends Node>, Set<NodeFunction<? extends Node>>> nodeFunctions = new HashMap<Class<? extends Node>, Set<NodeFunction<? extends Node>>>();
-        nodeFunctions.put(StringNode.class, new HashSet<NodeFunction<? extends Node>>());
-        nodeFunctions.get(StringNode.class).add(nodeFunction1);
-        nodeFunctions.get(StringNode.class).add(nodeFunction2);
+        nodeFunctions.put(StringHistoneNode.class, new HashSet<NodeFunction<? extends Node>>());
+        nodeFunctions.get(StringHistoneNode.class).add(nodeFunction1);
+        nodeFunctions.get(StringHistoneNode.class).add(nodeFunction2);
 
         HistoneBuilder builder = new HistoneBuilder();
-        builder.setGson(gson);
         builder.setResourceLoader(resourceLoader1);
         builder.setGlobalFunctions(globalFunctions);
         builder.setNodeFunctions(nodeFunctions);
@@ -167,23 +164,23 @@ public class HistoneBuilderTest {
         assertNotNull(histone);
     }
 
-    @Test
-    public void changeGsonAfterBuildExecuted() throws HistoneException {
-        HistoneBuilder builder = new HistoneBuilder();
-        Gson gson1 = new Gson();
-        builder.setGson(gson1);
-
-        Histone histone1 = builder.build();
-
-        Gson gson2 = new Gson();
-        builder.setGson(gson2);
-
-        Histone histone2 = builder.build();
-
-        assertNotSame(histone1, histone2);
-        assertSame(gson1, histone1.getGson());
-        assertSame(gson2, histone2.getGson());
-    }
+//    @Test
+//    public void changeGsonAfterBuildExecuted() throws HistoneException {
+//        HistoneBuilder builder = new HistoneBuilder();
+//        Gson gson1 = new Gson();
+//        builder.setGson(gson1);
+//
+//        Histone histone1 = builder.build();
+//
+//        Gson gson2 = new Gson();
+//        builder.setGson(gson2);
+//
+//        Histone histone2 = builder.build();
+//
+//        assertNotSame(histone1, histone2);
+//        assertSame(gson1, histone1.getGson());
+//        assertSame(gson2, histone2.getGson());
+//    }
 
     @Test
     public void addResolversAfterBuildExecuted() throws HistoneException {
@@ -211,8 +208,8 @@ public class HistoneBuilderTest {
         HistoneBuilder builder = new HistoneBuilder();
 
         Map<Class<? extends Node>, Set<NodeFunction<? extends Node>>> nodeFunctions1 = new HashMap<Class<? extends Node>, Set<NodeFunction<? extends Node>>>();
-        nodeFunctions1.put(StringNode.class, new HashSet<NodeFunction<? extends Node>>());
-        nodeFunctions1.get(StringNode.class).add(nodeFunction1);
+        nodeFunctions1.put(StringHistoneNode.class, new HashSet<NodeFunction<? extends Node>>());
+        nodeFunctions1.get(StringHistoneNode.class).add(nodeFunction1);
         builder.setNodeFunctions(nodeFunctions1);
 
         Histone histone1 = builder.build();
@@ -221,8 +218,8 @@ public class HistoneBuilderTest {
         assertEquals("a 111 b", result1);
 
         Map<Class<? extends Node>, Set<NodeFunction<? extends Node>>> nodeFunctions2 = new HashMap<Class<? extends Node>, Set<NodeFunction<? extends Node>>>();
-        nodeFunctions2.put(StringNode.class, new HashSet<NodeFunction<? extends Node>>());
-        nodeFunctions2.get(StringNode.class).add(nodeFunction2);
+        nodeFunctions2.put(StringHistoneNode.class, new HashSet<NodeFunction<? extends Node>>());
+        nodeFunctions2.get(StringHistoneNode.class).add(nodeFunction2);
         builder.setNodeFunctions(nodeFunctions2);
 
         Histone histone2 = builder.build();
@@ -234,12 +231,12 @@ public class HistoneBuilderTest {
     public void addNodeFunctionsAfterBuildExecuted() throws HistoneException {
         HistoneBuilder builder = new HistoneBuilder();
 
-        builder.addNodeFunction(StringNode.class, nodeFunction1);
+        builder.addNodeFunction(StringHistoneNode.class, nodeFunction1);
         Histone histone1 = builder.build();
 
         assertEquals("a 111 b", histone1.evaluate("a {{'test'.func1()}} b"));
 
-        builder.addNodeFunction(StringNode.class, nodeFunction2);
+        builder.addNodeFunction(StringHistoneNode.class, nodeFunction2);
         Histone histone2 = builder.build();
 
         assertEquals("a 111 b", histone1.evaluate("a {{'test'.func1()}} b"));

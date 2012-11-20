@@ -16,13 +16,18 @@
 package ru.histone.evaluator.functions.node;
 
 import ru.histone.evaluator.nodes.Node;
+import ru.histone.evaluator.nodes.NodeFactory;
 import ru.histone.evaluator.nodes.UndefinedNode;
-import ru.histone.evaluator.nodes.UndefinedNumberNode;
+import ru.histone.evaluator.nodes.UndefinedNumberHistoneNode;
 
 /**
  * Return if current target is undefined
  */
-public class IsUndefined implements NodeFunction<Node> {
+public class IsUndefined extends NodeFunction<Node> {
+    public IsUndefined(NodeFactory nodeFactory) {
+        super(nodeFactory);
+    }
+
     @Override
     public String getName() {
         return "isUndefined";
@@ -30,6 +35,6 @@ public class IsUndefined implements NodeFunction<Node> {
 
     @Override
     public Node execute(Node target, Node... args) {
-        return (target instanceof UndefinedNode) || (target instanceof UndefinedNumberNode) ? Node.TRUE : Node.FALSE;
+        return (target instanceof UndefinedNode) || (target instanceof UndefinedNumberHistoneNode) ? getNodeFactory().TRUE : getNodeFactory().FALSE;
     }
 }

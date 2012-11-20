@@ -15,9 +15,9 @@
  */
 package ru.histone.acceptance;
 
-import com.google.gson.*;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonWriter;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.junit.ComparisonFailure;
 import org.junit.runner.Description;
 import org.junit.runner.RunWith;
@@ -35,10 +35,7 @@ import ru.histone.acceptance.helpers.*;
 import ru.histone.evaluator.EvaluatorException;
 import ru.histone.evaluator.functions.global.GlobalFunction;
 import ru.histone.evaluator.functions.node.NodeFunction;
-import ru.histone.evaluator.nodes.BooleanNode;
-import ru.histone.evaluator.nodes.Node;
-import ru.histone.evaluator.nodes.NumberNode;
-import ru.histone.evaluator.nodes.StringNode;
+import ru.histone.evaluator.nodes.*;
 import ru.histone.utils.CollectionUtils;
 
 import javax.xml.stream.XMLInputFactory;
@@ -50,12 +47,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
-import java.math.BigDecimal;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 @RunWith(EvaluatorAcceptanceTest.class)
 public class EvaluatorAcceptanceTest extends Runner {
@@ -63,26 +56,15 @@ public class EvaluatorAcceptanceTest extends Runner {
     protected static final String MDC_TEST_NAME = "testCaseName";
 
     private Description testSuiteDescription;
-    private Gson gson;
     private static final XMLInputFactory inputFactory = XMLInputFactory.newInstance();
+
+    private ObjectMapper jackson;
+    private NodeFactory nodeFactory;
 
     public EvaluatorAcceptanceTest(Class<?> testClass) {
         testSuiteDescription = Description.createSuiteDescription("Evaluator XML Test Cases");
-
-        GsonBuilder gsonBuilder = new GsonBuilder();
-        gsonBuilder.serializeNulls();
-//        gsonBuilder.registerTypeAdapter(BigDecimal.class, new TypeAdapter<BigDecimal>() {
-//            @Override
-//            public BigDecimal read(JsonReader reader) throws IOException {
-//                return new BigDecimal(reader.nextString());
-//            }
-//
-//            @Override
-//            public void write(JsonWriter writer, BigDecimal value) throws IOException {
-//                writer.value(value.toPlainString());
-//            }
-//        }.nullSafe());
-        this.gson = gsonBuilder.create();
+        jackson = new ObjectMapper();
+        nodeFactory = new NodeFactory(jackson);
     }
 
     @Override
@@ -93,11 +75,17 @@ public class EvaluatorAcceptanceTest extends Runner {
     @Override
     public void run(RunNotifier notifier) {
         MDC.put(MDC_TEST_NAME, "before");
-        Reader casesListReader = new InputStreamReader(getClass().getResourceAsStream("/evaluator/cases.json"));
-        JsonArray testCases = gson.fromJson(casesListReader, JsonElement.class).getAsJsonArray();
-        for (JsonElement element : testCases) {
-            runTestCasesFromXmlFile(notifier, element.getAsString());
+        Reader reader = new InputStreamReader(getClass().getResourceAsStream("/evaluator/cases.json"));
+        try {
+            Iterator<JsonNode> iter = jackson.readTree(reader).iterator();
+            while (iter.hasNext()) {
+                JsonNode element = iter.next();
+                runTestCasesFromXmlFile(notifier, element.asText());
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Error reading json", e);
         }
+
     }
 
     private void runTestCasesFromXmlFile(RunNotifier notifier, String fileName) {
@@ -265,7 +253,7 @@ public class EvaluatorAcceptanceTest extends Runner {
             }
 
             HistoneBuilder histoneBuilder = new HistoneBuilder();
-            histoneBuilder.setGson(gson);
+            histoneBuilder.setJackson(jackson);
             if (CollectionUtils.isNotEmpty(testCase.getMockFiles())) {
                 //TODO: histoneBuilder.setResourceResolvers(toResourceResolvers(testCase.getMockFiles()));
             }
@@ -290,7 +278,7 @@ public class EvaluatorAcceptanceTest extends Runner {
             if (expectedException != null) {
                 try {
                     Reader input = new StringReader(testCase.getInput());
-                    JsonElement context = gson.fromJson(testCase.getContext(), JsonElement.class);
+                    JsonNode context = jackson.readTree(testCase.getContext());
                     String output = histone.evaluate(input, context);
 //                    String output = histone.process(testCase.getInput(), testCase.getContext());
                     log.debug("case({}): output={}", new Object[]{testIdx, output});
@@ -313,7 +301,7 @@ public class EvaluatorAcceptanceTest extends Runner {
                 notifier.fireTestFailure(new Failure(description, new ComparisonFailure(msgF, expectedF, "")));
             } else {
                 Reader input = new StringReader(testCase.getInput());
-                JsonElement context = gson.fromJson(testCase.getContext(), JsonElement.class);
+                JsonNode context = (testCase.getContext()==null) ? jackson.getNodeFactory().nullNode() : jackson.readTree(testCase.getContext());
                 String output = histone.evaluate(input, context);
 //                String output = histone.process(testCase.getInput(), testCase.getContext());
                 log.debug("case({}): output={}", new Object[]{testIdx, output});
@@ -372,7 +360,7 @@ public class EvaluatorAcceptanceTest extends Runner {
     private Set<GlobalFunction> toGlobalFunctions(Set<MockGlobalFunctionHolder> mockFunctions) {
         Set<GlobalFunction> globalFunctions = new HashSet<GlobalFunction>();
         for (final MockGlobalFunctionHolder function : mockFunctions) {
-            GlobalFunction globalFunction = new MockGlobalFunction(function.getName(), function.getReturnType(), function.getData());
+            GlobalFunction globalFunction = new MockGlobalFunction(nodeFactory,function.getName(), function.getReturnType(), function.getData());
             globalFunctions.add(globalFunction);
         }
         return globalFunctions;
@@ -382,14 +370,14 @@ public class EvaluatorAcceptanceTest extends Runner {
         Map<Class<? extends Node>, Set<NodeFunction<? extends Node>>> nodeFunctions = new HashMap<Class<? extends Node>, Set<NodeFunction<? extends Node>>>();
 
         for (final MockNodeFunctionHolder function : mockFunctions) {
-            NodeFunction nodeFunction = new MockNodeFunction(function.getName(), function.getReturnType(), function.getData());
+            NodeFunction nodeFunction = new MockNodeFunction(nodeFactory, function.getName(), function.getReturnType(), function.getData());
             Class<? extends Node> nodeClass = null;
             if ("string".equalsIgnoreCase(function.getNodeType())) {
-                nodeClass = StringNode.class;
+                nodeClass = StringHistoneNode.class;
             } else if ("number".equalsIgnoreCase(function.getNodeType())) {
-                nodeClass = NumberNode.class;
+                nodeClass = NumberHistoneNode.class;
             } else if ("boolean".equalsIgnoreCase(function.getNodeType())) {
-                nodeClass = BooleanNode.class;
+                nodeClass = BooleanHistoneNode.class;
             } else {
                 throw new RuntimeException(String.format("AstNodeType '%s' not supported by tests", function.getNodeType()));
             }

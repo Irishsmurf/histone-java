@@ -15,12 +15,14 @@
  */
 package ru.histone.evaluator.functions.node;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import ru.histone.evaluator.nodes.Node;
-import ru.histone.evaluator.nodes.StringNode;
+import ru.histone.evaluator.nodes.NodeFactory;
+import ru.histone.evaluator.nodes.StringHistoneNode;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -36,65 +38,67 @@ public class NodeFunctionsManagerTest {
     private NodeFunction emptyFunction1_DuplicatedName;
     private NodeFunction emptyFunction1_DifferentCase;
     private NodeFunction functionWithException;
+    private NodeFactory nodeFactory;
 
     @Before
     public void before() {
-        emptyFunction1 = new NodeFunction<StringNode>() {
+        nodeFactory = new NodeFactory(new ObjectMapper());
+        emptyFunction1 = new NodeFunction<StringHistoneNode>(nodeFactory) {
             @Override
             public String getName() {
                 return "emptyFunction1";
             }
 
             @Override
-            public Node execute(StringNode target, Node... args) throws NodeFunctionExecutionException {
-                return StringNode.create(getName());
+            public Node execute(StringHistoneNode target, Node... args) throws NodeFunctionExecutionException {
+                return getNodeFactory().string(getName());
             }
         };
 
-        emptyFunction2 = new NodeFunction<StringNode>() {
+        emptyFunction2 = new NodeFunction<StringHistoneNode>(nodeFactory) {
             @Override
             public String getName() {
                 return "emptyFunction2";
             }
 
             @Override
-            public Node execute(StringNode target, Node... args) throws NodeFunctionExecutionException {
-                return StringNode.create(getName());
+            public Node execute(StringHistoneNode target, Node... args) throws NodeFunctionExecutionException {
+                return getNodeFactory().string(getName());
             }
         };
 
-        emptyFunction1_DuplicatedName = new NodeFunction<StringNode>() {
+        emptyFunction1_DuplicatedName = new NodeFunction<StringHistoneNode>(nodeFactory) {
             @Override
             public String getName() {
                 return "emptyFunction1";
             }
 
             @Override
-            public Node execute(StringNode target, Node... args) throws NodeFunctionExecutionException {
-                return StringNode.create(getName());
+            public Node execute(StringHistoneNode target, Node... args) throws NodeFunctionExecutionException {
+                return getNodeFactory().string(getName());
             }
         };
 
-        emptyFunction1_DifferentCase = new NodeFunction<StringNode>() {
+        emptyFunction1_DifferentCase = new NodeFunction<StringHistoneNode>(nodeFactory) {
             @Override
             public String getName() {
                 return "emptyfunction1";
             }
 
             @Override
-            public Node execute(StringNode target, Node... args) throws NodeFunctionExecutionException {
-                return StringNode.create(getName());
+            public Node execute(StringHistoneNode target, Node... args) throws NodeFunctionExecutionException {
+                return getNodeFactory().string(getName());
             }
         };
 
-        functionWithException = new NodeFunction<StringNode>() {
+        functionWithException = new NodeFunction<StringHistoneNode>(nodeFactory) {
             @Override
             public String getName() {
                 return "functionWithException";
             }
 
             @Override
-            public Node execute(StringNode target, Node... args) throws NodeFunctionExecutionException {
+            public Node execute(StringHistoneNode target, Node... args) throws NodeFunctionExecutionException {
                 throw new RuntimeException("Some exception");
             }
         };
@@ -104,55 +108,55 @@ public class NodeFunctionsManagerTest {
     public void checkFunctionOnEmptyFunctionList() {
         NodeFunctionsManager manager = new NodeFunctionsManager();
 
-        assertFalse(manager.hasFunction(StringNode.class, "aaa"));
+        assertFalse(manager.hasFunction(StringHistoneNode.class, "aaa"));
     }
 
     @Test
     public void executeOnEmptyFunctionList() {
         thrown.expect(NodeFunctionExecutionException.class);
-        thrown.expectMessage("No NodeFunction 'aaa' found for node class 'StringNode'");
+        thrown.expectMessage("No NodeFunction 'aaa' found for node class 'StringHistoneNode'");
 
         NodeFunctionsManager manager = new NodeFunctionsManager();
 
-        manager.execute(StringNode.create(), "aaa");
+        manager.execute(nodeFactory.string(), "aaa");
     }
 
     @Test
     public void checkFunctionRegistration() {
         NodeFunctionsManager manager = new NodeFunctionsManager();
-        manager.registerFunction(StringNode.class, emptyFunction1);
+        manager.registerFunction(StringHistoneNode.class, emptyFunction1);
 
-        assertFalse(manager.hasFunction(StringNode.class, "aaa"));
-        assertTrue(manager.hasFunction(StringNode.class, "emptyFunction1"));
-        assertFalse(manager.hasFunction(StringNode.class, "emptyfunction1"));
+        assertFalse(manager.hasFunction(StringHistoneNode.class, "aaa"));
+        assertTrue(manager.hasFunction(StringHistoneNode.class, "emptyFunction1"));
+        assertFalse(manager.hasFunction(StringHistoneNode.class, "emptyfunction1"));
     }
 
     @Test
     public void checkSeveralFunctionRegistration() {
         NodeFunctionsManager manager = new NodeFunctionsManager();
-        manager.registerFunction(StringNode.class, emptyFunction1);
-        manager.registerFunction(StringNode.class, emptyFunction2);
+        manager.registerFunction(StringHistoneNode.class, emptyFunction1);
+        manager.registerFunction(StringHistoneNode.class, emptyFunction2);
 
-        assertFalse(manager.hasFunction(StringNode.class, "aaa"));
-        assertTrue(manager.hasFunction(StringNode.class, "emptyFunction1"));
-        assertTrue(manager.hasFunction(StringNode.class, "emptyFunction2"));
+        assertFalse(manager.hasFunction(StringHistoneNode.class, "aaa"));
+        assertTrue(manager.hasFunction(StringHistoneNode.class, "emptyFunction1"));
+        assertTrue(manager.hasFunction(StringHistoneNode.class, "emptyFunction2"));
     }
 
     @Test
     public void checkFunctionRegistrationDuplicatedName() {
         NodeFunctionsManager manager = new NodeFunctionsManager();
-        manager.registerFunction(StringNode.class, emptyFunction1);
-        manager.registerFunction(StringNode.class, emptyFunction1_DuplicatedName);
+        manager.registerFunction(StringHistoneNode.class, emptyFunction1);
+        manager.registerFunction(StringHistoneNode.class, emptyFunction1_DuplicatedName);
     }
 
     @Test
     public void checkFunctionRegistrationDifferentCaseInName() {
         NodeFunctionsManager manager = new NodeFunctionsManager();
-        manager.registerFunction(StringNode.class, emptyFunction1);
-        manager.registerFunction(StringNode.class, emptyFunction1_DifferentCase);
+        manager.registerFunction(StringHistoneNode.class, emptyFunction1);
+        manager.registerFunction(StringHistoneNode.class, emptyFunction1_DifferentCase);
 
-        Node result1 = manager.execute(StringNode.create(), emptyFunction1.getName());
-        Node result2 = manager.execute(StringNode.create(), emptyFunction1_DifferentCase.getName());
+        Node result1 = manager.execute(nodeFactory.string(), emptyFunction1.getName());
+        Node result2 = manager.execute(nodeFactory.string(), emptyFunction1_DifferentCase.getName());
 
         assertEquals("emptyFunction1", result1.getAsString().getValue());
         assertEquals("emptyfunction1", result2.getAsString().getValue());
@@ -161,47 +165,47 @@ public class NodeFunctionsManagerTest {
     @Test
     public void executeNonExistingFunction() {
         thrown.expect(NodeFunctionExecutionException.class);
-        thrown.expectMessage("No NodeFunction 'aaa' found for node class 'StringNode'");
+        thrown.expectMessage("No NodeFunction 'aaa' found for node class 'StringHistoneNode'");
 
         NodeFunctionsManager manager = new NodeFunctionsManager();
-        manager.registerFunction(StringNode.class, emptyFunction1);
+        manager.registerFunction(StringHistoneNode.class, emptyFunction1);
 
-        manager.execute(StringNode.create(), "aaa");
+        manager.execute(nodeFactory.string(), "aaa");
     }
 
     @Test
     public void executeFunctionWithDifferentCase() {
         thrown.expect(NodeFunctionExecutionException.class);
-        thrown.expectMessage("No NodeFunction 'emptyfunction1' found for node class 'StringNode'");
+        thrown.expectMessage("No NodeFunction 'emptyfunction1' found for node class 'StringHistoneNode'");
 
         NodeFunctionsManager manager = new NodeFunctionsManager();
-        manager.registerFunction(StringNode.class, emptyFunction1);
+        manager.registerFunction(StringHistoneNode.class, emptyFunction1);
 
-        manager.execute(StringNode.create(), "emptyfunction1");
+        manager.execute(nodeFactory.string(), "emptyfunction1");
     }
 
 
     @Test
     public void exceptionInNodeFunction() {
         thrown.expect(NodeFunctionExecutionException.class);
-        thrown.expectMessage("Error executing NodeFunction 'functionWithException' for node class 'StringNode'");
+        thrown.expectMessage("Error executing NodeFunction 'functionWithException' for node class 'StringHistoneNode'");
 
         NodeFunctionsManager manager = new NodeFunctionsManager();
-        manager.registerFunction(StringNode.class, functionWithException);
+        manager.registerFunction(StringHistoneNode.class, functionWithException);
 
-        manager.execute(StringNode.create(), "functionWithException");
+        manager.execute(nodeFactory.string(), "functionWithException");
     }
 
     @Test
     public void functionResultWithArgs() {
-        NodeFunction NodeFunction = new NodeFunction<StringNode>() {
+        NodeFunction NodeFunction = new NodeFunction<StringHistoneNode>(nodeFactory) {
             @Override
             public String getName() {
                 return "myNodeFunction";
             }
 
             @Override
-            public Node execute(StringNode target, Node... args) throws NodeFunctionExecutionException {
+            public Node execute(StringHistoneNode target, Node... args) throws NodeFunctionExecutionException {
                 StringBuilder sb = new StringBuilder();
                 sb.append(getName()).append(" = ").append(target.getValue()).append("[");
                 boolean addSeparator = false;
@@ -213,16 +217,16 @@ public class NodeFunctionsManagerTest {
                     addSeparator = true;
                 }
                 sb.append("]");
-                return StringNode.create(sb.toString());
+                return nodeFactory.string(sb.toString());
             }
         };
 
 
         NodeFunctionsManager manager = new NodeFunctionsManager();
-        manager.registerFunction(StringNode.class, NodeFunction);
+        manager.registerFunction(StringHistoneNode.class, NodeFunction);
 
 
-        Node node = manager.execute(StringNode.create("+++"),"myNodeFunction", StringNode.create("A"), StringNode.create("B"), StringNode.create("C"));
+        Node node = manager.execute(nodeFactory.string("+++"),"myNodeFunction", nodeFactory.string("A"), nodeFactory.string("B"), nodeFactory.string("C"));
         assertNotNull(node);
         assertTrue(node.isString());
         assertEquals(node.getAsString().getValue(), "myNodeFunction = +++[A-B-C]");

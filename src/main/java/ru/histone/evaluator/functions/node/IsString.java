@@ -16,12 +16,17 @@
 package ru.histone.evaluator.functions.node;
 
 import ru.histone.evaluator.nodes.Node;
-import ru.histone.evaluator.nodes.StringNode;
+import ru.histone.evaluator.nodes.NodeFactory;
+import ru.histone.evaluator.nodes.StringHistoneNode;
 
 /**
  * Return if current target is of string type
  */
-public class IsString implements NodeFunction<Node> {
+public class IsString extends NodeFunction<Node> {
+    public IsString(NodeFactory nodeFactory) {
+        super(nodeFactory);
+    }
+
     @Override
     public String getName() {
         return "isString";
@@ -29,6 +34,6 @@ public class IsString implements NodeFunction<Node> {
 
     @Override
     public Node execute(Node target, Node... args) {
-        return (target instanceof StringNode) ? Node.TRUE : Node.FALSE;
+        return (target instanceof StringHistoneNode) ? getNodeFactory().TRUE : getNodeFactory().FALSE;
     }
 }

@@ -19,14 +19,19 @@ import java.util.regex.Pattern;
 
 import ru.histone.evaluator.functions.node.NodeFunction;
 import ru.histone.evaluator.nodes.Node;
-import ru.histone.evaluator.nodes.ObjectNode;
-import ru.histone.evaluator.nodes.StringNode;
+import ru.histone.evaluator.nodes.NodeFactory;
+import ru.histone.evaluator.nodes.ObjectHistoneNode;
+import ru.histone.evaluator.nodes.StringHistoneNode;
 
 /**
  * Split target value into array using specified separator<br/>
  * If separator isn't specified, then space symbol will be used instead.
  */
-public class Split implements NodeFunction<StringNode> {
+public class Split extends NodeFunction<StringHistoneNode> {
+
+    public Split(NodeFactory nodeFactory) {
+        super(nodeFactory);
+    }
 
     @Override
     public String getName() {
@@ -34,13 +39,13 @@ public class Split implements NodeFunction<StringNode> {
     }
 
     @Override
-    public Node execute(StringNode target, Node... args) {
+    public Node execute(StringHistoneNode target, Node... args) {
         String value = target.getValue();
         if (args.length > 0 && args[0].isString()) {
             String separator = args[0].getAsString().getValue();
-            return ObjectNode.create(split(value, separator));
+            return getNodeFactory().object(split(value, separator));
         } else {
-            return ObjectNode.create(split(value, ""));
+            return getNodeFactory().object(split(value, ""));
         }
 
     }

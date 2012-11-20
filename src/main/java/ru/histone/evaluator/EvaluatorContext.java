@@ -15,32 +15,23 @@
  */
 package ru.histone.evaluator;
 
-import java.util.ArrayDeque;
-import java.util.Deque;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import ru.histone.GlobalProperty;
-import ru.histone.evaluator.nodes.ContextWrapperNode;
-import ru.histone.evaluator.nodes.GlobalObjectNode;
-import ru.histone.evaluator.nodes.Node;
-import ru.histone.evaluator.nodes.ObjectNode;
-import ru.histone.evaluator.nodes.UndefinedNode;
+import ru.histone.evaluator.nodes.*;
+
+import java.util.*;
+import java.util.Map.Entry;
 
 /**
  * Special object for storing evaluator context<br/>
  */
 public class EvaluatorContext {
+    private NodeFactory nodeFactory;
     private Deque<Map<String, Node>> stacksProps;
     private Deque<Map<String, MacroFunc>> stacksMacro;
     private Node initialContext;
-    private ObjectNode global;
+    private ObjectHistoneNode global;
     private Set<String> importedResources;
 
     /**
@@ -50,14 +41,14 @@ public class EvaluatorContext {
      * @param jsonCtx JSON object for context
      * @return evaluator context object
      */
-    public static EvaluatorContext createFromJson(ObjectNode global, JsonElement jsonCtx) {
+    public static EvaluatorContext createFromJson(NodeFactory nodeFactory, ObjectHistoneNode global, JsonNode jsonCtx) {
         if (global == null) {
-            global = new GlobalObjectNode();
+            global = new GlobalObjectNode(nodeFactory);
         }
         if (jsonCtx == null) {
-            jsonCtx = new JsonObject();
+            jsonCtx = nodeFactory.jsonObject();
         }
-        return new EvaluatorContext(global, jsonCtx);
+        return new EvaluatorContext(nodeFactory, global, jsonCtx);
     }
 
     /**
@@ -66,14 +57,14 @@ public class EvaluatorContext {
      * @param global this variable stores 'global' variables values
      * @return evaluator context object
      */
-    public static EvaluatorContext createEmpty(GlobalObjectNode global) {
+    public static EvaluatorContext createEmpty(NodeFactory nodeFactory, GlobalObjectNode global) {
         if (global == null) {
-            return new EvaluatorContext(new GlobalObjectNode(), new JsonObject());
+            return new EvaluatorContext(nodeFactory, new GlobalObjectNode(nodeFactory), nodeFactory.jsonObject());
         }
-        return new EvaluatorContext(global, new JsonObject());
+        return new EvaluatorContext(nodeFactory, global, nodeFactory.jsonObject());
     }
 
-    private EvaluatorContext(ObjectNode global, JsonElement initialContext) {
+    private EvaluatorContext(NodeFactory nodeFactory, ObjectHistoneNode global, JsonNode initialContext) {
         this.stacksProps = new ArrayDeque<Map<String, Node>>();
         this.stacksMacro = new ArrayDeque<Map<String, MacroFunc>>();
 
@@ -82,10 +73,12 @@ public class EvaluatorContext {
 
         this.importedResources = new HashSet<String>();
 
+        this.nodeFactory = nodeFactory;
+
         if (initialContext != null) {
-            this.initialContext = Node.jsonToNode(initialContext);
+            this.initialContext = this.nodeFactory.jsonToNode(initialContext);
         } else {
-            this.initialContext = UndefinedNode.INSTANCE;
+            this.initialContext = this.nodeFactory.UNDEFINED;
         }
 
         this.global = global;
@@ -224,7 +217,7 @@ public class EvaluatorContext {
      * @return Node object representing context
      */
     public Node getAsNode() {
-        return ContextWrapperNode.create(this);
+        return ContextWrapperNode.create(nodeFactory, this);
     }
 
     /**
@@ -241,7 +234,7 @@ public class EvaluatorContext {
      *
      * @return global node object
      */
-    public ObjectNode getGlobal() {
+    public ObjectHistoneNode getGlobal() {
         return global;
     }
 
@@ -253,7 +246,7 @@ public class EvaluatorContext {
      */
     public Node getGlobalValue(GlobalProperty property) {
         if (global == null) {
-            return Node.NULL;
+            return nodeFactory.NULL;
         }
         return global.getProp(property.getName());
     }
@@ -269,7 +262,7 @@ public class EvaluatorContext {
             return;
         }
         if (value == null) {
-            value = Node.NULL;
+            value = nodeFactory.NULL;
         }
         global.add(property.getName(), value);
     }

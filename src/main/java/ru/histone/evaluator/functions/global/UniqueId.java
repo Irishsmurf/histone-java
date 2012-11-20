@@ -18,12 +18,17 @@ package ru.histone.evaluator.functions.global;
 import java.util.UUID;
 
 import ru.histone.evaluator.nodes.Node;
-import ru.histone.evaluator.nodes.StringNode;
+import ru.histone.evaluator.nodes.NodeFactory;
+import ru.histone.evaluator.nodes.StringHistoneNode;
 
 /**
  * Generates unique string<br/>
  */
-public class UniqueId implements GlobalFunction {
+public class UniqueId extends GlobalFunction {
+    public UniqueId(NodeFactory nodeFactory) {
+        super(nodeFactory);
+    }
+
     @Override
     public String getName() {
         return "uniqueId";
@@ -31,6 +36,6 @@ public class UniqueId implements GlobalFunction {
 
     @Override
     public Node execute(Node... args) {
-        return StringNode.create(UUID.randomUUID().toString());
+        return getNodeFactory().string(UUID.randomUUID().toString());
     }
 }

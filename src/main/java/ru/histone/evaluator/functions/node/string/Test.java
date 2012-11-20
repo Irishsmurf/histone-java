@@ -20,12 +20,17 @@ import java.util.regex.Pattern;
 
 import ru.histone.evaluator.functions.node.NodeFunction;
 import ru.histone.evaluator.nodes.Node;
-import ru.histone.evaluator.nodes.StringNode;
+import ru.histone.evaluator.nodes.NodeFactory;
+import ru.histone.evaluator.nodes.StringHistoneNode;
 
 /**
  * Check string against Regular Expression
  */
-public class Test implements NodeFunction<StringNode> {
+public class Test extends NodeFunction<StringHistoneNode> {
+
+    public Test(NodeFactory nodeFactory) {
+        super(nodeFactory);
+    }
 
     @Override
     public String getName() {
@@ -33,15 +38,15 @@ public class Test implements NodeFunction<StringNode> {
     }
 
     @Override
-    public Node execute(StringNode target, Node... args) {
+    public Node execute(StringHistoneNode target, Node... args) {
         if (args.length > 0) {
 
             String regexp = args[0].getAsString().getValue();
             Pattern pt = Pattern.compile(regexp);
             Matcher m = pt.matcher(target.getValue());
-            return m.find() ? Node.TRUE : Node.FALSE;
+            return m.find() ? getNodeFactory().TRUE : getNodeFactory().FALSE;
         }
 
-        return Node.UNDEFINED;
+        return getNodeFactory().UNDEFINED;
     }
 }

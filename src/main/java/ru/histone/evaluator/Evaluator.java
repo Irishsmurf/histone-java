@@ -15,7 +15,9 @@
  */
 package ru.histone.evaluator;
 
-import com.google.gson.*;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.histone.GlobalProperty;
@@ -56,7 +58,7 @@ public class Evaluator {
     private static final Logger log = LoggerFactory.getLogger(Evaluator.class);
 
     private final Parser parser;
-    private final Gson gson;
+    private final NodeFactory nodeFactory;
     private final ResourceLoader resourceLoader;
     private final GlobalFunctionsManager globalFunctionsManager;
     private final NodeFunctionsManager nodeFunctionsManager;
@@ -65,7 +67,7 @@ public class Evaluator {
 
     public Evaluator(EvaluatorBootstrap bootstrap) {
         this.parser = bootstrap.getParser();
-        this.gson = bootstrap.getGson();
+        this.nodeFactory = bootstrap.getNodeFactory();
         this.resourceLoader = bootstrap.getResourceLoader();
         this.globalFunctionsManager = registerMandatoryGlobalFunctions(bootstrap);
         this.nodeFunctionsManager = registerMandatoryNodeFunctions(bootstrap);
@@ -80,43 +82,43 @@ public class Evaluator {
      */
     private static NodeFunctionsManager registerMandatoryNodeFunctions(EvaluatorBootstrap bootstrap) {
         NodeFunctionsManager nodeFunctionsManager = bootstrap.getNodeFunctionsManager();
-        nodeFunctionsManager.registerBuiltInFunction(ObjectNode.class, new HasIndex());
-        nodeFunctionsManager.registerBuiltInFunction(ObjectNode.class, new Join());
-        nodeFunctionsManager.registerBuiltInFunction(ObjectNode.class, new Slice());
+        nodeFunctionsManager.registerBuiltInFunction(ObjectHistoneNode.class, new HasIndex(bootstrap.getNodeFactory()));
+        nodeFunctionsManager.registerBuiltInFunction(ObjectHistoneNode.class, new Join(bootstrap.getNodeFactory()));
+        nodeFunctionsManager.registerBuiltInFunction(ObjectHistoneNode.class, new Slice(bootstrap.getNodeFactory()));
 
-        nodeFunctionsManager.registerBuiltInFunction(ObjectNode.class, new HasKey());
-        nodeFunctionsManager.registerBuiltInFunction(ObjectNode.class, new Keys());
-        nodeFunctionsManager.registerBuiltInFunction(ObjectNode.class, new Values());
-        nodeFunctionsManager.registerBuiltInFunction(ObjectNode.class, new Remove());
-        nodeFunctionsManager.registerBuiltInFunction(ObjectNode.class, new ru.histone.evaluator.functions.node.object.Size());
+        nodeFunctionsManager.registerBuiltInFunction(ObjectHistoneNode.class, new HasKey(bootstrap.getNodeFactory()));
+        nodeFunctionsManager.registerBuiltInFunction(ObjectHistoneNode.class, new Keys(bootstrap.getNodeFactory()));
+        nodeFunctionsManager.registerBuiltInFunction(ObjectHistoneNode.class, new Values(bootstrap.getNodeFactory()));
+        nodeFunctionsManager.registerBuiltInFunction(ObjectHistoneNode.class, new Remove(bootstrap.getNodeFactory()));
+        nodeFunctionsManager.registerBuiltInFunction(ObjectHistoneNode.class, new ru.histone.evaluator.functions.node.object.Size(bootstrap.getNodeFactory()));
 
-        nodeFunctionsManager.registerBuiltInFunction(NumberNode.class, new Abs());
-        nodeFunctionsManager.registerBuiltInFunction(NumberNode.class, new Ceil());
-        nodeFunctionsManager.registerBuiltInFunction(NumberNode.class, new Floor());
-        nodeFunctionsManager.registerBuiltInFunction(NumberNode.class, new Round());
-        nodeFunctionsManager.registerBuiltInFunction(NumberNode.class, new ToChar());
+        nodeFunctionsManager.registerBuiltInFunction(NumberHistoneNode.class, new Abs(bootstrap.getNodeFactory()));
+        nodeFunctionsManager.registerBuiltInFunction(NumberHistoneNode.class, new Ceil(bootstrap.getNodeFactory()));
+        nodeFunctionsManager.registerBuiltInFunction(NumberHistoneNode.class, new Floor(bootstrap.getNodeFactory()));
+        nodeFunctionsManager.registerBuiltInFunction(NumberHistoneNode.class, new Round(bootstrap.getNodeFactory()));
+        nodeFunctionsManager.registerBuiltInFunction(NumberHistoneNode.class, new ToChar(bootstrap.getNodeFactory()));
 
-        nodeFunctionsManager.registerBuiltInFunction(StringNode.class, new CharCodeAt());
-        nodeFunctionsManager.registerBuiltInFunction(StringNode.class, new ru.histone.evaluator.functions.node.string.Slice());
-        nodeFunctionsManager.registerBuiltInFunction(StringNode.class, new Split());
-        nodeFunctionsManager.registerBuiltInFunction(StringNode.class, new Strip());
-        nodeFunctionsManager.registerBuiltInFunction(StringNode.class, new ToLowerCase());
-        nodeFunctionsManager.registerBuiltInFunction(StringNode.class, new ToNumber());
-        nodeFunctionsManager.registerBuiltInFunction(StringNode.class, new ToUpperCase());
-        nodeFunctionsManager.registerBuiltInFunction(StringNode.class, new Test());
-        nodeFunctionsManager.registerBuiltInFunction(StringNode.class, new Size());
+        nodeFunctionsManager.registerBuiltInFunction(StringHistoneNode.class, new CharCodeAt(bootstrap.getNodeFactory()));
+        nodeFunctionsManager.registerBuiltInFunction(StringHistoneNode.class, new ru.histone.evaluator.functions.node.string.Slice(bootstrap.getNodeFactory()));
+        nodeFunctionsManager.registerBuiltInFunction(StringHistoneNode.class, new Split(bootstrap.getNodeFactory()));
+        nodeFunctionsManager.registerBuiltInFunction(StringHistoneNode.class, new Strip(bootstrap.getNodeFactory()));
+        nodeFunctionsManager.registerBuiltInFunction(StringHistoneNode.class, new ToLowerCase(bootstrap.getNodeFactory()));
+        nodeFunctionsManager.registerBuiltInFunction(StringHistoneNode.class, new ToNumber(bootstrap.getNodeFactory()));
+        nodeFunctionsManager.registerBuiltInFunction(StringHistoneNode.class, new ToUpperCase(bootstrap.getNodeFactory()));
+        nodeFunctionsManager.registerBuiltInFunction(StringHistoneNode.class, new Test(bootstrap.getNodeFactory()));
+        nodeFunctionsManager.registerBuiltInFunction(StringHistoneNode.class, new Size(bootstrap.getNodeFactory()));
 
-        nodeFunctionsManager.registerBuiltInFunction(Node.class, new IsBoolean());
-        nodeFunctionsManager.registerBuiltInFunction(Node.class, new IsFloat());
-        nodeFunctionsManager.registerBuiltInFunction(Node.class, new IsInteger());
-        nodeFunctionsManager.registerBuiltInFunction(Node.class, new IsNull());
-        nodeFunctionsManager.registerBuiltInFunction(Node.class, new IsNumber());
-        nodeFunctionsManager.registerBuiltInFunction(Node.class, new IsMap());
-        nodeFunctionsManager.registerBuiltInFunction(Node.class, new IsString());
-        nodeFunctionsManager.registerBuiltInFunction(Node.class, new IsUndefined());
-        nodeFunctionsManager.registerBuiltInFunction(Node.class, new ToJson(bootstrap.getGson()));
-        nodeFunctionsManager.registerBuiltInFunction(Node.class, new ToString());
-        nodeFunctionsManager.registerBuiltInFunction(Node.class, new ToMap());
+        nodeFunctionsManager.registerBuiltInFunction(Node.class, new IsBoolean(bootstrap.getNodeFactory()));
+        nodeFunctionsManager.registerBuiltInFunction(Node.class, new IsFloat(bootstrap.getNodeFactory()));
+        nodeFunctionsManager.registerBuiltInFunction(Node.class, new IsInteger(bootstrap.getNodeFactory()));
+        nodeFunctionsManager.registerBuiltInFunction(Node.class, new IsNull(bootstrap.getNodeFactory()));
+        nodeFunctionsManager.registerBuiltInFunction(Node.class, new IsNumber(bootstrap.getNodeFactory()));
+        nodeFunctionsManager.registerBuiltInFunction(Node.class, new IsMap(bootstrap.getNodeFactory()));
+        nodeFunctionsManager.registerBuiltInFunction(Node.class, new IsString(bootstrap.getNodeFactory()));
+        nodeFunctionsManager.registerBuiltInFunction(Node.class, new IsUndefined(bootstrap.getNodeFactory()));
+        nodeFunctionsManager.registerBuiltInFunction(Node.class, new ToJson(bootstrap.getNodeFactory()));
+        nodeFunctionsManager.registerBuiltInFunction(Node.class, new ToString(bootstrap.getNodeFactory()));
+        nodeFunctionsManager.registerBuiltInFunction(Node.class, new ToMap(bootstrap.getNodeFactory()));
 
         return nodeFunctionsManager;
     }
@@ -129,17 +131,17 @@ public class Evaluator {
      */
     private static GlobalFunctionsManager registerMandatoryGlobalFunctions(EvaluatorBootstrap bootstrap) {
         GlobalFunctionsManager globalFunctionsManager = bootstrap.getGlobalFunctionsManager();
-        globalFunctionsManager.registerBuiltInFunction(new Min());
-        globalFunctionsManager.registerBuiltInFunction(new Max());
-        globalFunctionsManager.registerBuiltInFunction(new UniqueId());
-        globalFunctionsManager.registerBuiltInFunction(new Range());
-        globalFunctionsManager.registerBuiltInFunction(new DayOfWeek());
-        globalFunctionsManager.registerBuiltInFunction(new DaysInMonth());
+        globalFunctionsManager.registerBuiltInFunction(new Min(bootstrap.getNodeFactory()));
+        globalFunctionsManager.registerBuiltInFunction(new Max(bootstrap.getNodeFactory()));
+        globalFunctionsManager.registerBuiltInFunction(new UniqueId(bootstrap.getNodeFactory()));
+        globalFunctionsManager.registerBuiltInFunction(new Range(bootstrap.getNodeFactory()));
+        globalFunctionsManager.registerBuiltInFunction(new DayOfWeek(bootstrap.getNodeFactory()));
+        globalFunctionsManager.registerBuiltInFunction(new DaysInMonth(bootstrap.getNodeFactory()));
         return globalFunctionsManager;
     }
 
     public void setGlobalProperty(GlobalProperty property, String value) {
-        global.add(property.getName(), StringNode.create(value));
+        global.add(property.getName(), nodeFactory.string(value));
     }
 
     /**
@@ -150,8 +152,8 @@ public class Evaluator {
      * @return evaluation result
      * @throws ru.histone.HistoneException in case of eny errors
      */
-    public String process(String input, JsonElement jsonCtx) throws HistoneException {
-        JsonArray ast = parser.parse(input);
+    public String process(String input, JsonNode jsonCtx) throws HistoneException {
+        ArrayNode ast = parser.parse(input);
         return process(ast, jsonCtx);
     }
 
@@ -164,7 +166,7 @@ public class Evaluator {
      * @throws ru.histone.HistoneException in case of eny errors
      */
     public String process(String input, EvaluatorContext context) throws HistoneException {
-        JsonArray ast = parser.parse(input);
+        ArrayNode ast = parser.parse(input);
         return process(ast, context);
     }
 
@@ -176,8 +178,8 @@ public class Evaluator {
      * @return evaluation result
      * @throws ru.histone.HistoneException in case of eny errors
      */
-    public String process(JsonArray ast, JsonElement jsonCtx) throws HistoneException {
-        return process(ast, EvaluatorContext.createFromJson(global, jsonCtx));
+    public String process(ArrayNode ast, JsonNode jsonCtx) throws HistoneException {
+        return process(ast, EvaluatorContext.createFromJson(nodeFactory, global, jsonCtx));
     }
 
     /**
@@ -188,19 +190,19 @@ public class Evaluator {
      * @return evaluation result
      * @throws ru.histone.HistoneException in case of eny errors
      */
-    public String process(JsonArray ast, EvaluatorContext context) throws HistoneException {
+    public String process(ArrayNode ast, EvaluatorContext context) throws HistoneException {
         return processInternal(ast, context);
     }
 
-    private String processInternal(JsonElement jsonElement, EvaluatorContext context) throws EvaluatorException {
-        return processInternal(jsonElement.getAsJsonArray(), context);
+    private String processInternal(JsonNode jsonElement, EvaluatorContext context) throws EvaluatorException {
+        return processInternal((ArrayNode) jsonElement, context);
     }
 
-    private String processInternal(JsonArray ast, EvaluatorContext context) throws EvaluatorException {
+    private String processInternal(ArrayNode ast, EvaluatorContext context) throws EvaluatorException {
         log.debug("processInternal(): template={}, context={}", ast, context);
 
         StringBuilder out = new StringBuilder();
-        for (JsonElement element : ast) {
+        for (JsonNode element : ast) {
             log.debug("process(): fragment={}", element);
             Node node = processNode(element, context);
             log.debug("process(): node={}", node);
@@ -209,102 +211,99 @@ public class Evaluator {
         return out.toString();
     }
 
-    private boolean isString(JsonElement element) {
-        return element.isJsonPrimitive() && element.getAsJsonPrimitive().isString();
-    }
-
-    private Node processNode(JsonElement jsonElement, EvaluatorContext context) throws EvaluatorException {
+    private Node processNode(JsonNode jsonElement, EvaluatorContext context) throws EvaluatorException {
         log.debug("processNode(): element={}, context={}", new Object[]{jsonElement, context});
 
-        if (isString(jsonElement)) {
-            return StringNode.create(jsonElement.getAsJsonPrimitive().getAsString());
+        if (jsonElement.isTextual()) {
+            return nodeFactory.string(jsonElement);
+//            return nodeFactory.string(jsonElement.getAsJsonPrimitive().getAsString());
         }
 
-        if (!jsonElement.isJsonArray()) {
+        if (!jsonElement.isArray()) {
             Histone.runtime_log_warn("Invalid JSON element! Neither 'string', nor 'array'. Element: '{}'", jsonElement.toString());
-            return Node.UNDEFINED;
+            return nodeFactory.UNDEFINED;
         }
 
-        JsonArray astArray = jsonElement.getAsJsonArray();
+        ArrayNode astArray = (ArrayNode) jsonElement;
 
-        int nodeType = astArray.getAsJsonArray().get(0).getAsJsonPrimitive().getAsInt();
+        int nodeType = astArray.get(0).intValue();
         switch (nodeType) {
             case AstNodeType.TRUE:
-                return Node.TRUE;
+                return nodeFactory.TRUE;
 
             case AstNodeType.FALSE:
-                return Node.FALSE;
+                return nodeFactory.FALSE;
 
             case AstNodeType.NULL:
-                return Node.NULL;
+                return nodeFactory.NULL;
 
             case AstNodeType.INT:
-                return NumberNode.create(astArray.get(1).getAsBigDecimal());
+                return nodeFactory.number(astArray.get(1).decimalValue());
 
             case AstNodeType.DOUBLE:
-                return NumberNode.create(astArray.get(1).getAsBigDecimal());
+                return nodeFactory.number(astArray.get(1).decimalValue());
 
             case AstNodeType.STRING:
-                return StringNode.create(astArray.get(1).getAsString());
+                return nodeFactory.string(astArray.get(1).asText());
 
             case AstNodeType.MAP:
-                return processMap(astArray.get(1).getAsJsonArray(), context);
+                return processMap((ArrayNode) astArray.get(1), context);
 //
 //            case AstNodeType.ARRAY:
-//                return processArray(astArray.get(1).getAsJsonArray(), context);
+//                return processArray(astArray.get(1).getAsArrayNode(), context);
 //
 //            case AstNodeType.OBJECT:
-//                return processObject(astArray.get(1).getAsJsonArray(), context);
+//                return processObject(astArray.get(1).getAsArrayNode(), context);
 
             case AstNodeType.ADD:
-                return processAdd(astArray.get(1).getAsJsonArray(), astArray.get(2).getAsJsonArray(), context);
+                return processAdd((ArrayNode) astArray.get(1), (ArrayNode) astArray.get(2), context);
             case AstNodeType.SUB:
-                return processSub(astArray.get(1).getAsJsonArray(), astArray.get(2).getAsJsonArray(), context);
+                return processSub((ArrayNode) astArray.get(1), (ArrayNode) astArray.get(2), context);
             case AstNodeType.MUL:
-                return processMul(astArray.get(1).getAsJsonArray(), astArray.get(2).getAsJsonArray(), context);
+                return processMul((ArrayNode) astArray.get(1), (ArrayNode) astArray.get(2), context);
             case AstNodeType.DIV:
-                return processDiv(astArray.get(1).getAsJsonArray(), astArray.get(2).getAsJsonArray(), context);
+                return processDiv((ArrayNode) astArray.get(1), (ArrayNode) astArray.get(2), context);
             case AstNodeType.MOD:
-                return processMod(astArray.get(1).getAsJsonArray(), astArray.get(2).getAsJsonArray(), context);
+                return processMod((ArrayNode) astArray.get(1), (ArrayNode) astArray.get(2), context);
 
             case AstNodeType.NEGATE:
-                return processNegate(astArray.get(1).getAsJsonArray(), context);
+                return processNegate((ArrayNode) astArray.get(1), context);
 
             case AstNodeType.OR:
-                return processOr(astArray.get(1).getAsJsonArray(), astArray.get(2).getAsJsonArray(), context);
+                return processOr((ArrayNode) astArray.get(1), (ArrayNode) astArray.get(2), context);
             case AstNodeType.AND:
-                return processAnd(astArray.get(1).getAsJsonArray(), astArray.get(2).getAsJsonArray(), context);
+                return processAnd((ArrayNode) astArray.get(1), (ArrayNode) astArray.get(2), context);
             case AstNodeType.NOT:
-                return processNot(astArray.get(1).getAsJsonArray(), context);
+                return processNot((ArrayNode) astArray.get(1), context);
 
             case AstNodeType.EQUAL:
-                return processEqual(astArray.get(1).getAsJsonArray(), astArray.get(2).getAsJsonArray(), context);
+                return processEqual((ArrayNode) astArray.get(1), (ArrayNode) astArray.get(2), context);
             case AstNodeType.NOT_EQUAL:
-                return processNotEqual(astArray.get(1).getAsJsonArray(), astArray.get(2).getAsJsonArray(), context);
+                return processNotEqual((ArrayNode) astArray.get(1), (ArrayNode) astArray.get(2), context);
 
             case AstNodeType.LESS_OR_EQUAL:
-                return processLessOrEqual(astArray.get(1).getAsJsonArray(), astArray.get(2).getAsJsonArray(), context);
+                return processLessOrEqual((ArrayNode) astArray.get(1), (ArrayNode) astArray.get(2), context);
             case AstNodeType.LESS_THAN:
-                return processLessThan(astArray.get(1).getAsJsonArray(), astArray.get(2).getAsJsonArray(), context);
+                return processLessThan((ArrayNode) astArray.get(1), (ArrayNode) astArray.get(2), context);
             case AstNodeType.GREATER_OR_EQUAL:
-                return processGreaterOrEqual(astArray.get(1).getAsJsonArray(), astArray.get(2).getAsJsonArray(), context);
+                return processGreaterOrEqual((ArrayNode) astArray.get(1), (ArrayNode) astArray.get(2), context);
             case AstNodeType.GREATER_THAN:
-                return processGreaterThan(astArray.get(1).getAsJsonArray(), astArray.get(2).getAsJsonArray(), context);
+                return processGreaterThan((ArrayNode) astArray.get(1), (ArrayNode) astArray.get(2), context);
             case AstNodeType.TERNARY:
-                return processTernary(astArray.get(1).getAsJsonArray(), astArray.get(2).getAsJsonArray(), (astArray.size() > 3) ? astArray.get(3).getAsJsonArray() : null, context);
+                return processTernary((ArrayNode) astArray.get(1), (ArrayNode) astArray.get(2), (astArray.size() > 3) ? (ArrayNode) astArray.get(3) : null, context);
             case AstNodeType.IF:
-                return processIf(astArray.get(1).getAsJsonArray(), context);
+                return processIf((ArrayNode) astArray.get(1), context);
             case AstNodeType.FOR:
-                return processFor(astArray.get(1).getAsJsonArray(), astArray.get(2).getAsJsonArray(), astArray.get(3).getAsJsonArray(), context);
+                return processFor((ArrayNode) astArray.get(1), (ArrayNode) astArray.get(2), (ArrayNode) astArray.get(3), context);
 
             case AstNodeType.STATEMENTS:
                 return processStatements(astArray.get(1), context);
 
             case AstNodeType.VAR:
-                return processVar(astArray.get(1).getAsJsonPrimitive(), astArray.get(2).getAsJsonArray(), context);
+                return processVar(astArray.get(1), (ArrayNode)astArray.get(2), context);
 
             case AstNodeType.SELECTOR:
-                return processSelector(astArray.get(1).getAsJsonArray(), context);
+                return processSelector((ArrayNode)astArray.get(1), context);
 
             case AstNodeType.CALL:
                 return processCall(astArray.get(1), astArray.get(2), astArray.get(3), context);
@@ -313,16 +312,16 @@ public class Evaluator {
                 return processImport(astArray.get(1), context);
 
             case AstNodeType.MACRO:
-                return processMacro(astArray.get(1).getAsJsonPrimitive(), astArray.get(2).getAsJsonArray(), astArray.get(3).getAsJsonArray(), context);
+                return processMacro(astArray.get(1), (ArrayNode)astArray.get(2), (ArrayNode)astArray.get(3), context);
 
             default:
                 Histone.runtime_log_error("Unknown nodeType", null, nodeType);
-                return Node.UNDEFINED;
+                return nodeFactory.UNDEFINED;
         }
     }
 
-    private JsonArray slice(JsonArray astArray, int fromIndex) {
-        JsonArray result = new JsonArray();
+    private ArrayNode slice(ArrayNode astArray, int fromIndex) {
+        ArrayNode result = nodeFactory.jsonArray();
 
         for (int i = fromIndex; i < astArray.size(); i++) {
             result.add(astArray.get(i));
@@ -331,8 +330,8 @@ public class Evaluator {
         return result;
     }
 
-    private Node processMacro(JsonPrimitive ident, JsonArray args, JsonArray statements, EvaluatorContext context) throws EvaluatorException {
-        String name = ident.getAsString();
+    private Node processMacro(JsonNode ident, ArrayNode args, ArrayNode statements, EvaluatorContext context) throws EvaluatorException {
+        String name = ident.asText();
 
         MacroFunc func = new MacroFunc();
         func.setArgs(args);
@@ -340,40 +339,40 @@ public class Evaluator {
         func.setBaseURI(getContextBaseURI(context));
         context.putMacro(name, func);
 
-        return Node.UNDEFINED;
+        return nodeFactory.UNDEFINED;
     }
 
     private Node runMacro(String name, List<Node> args, EvaluatorContext context) throws EvaluatorException {
         MacroFunc macro = context.getMacro(name);
         if (macro == null) {
             Histone.runtime_log_warn("No macro found by name = '{}'", name);
-            return Node.UNDEFINED;
+            return nodeFactory.UNDEFINED;
         }
-        ObjectNode self = ObjectNode.create();
-        ObjectNode argsNode = ObjectNode.create(args);
+        ObjectHistoneNode self = nodeFactory.object();
+        ObjectHistoneNode argsNode = nodeFactory.object(args);
         self.add("arguments", argsNode);
         context.putProp("self", self);
 
         Iterator<Node> argsItr = args.iterator();
-        for (JsonElement macroArg : macro.getArgs()) {
-            context.putProp(macroArg.getAsString(), (argsItr.hasNext() ? argsItr.next() : Node.UNDEFINED));
+        for (JsonNode macroArg : macro.getArgs()) {
+            context.putProp(macroArg.asText(), (argsItr.hasNext() ? argsItr.next() : nodeFactory.UNDEFINED));
         }
         String currentBaseURI = getContextBaseURI(context);
         String macroBaseURI = macro.getBaseURI();
         if (macroBaseURI != null/* && macroBaseURI.isAbsolute() && !macroBaseURI.isOpaque()*/) {
-            context.setGlobalValue(GlobalProperty.BASE_URI, StringNode.create(macroBaseURI));
+            context.setGlobalValue(GlobalProperty.BASE_URI, nodeFactory.string(macroBaseURI));
         }
-        StringNode result = StringNode.create(processInternal(macro.getStatements(), context));
-        context.setGlobalValue(GlobalProperty.BASE_URI, currentBaseURI == null ? Node.NULL : StringNode.create(currentBaseURI));
+        StringHistoneNode result = nodeFactory.string(processInternal(macro.getStatements(), context));
+        context.setGlobalValue(GlobalProperty.BASE_URI, currentBaseURI == null ? nodeFactory.NULL : nodeFactory.string(currentBaseURI));
         return result;
     }
 
-    private Node processImport(JsonElement pathElement, EvaluatorContext context) throws EvaluatorException {
-        if (!isString(pathElement)) {
+    private Node processImport(JsonNode pathElement, EvaluatorContext context) throws EvaluatorException {
+        if (!pathElement.isTextual()) {
             Histone.runtime_log_warn("Invalid path to imported template: '{}'", pathElement.toString());
-            return Node.UNDEFINED;
+            return nodeFactory.UNDEFINED;
         }
-        String path = pathElement.getAsJsonPrimitive().getAsString();
+        String path = pathElement.asText();
         Resource resource = null;
         InputStream resourceStream = null;
         try {
@@ -382,42 +381,43 @@ public class Evaluator {
 
             if (context.hasImportedResource(resourceFullPath)) {
                 Histone.runtime_log_info("Resource already imported.");
-                return Node.UNDEFINED;
+                return nodeFactory.UNDEFINED;
             } else {
                 resource = resourceLoader.load(path, currentBaseURI);
                 if (resource == null) {
                     Histone.runtime_log_warn("Can't import resource by path = '{}'. Resource was not found.", path);
-                    return Node.UNDEFINED;
+                    return nodeFactory.UNDEFINED;
                 }
                 resourceStream = resource.getInputStream();
                 if (resourceStream == null) {
                     Histone.runtime_log_warn("Can't import resource by path = '{}'. Resource is unreadable", path);
-                    return Node.UNDEFINED;
+                    return nodeFactory.UNDEFINED;
                 }
                 String templateContent = IOUtils.toString(resourceStream); //yeah... full file reading, because of our tokenizer is regexp-based :(
 
                 // Add this resource full path to context
                 context.addImportedResource(resourceFullPath.toString());
 
-                JsonElement parseResult = parser.parse(templateContent);
+                JsonNode parseResult = parser.parse(templateContent);
                 URI resourceURI = (resource.getBaseHref() != null) ? URI.create(resource.getBaseHref()) : null;
                 if (resourceURI != null && resourceURI.isAbsolute() && !resourceURI.isOpaque()) {
-                    context.setGlobalValue(GlobalProperty.BASE_URI, StringNode.create(resourceURI.toString()));
+                    context.setGlobalValue(GlobalProperty.BASE_URI, nodeFactory.string(resourceURI.toString()));
                 }
-                StringNode.create(processInternal(parseResult, context));
-                context.setGlobalValue(GlobalProperty.BASE_URI, currentBaseURI == null ? Node.NULL : StringNode.create(currentBaseURI.toString()));
+//                nodeFactory.string(processInternal(parseResult, context));  -  WTF??
+                processInternal(parseResult, context);
+                context.setGlobalValue(GlobalProperty.BASE_URI, currentBaseURI == null ? nodeFactory.NULL : nodeFactory.string(currentBaseURI.toString()));
 
-                return Node.UNDEFINED;
+                return nodeFactory.UNDEFINED;
             }
         } catch (ResourceLoadException e) {
             Histone.runtime_log_warn_e("Resource import failed! Unresolvable resource.", e);
-            return Node.UNDEFINED;
+            return nodeFactory.UNDEFINED;
         } catch (IOException e) {
             Histone.runtime_log_warn_e("Resource import failed! Resource reading error.", e);
-            return Node.UNDEFINED;
+            return nodeFactory.UNDEFINED;
         } catch (ParserException e) {
             Histone.runtime_log_warn_e("Resource import failed! Resource parsing error.", e);
-            return Node.UNDEFINED;
+            return nodeFactory.UNDEFINED;
         } finally {
             IOUtils.closeQuietly(resourceStream, log);
             IOUtils.closeQuietly(resource, log);
@@ -432,24 +432,26 @@ public class Evaluator {
         return value.getAsString().getValue();
     }
 
-    private Node processCall(JsonElement target, JsonElement nameElement, JsonElement args, EvaluatorContext context) throws EvaluatorException {
-        if (nameElement.isJsonArray()) {
-            Node functionNameNode = processNode(nameElement.getAsJsonArray(), context);
-            nameElement = functionNameNode.getAsJsonElement();
+    private Node processCall(JsonNode target, JsonNode nameElement, JsonNode args, EvaluatorContext context) throws EvaluatorException {
+        if (nameElement.isArray()) {
+            Node functionNameNode = processNode(nameElement, context);
+            nameElement = functionNameNode.getAsJsonNode();
         }
-        if (!isString(nameElement)) {
+        if (!nameElement.isTextual()) {
             Histone.runtime_log_warn("call to undefined function '{}'", nameElement.toString());
-            return Node.UNDEFINED;
+            return nodeFactory.UNDEFINED;
         }
-        String name = nameElement.getAsJsonPrimitive().getAsString();
+        String name = nameElement.asText();
         if (name == null || name.length() == 0) {
             Histone.runtime_log_warn("call to undefined anonymous function");
-            return Node.UNDEFINED;
+            return nodeFactory.UNDEFINED;
         }
 
         List<Node> argsList = new ArrayList<Node>();
-        if (!args.isJsonNull()) {
-            for (JsonElement arg : args.getAsJsonArray()) {
+        if (!args.isNull()) {
+            Iterator<JsonNode> iter = args.iterator();
+            while (iter.hasNext()){
+                JsonNode arg = iter.next();
                 Node argNode = processNode(arg, context);
                 argsList.add(argNode);
             }
@@ -459,30 +461,30 @@ public class Evaluator {
             context.saveState();
 
 
-            if (!target.isJsonNull()) {
+            if (!target.isNull()) {
                 // if target is not null, then it means we want to run Node fucntion or global.functionName()
 
-                Node targetNode = processNode(target.getAsJsonArray(), context);
-                // if target is reserved word 'global' then we will run ObjectNode.function() or global function
+                Node targetNode = processNode(target, context);
+                // if target is reserved word 'global' then we will run ObjectHistoneNode.function() or global function
                 if (targetNode.isObject() && targetNode.getAsObject().isGlobalObject()) {
 
 
                     if (nodeFunctionsManager.hasFunction(targetNode, name)) {
-                        // if we have such function for ObjectNode type (e.g. global.isObject())
+                        // if we have such function for ObjectHistoneNode type (e.g. global.isObject())
                         return runNodeFunc(targetNode, name, argsList);
                     } else {
                         // next we need to check if we have such global function
                         if (globalFunctionsManager.hasFunction(name)) {
                             return runGlobalFunc(name, argsList);
                         } else {
-                            return Node.UNDEFINED;
+                            return nodeFactory.UNDEFINED;
                         }
                     }
                 } else {
                     // if target wasn't global object, then we need to check if we have Node function
                     if (!nodeFunctionsManager.hasFunction(targetNode, name)) {
                         Histone.runtime_log_warn("'{}' is undefined function for type '{}'", name, targetNode.toString());
-                        return Node.UNDEFINED;
+                        return nodeFactory.UNDEFINED;
                     }
                     return runNodeFunc(targetNode, name, argsList);
                 }
@@ -513,7 +515,7 @@ public class Evaluator {
                 return processLoadText(argsList, context);
             }
 
-            return Node.UNDEFINED;
+            return nodeFactory.UNDEFINED;
         } finally {
             context.restoreState();
         }
@@ -522,7 +524,7 @@ public class Evaluator {
     private Node processLoadJSON(List<Node> argsList, EvaluatorContext context) {
         Node[] args = argsList.toArray((Node[]) Array.newInstance(Node.class, argsList.size()));
         if (ArrayUtils.isEmpty(args)) {
-            return Node.UNDEFINED;
+            return nodeFactory.UNDEFINED;
         }
         Node arg = args[0];
         if (!arg.isString()) {
@@ -538,33 +540,36 @@ public class Evaluator {
             resource = resourceLoader.load(path, currentBaseURI, args);
             if (resource == null) {
                 Histone.runtime_log_warn(String.format("Can't load resource by path = '%s'. Resource was not found.", path));
-                return Node.UNDEFINED;
+                return nodeFactory.UNDEFINED;
 
             }
             resourceStream = resource.getInputStream();
             if (resourceStream == null) {
                 Histone.runtime_log_warn(String.format("Can't load resource by path = '%s'. Resource is unreadable.", path));
-                return Node.UNDEFINED;
+                return nodeFactory.UNDEFINED;
             }
             reader = new InputStreamReader(resourceStream);
-            JsonElement json = gson.fromJson(reader, JsonElement.class);
+            JsonNode json = nodeFactory.jsonNode(reader);
             if (json == null) {
                 Histone.runtime_log_warn("Invalid JSON data found by path: " + path);
-                return Node.UNDEFINED;
+                return nodeFactory.UNDEFINED;
             }
-            return Node.jsonToNode(json);
+            return nodeFactory.jsonToNode(json);
         } catch (ResourceLoadException e) {
             Histone.runtime_log_warn_e("Resource loadJSON failed! Unresolvable resource.", e);
-            return Node.UNDEFINED;
-        } catch (JsonSyntaxException e) {
+            return nodeFactory.UNDEFINED;
+        } catch (JsonProcessingException e) {
             Histone.runtime_log_warn_e("Resource loadJSON failed! Unresolvable resource.", e);
-            return Node.UNDEFINED;
-        } catch (JsonIOException e) {
-            Histone.runtime_log_warn_e("Resource loadJSON failed! Unresolvable resource.", e);
-            return Node.UNDEFINED;
+            return nodeFactory.UNDEFINED;
+//        } catch (JsonSyntaxException e) {
+//            Histone.runtime_log_warn_e("Resource loadJSON failed! Unresolvable resource.", e);
+//            return nodeFactory.UNDEFINED;
+//        } catch (JsonIOException e) {
+//            Histone.runtime_log_warn_e("Resource loadJSON failed! Unresolvable resource.", e);
+//            return nodeFactory.UNDEFINED;
         } catch (IOException e) {
             Histone.runtime_log_warn_e("Resource loadJSON failed! Unresolvable resource.", e);
-            return Node.UNDEFINED;
+            return nodeFactory.UNDEFINED;
         } finally {
             IOUtils.closeQuietly(reader, log);
             IOUtils.closeQuietly(resourceStream, log);
@@ -575,12 +580,12 @@ public class Evaluator {
     private Node processLoadText(List<Node> argsList, EvaluatorContext context) {
         Node[] args = argsList.toArray((Node[]) Array.newInstance(Node.class, argsList.size()));
         if (ArrayUtils.isEmpty(args)) {
-            return Node.UNDEFINED;
+            return nodeFactory.UNDEFINED;
         }
         Node arg = args[0];
         if (!arg.isString()) {
             Histone.runtime_log_warn("Non-string path for text resource location: " + arg.getAsString().getValue());
-            return Node.UNDEFINED;
+            return nodeFactory.UNDEFINED;
         }
         String path = arg.getAsString().getValue();
         String currentBaseURI = getContextBaseURI(context);
@@ -591,20 +596,20 @@ public class Evaluator {
             resource = resourceLoader.load(path, currentBaseURI, args);
             if (resource == null) {
                 Histone.runtime_log_warn(String.format("Can't load resource by path = '%s'. Resource was not found.", path));
-                return Node.UNDEFINED;
+                return nodeFactory.UNDEFINED;
             }
             resourceStream = resource.getInputStream();
             if (resourceStream == null) {
                 Histone.runtime_log_warn(String.format("Can't load resource by path = '%s'. Resource is unreadable.", path));
-                return Node.UNDEFINED;
+                return nodeFactory.UNDEFINED;
             }
-            return StringNode.create(resourceStream);
+            return nodeFactory.string(resourceStream);
         } catch (ResourceLoadException e) {
             Histone.runtime_log_warn_e("Resource loadText failed! Unresolvable resource.", e);
-            return Node.UNDEFINED;
+            return nodeFactory.UNDEFINED;
         } catch (IOException e) {
             Histone.runtime_log_warn_e("Resource loadText failed! Unresolvable resource.", e);
-            return Node.UNDEFINED;
+            return nodeFactory.UNDEFINED;
         } finally {
             IOUtils.closeQuietly(resourceStream, log);
             IOUtils.closeQuietly(resource, log);
@@ -614,7 +619,7 @@ public class Evaluator {
 
     private Node processInclude(List<Node> args, EvaluatorContext context) {
         if (args.size() == 0) {
-            return Node.UNDEFINED;
+            return nodeFactory.UNDEFINED;
         }
         Node uriNode = args.get(0);
         if (!uriNode.isString()) {
@@ -629,37 +634,37 @@ public class Evaluator {
             resource = resourceLoader.load(path, currentBaseURI);
             if (resource == null) {
                 Histone.runtime_log_warn("Can't include resource by path = '{}'. Resource was not found.", path);
-                return Node.UNDEFINED;
+                return nodeFactory.UNDEFINED;
             }
             resourceStream = resource.getInputStream();
             if (resourceStream == null) {
                 Histone.runtime_log_warn("Can't include resource by path = '{}'. Resource is unreadable", path);
-                return Node.UNDEFINED;
+                return nodeFactory.UNDEFINED;
             }
             String templateContent = IOUtils.toString(resourceStream); //yeah... full file reading, because of our tokenizer is regexp-based :(
-            JsonArray parseResult = parser.parse(templateContent);
-            GlobalObjectNode globalCopy = new GlobalObjectNode(global);
+            ArrayNode parseResult = parser.parse(templateContent);
+            GlobalObjectNode globalCopy = new GlobalObjectNode(nodeFactory, global);
             URI resourceUri = (resource.getBaseHref() != null) ? URI.create(resource.getBaseHref()) : null;
             if (resourceUri != null && resourceUri.isAbsolute() && !resourceUri.isOpaque()) {
-                globalCopy.add(GlobalProperty.BASE_URI.getName(), StringNode.create(resourceUri.toString()));
+                globalCopy.add(GlobalProperty.BASE_URI.getName(), nodeFactory.string(resourceUri.toString()));
             }
             if (args.size() <= 1) {
-                String includeOutput = processInternal(parseResult, EvaluatorContext.createEmpty(globalCopy));
-                return StringNode.create(includeOutput);
+                String includeOutput = processInternal(parseResult, EvaluatorContext.createEmpty(nodeFactory, globalCopy));
+                return nodeFactory.string(includeOutput);
             }
-            return StringNode.create(processInternal(parseResult, EvaluatorContext.createFromJson(globalCopy, args.get(1).getAsJsonElement())));
+            return nodeFactory.string(processInternal(parseResult, EvaluatorContext.createFromJson(nodeFactory, globalCopy, args.get(1).getAsJsonNode())));
         } catch (ResourceLoadException e) {
             Histone.runtime_log_warn_e("Resource include failed! Unresolvable resource.", e);
-            return Node.UNDEFINED;
+            return nodeFactory.UNDEFINED;
         } catch (IOException e) {
             Histone.runtime_log_warn_e("Resource include failed! Resource reading error.", e);
-            return Node.UNDEFINED;
+            return nodeFactory.UNDEFINED;
         } catch (ParserException e) {
             Histone.runtime_log_warn_e("Resource include failed! Resource parsing error.", e);
-            return Node.UNDEFINED;
+            return nodeFactory.UNDEFINED;
         } catch (EvaluatorException e) {
             Histone.runtime_log_warn_e("Resource include failed! Resource evaluation error.", e);
-            return Node.UNDEFINED;
+            return nodeFactory.UNDEFINED;
         } finally {
             IOUtils.closeQuietly(resourceStream, log);
             IOUtils.closeQuietly(resource, log);
@@ -671,7 +676,7 @@ public class Evaluator {
             return nodeFunctionsManager.execute(targetNode, name, args.toArray((Node[]) Array.newInstance(Node.class, args.size())));
         } catch (NodeFunctionExecutionException e) {
             Histone.runtime_log_warn_e("Node function '{}' execution on node '{}' failed!", e, name, targetNode.getAsString());
-            return Node.UNDEFINED;
+            return nodeFactory.UNDEFINED;
         }
     }
 
@@ -680,36 +685,36 @@ public class Evaluator {
             return globalFunctionsManager.execute(name, args.toArray((Node[]) Array.newInstance(Node.class, args.size())));
         } catch (GlobalFunctionExecutionException e) {
             Histone.runtime_log_warn("Global function '%s' execution failed!", e, name);
-            return Node.UNDEFINED;
+            return nodeFactory.UNDEFINED;
         }
     }
 
-    private Node processVar(JsonPrimitive ident, JsonArray expression, EvaluatorContext context) throws EvaluatorException {
+    private Node processVar(JsonNode ident, ArrayNode expression, EvaluatorContext context) throws EvaluatorException {
         log.debug("processVar(): ident={}, expression={}, context={}", new Object[]{ident, expression, context});
 
         Node exprNode = processNode(expression, context);
-        context.putProp(ident.getAsString(), exprNode);
-        return Node.UNDEFINED;
+        context.putProp(ident.asText(), exprNode);
+        return nodeFactory.UNDEFINED;
     }
 
-    private Node processStatements(JsonElement jsonElement, EvaluatorContext context) throws EvaluatorException {
-        log.debug("processStatements(): jsonElement={}, context={}", new Object[]{jsonElement, context});
+    private Node processStatements(JsonNode jsonElement, EvaluatorContext context) throws EvaluatorException {
+        log.debug("processStatements(): JsonNode={}, context={}", new Object[]{jsonElement, context});
 
-        return StringNode.create(processInternal(jsonElement, context));
+        return nodeFactory.string(processInternal(jsonElement, context));
     }
 
-    private Node processFor(JsonArray iterator, JsonArray collection, JsonArray statements, EvaluatorContext context) throws EvaluatorException {
+    private Node processFor(ArrayNode iterator, ArrayNode collection, ArrayNode statements, EvaluatorContext context) throws EvaluatorException {
         log.debug("processFor(): iterator={}, collection={}, statements={}, context={}", new Object[]{iterator, collection, statements, context});
 
         StringBuilder sb = new StringBuilder();
 
-        String iterVal = iterator.get(0).getAsString();
-        String iterKey = (iterator.size() > 1) ? iterator.get(1).getAsString() : null;
+        String iterVal = iterator.get(0).asText();
+        String iterKey = (iterator.size() > 1) ? iterator.get(1).asText() : null;
 
 
-        Node collectionNode = processNode(collection.getAsJsonArray(), context);
+        Node collectionNode = processNode(collection, context);
 
-        ObjectNode self = ObjectNode.create();
+        ObjectHistoneNode self = nodeFactory.object();
         context.putProp("self", self);
 
         // Save context state
@@ -717,14 +722,14 @@ public class Evaluator {
 
         if (collectionNode.isObject()) {
             int idx = 0;
-            self.add("last", NumberNode.create(collectionNode.getAsObject().size() - 1));
+            self.add("last", nodeFactory.number(collectionNode.getAsObject().size() - 1));
             Map<Object, Node> elements = collectionNode.getAsObject().getElements();
             for (Object key : elements.keySet()) {
-                self.add("index", NumberNode.create(idx));
+                self.add("index", nodeFactory.number(idx));
 
                 context.putProp(iterVal, elements.get(key));
                 if (iterKey != null) {
-                    context.putProp(iterKey, StringNode.create(key.toString()));
+                    context.putProp(iterKey, nodeFactory.string(key.toString()));
                 }
 
                 sb.append(processInternal(statements.get(0), context));
@@ -738,21 +743,21 @@ public class Evaluator {
 
         context.restoreState();
 
-        return StringNode.create(sb.toString());
+        return nodeFactory.string(sb.toString());
     }
 
-    private Node processIf(JsonArray conditions, EvaluatorContext context) throws EvaluatorException {
+    private Node processIf(ArrayNode conditions, EvaluatorContext context) throws EvaluatorException {
         log.debug("processIf(): conditions={} context={}", new Object[]{conditions, context});
 
-        StringNode result = StringNode.create();
+        StringHistoneNode result = nodeFactory.string();
 
         context.saveState();
 
-        for (JsonElement condition : conditions) {
-            Node conditionResult = processNode(condition.getAsJsonArray().get(0).getAsJsonArray(), context);
+        for (JsonNode condition : conditions) {
+            Node conditionResult = processNode(condition.get(0), context);
 
             if (conditionResult.getAsBoolean().getValue()) {
-                result = StringNode.create(processInternal(condition.getAsJsonArray().get(1), context));
+                result = nodeFactory.string(processInternal(condition.get(1), context));
                 break;
             }
         }
@@ -762,7 +767,7 @@ public class Evaluator {
         return result;
     }
 
-    private Node processTernary(JsonArray condition, JsonArray trueNode, JsonArray falseNode, EvaluatorContext context) throws EvaluatorException {
+    private Node processTernary(ArrayNode condition, ArrayNode trueNode, ArrayNode falseNode, EvaluatorContext context) throws EvaluatorException {
         log.debug("processTernary(): conditions={}, trueNode={}, falseNode={}, context={}", new Object[]{condition, trueNode, falseNode, context});
 
         Node conditionResult = processNode(condition, context);
@@ -773,13 +778,13 @@ public class Evaluator {
         } else if (falseNode != null) {
             result = processNode(falseNode, context);
         } else {
-            result = Node.UNDEFINED;
+            result = nodeFactory.UNDEFINED;
         }
 
         return result;
     }
 
-    private Node processGreaterThan(JsonArray nodeLeft, JsonArray nodeRight, EvaluatorContext context) throws EvaluatorException {
+    private Node processGreaterThan(ArrayNode nodeLeft, ArrayNode nodeRight, EvaluatorContext context) throws EvaluatorException {
         log.debug("processGreaterThan(): left={}, right={}, context={}", new Object[]{nodeLeft, nodeRight, context});
 
         Node left = processNode(nodeLeft, context);
@@ -789,7 +794,7 @@ public class Evaluator {
         return left.oper_greaterThan(right);
     }
 
-    private Node processGreaterOrEqual(JsonArray nodeLeft, JsonArray nodeRight, EvaluatorContext context) throws EvaluatorException {
+    private Node processGreaterOrEqual(ArrayNode nodeLeft, ArrayNode nodeRight, EvaluatorContext context) throws EvaluatorException {
         log.debug("processGreaterOrEqual(): left={}, right={}, context={}", new Object[]{nodeLeft, nodeRight, context});
 
         Node left = processNode(nodeLeft, context);
@@ -799,7 +804,7 @@ public class Evaluator {
         return left.oper_greaterOrEqual(right);
     }
 
-    private Node processLessThan(JsonArray nodeLeft, JsonArray nodeRight, EvaluatorContext context) throws EvaluatorException {
+    private Node processLessThan(ArrayNode nodeLeft, ArrayNode nodeRight, EvaluatorContext context) throws EvaluatorException {
         log.debug("processLessThan(): left={}, right={}, context={}", new Object[]{nodeLeft, nodeRight, context});
 
         Node left = processNode(nodeLeft, context);
@@ -809,7 +814,7 @@ public class Evaluator {
         return left.oper_lessThan(right);
     }
 
-    private Node processLessOrEqual(JsonArray nodeLeft, JsonArray nodeRight, EvaluatorContext context) throws EvaluatorException {
+    private Node processLessOrEqual(ArrayNode nodeLeft, ArrayNode nodeRight, EvaluatorContext context) throws EvaluatorException {
         log.debug("processLessOrEqual(): nodeLeft={}, nodeRight={}, context={}", new Object[]{nodeLeft, nodeRight, context});
 
         Node left = processNode(nodeLeft, context);
@@ -819,7 +824,7 @@ public class Evaluator {
         return left.oper_lessOrEqual(right);
     }
 
-    private Node processNotEqual(JsonArray nodeLeft, JsonArray nodeRight, EvaluatorContext context) throws EvaluatorException {
+    private Node processNotEqual(ArrayNode nodeLeft, ArrayNode nodeRight, EvaluatorContext context) throws EvaluatorException {
         log.debug("processNotEqual(): nodeLeft={}, nodeRight={}, context={}", new Object[]{nodeLeft, nodeRight, context});
 
         Node left = processNode(nodeLeft, context);
@@ -829,7 +834,7 @@ public class Evaluator {
         return left.oper_notEqual(right);
     }
 
-    private Node processEqual(JsonArray nodeLeft, JsonArray nodeRight, EvaluatorContext context) throws EvaluatorException {
+    private Node processEqual(ArrayNode nodeLeft, ArrayNode nodeRight, EvaluatorContext context) throws EvaluatorException {
         log.debug("processEqual(): nodeLeft={}, nodeRight={}, context={}", new Object[]{nodeLeft, nodeRight, context});
 
         log.trace("processEqual(): nodeLeft={}, nodeRight={}, context={}", new Object[]{nodeLeft.getClass(), nodeRight.getClass(), context});
@@ -840,7 +845,7 @@ public class Evaluator {
         return left.oper_equal(right);
     }
 
-    private Node processNot(JsonArray node, EvaluatorContext context) throws EvaluatorException {
+    private Node processNot(ArrayNode node, EvaluatorContext context) throws EvaluatorException {
         log.debug("processNot(): node={}, context={}", new Object[]{node, context});
         Node left = processNode(node, context);
         log.trace("processNot(): node={}, context={}", new Object[]{node.getClass(), context});
@@ -848,7 +853,7 @@ public class Evaluator {
         return left.oper_not();
     }
 
-    private Node processAnd(JsonArray nodeLeft, JsonArray nodeRight, EvaluatorContext context) throws EvaluatorException {
+    private Node processAnd(ArrayNode nodeLeft, ArrayNode nodeRight, EvaluatorContext context) throws EvaluatorException {
         log.debug("pricessAnd(): nodeLeft={}, nodeRight={}, context={}", new Object[]{nodeLeft, nodeRight, context});
 
         log.trace("pricessAnd(): nodeLeft={}, nodeRight={}, context={}", new Object[]{nodeLeft.getClass(), nodeRight.getClass(), context});
@@ -859,7 +864,7 @@ public class Evaluator {
         return left.oper_and(right);
     }
 
-    private Node processOr(JsonArray nodeLeft, JsonArray nodeRight, EvaluatorContext context) throws EvaluatorException {
+    private Node processOr(ArrayNode nodeLeft, ArrayNode nodeRight, EvaluatorContext context) throws EvaluatorException {
         log.debug("pricessOr(): nodeLeft={}, nodeRight={}, context={}", new Object[]{nodeLeft, nodeRight, context});
 
         log.trace("pricessOr(): nodeLeft={}, nodeRight={}, context={}", new Object[]{nodeLeft.getClass(), nodeRight.getClass(), context});
@@ -870,7 +875,7 @@ public class Evaluator {
         return left.oper_or(right);
     }
 
-    private Node processAdd(JsonArray nodeLeft, JsonArray nodeRight, EvaluatorContext context) throws EvaluatorException {
+    private Node processAdd(ArrayNode nodeLeft, ArrayNode nodeRight, EvaluatorContext context) throws EvaluatorException {
         log.debug("processAdd(): nodeLeft={}, nodeRight={}, context={}", new Object[]{nodeLeft, nodeRight, context});
 
         log.trace("processAdd(): nodeLeft={}, nodeRight={}, context={}", new Object[]{nodeLeft.getClass(), nodeRight.getClass(), context});
@@ -881,7 +886,7 @@ public class Evaluator {
         return left.oper_add(right);
     }
 
-    private Node processSub(JsonArray nodeLeft, JsonArray nodeRight, EvaluatorContext context) throws EvaluatorException {
+    private Node processSub(ArrayNode nodeLeft, ArrayNode nodeRight, EvaluatorContext context) throws EvaluatorException {
         log.debug("processSub(): nodeLeft={}, nodeRight={}, context={}", new Object[]{nodeLeft, nodeRight, context});
         Node left = processNode(nodeLeft, context);
         Node right = processNode(nodeRight, context);
@@ -889,7 +894,7 @@ public class Evaluator {
         return left.oper_sub(right);
     }
 
-    private Node processMul(JsonArray nodeLeft, JsonArray nodeRight, EvaluatorContext context) throws EvaluatorException {
+    private Node processMul(ArrayNode nodeLeft, ArrayNode nodeRight, EvaluatorContext context) throws EvaluatorException {
         log.debug("processMul(): nodeLeft={}, nodeRight={}, context={}", new Object[]{nodeLeft, nodeRight, context});
         Node left = processNode(nodeLeft, context);
         Node right = processNode(nodeRight, context);
@@ -897,7 +902,7 @@ public class Evaluator {
         return left.oper_mul(right);
     }
 
-    private Node processDiv(JsonArray nodeLeft, JsonArray nodeRight, EvaluatorContext context) throws EvaluatorException {
+    private Node processDiv(ArrayNode nodeLeft, ArrayNode nodeRight, EvaluatorContext context) throws EvaluatorException {
         log.debug("processDiv(): nodeLeft={}, nodeRight={}, context={}", new Object[]{nodeLeft, nodeRight, context});
         Node left = processNode(nodeLeft, context);
         Node right = processNode(nodeRight, context);
@@ -905,7 +910,7 @@ public class Evaluator {
         return left.oper_div(right);
     }
 
-    private Node processMod(JsonArray nodeLeft, JsonArray nodeRight, EvaluatorContext context) throws EvaluatorException {
+    private Node processMod(ArrayNode nodeLeft, ArrayNode nodeRight, EvaluatorContext context) throws EvaluatorException {
         log.debug("processMod(): nodeLeft={}, nodeRight={}, context={}", new Object[]{nodeLeft, nodeRight, context});
         Node left = processNode(nodeLeft, context);
         Node right = processNode(nodeRight, context);
@@ -913,25 +918,25 @@ public class Evaluator {
         return left.oper_mod(right);
     }
 
-    private Node processNegate(JsonArray node, EvaluatorContext context) throws EvaluatorException {
+    private Node processNegate(ArrayNode node, EvaluatorContext context) throws EvaluatorException {
         log.debug("processNegate(): node={}, context={}", new Object[]{node, context});
         Node left = processNode(node, context);
         return left.oper_negate();
     }
 
-    private Node processMap(JsonArray element, EvaluatorContext context) throws EvaluatorException {
+    private Node processMap(ArrayNode element, EvaluatorContext context) throws EvaluatorException {
         log.debug("processMap(): element={}, context={}", new Object[]{element, context});
-        ObjectNode result = ObjectNode.create();
+        ObjectHistoneNode result = nodeFactory.object();
 
-        for (JsonElement item : element) {
-            JsonElement key = item.getAsJsonArray().get(0);
-            if (key.isJsonNull()) {
-                result.add(processNode(item.getAsJsonArray().get(1).getAsJsonArray(), context));
+        for (JsonNode item : element) {
+            JsonNode key = item.get(0);
+            if (key.isNull()) {
+                result.add(processNode(item.get(1), context));
             } else {
-                if (key.getAsJsonPrimitive().isNumber()) {
-                    result.add(key.getAsInt(), processNode(item.getAsJsonArray().get(1).getAsJsonArray(), context));
-                } else if (key.getAsJsonPrimitive().isString()) {
-                    result.add(key.getAsString(), processNode(item.getAsJsonArray().get(1).getAsJsonArray(), context));
+                if (key.isNumber()) {
+                    result.add(key.intValue(), processNode(item.get(1), context));
+                } else if (key.isTextual()) {
+                    result.add(key.asText(), processNode(item.get(1), context));
                 }
             }
         }
@@ -939,17 +944,17 @@ public class Evaluator {
         return result;
     }
 
-    private Node processSelector(JsonArray element, EvaluatorContext context) throws EvaluatorException {
+    private Node processSelector(ArrayNode element, EvaluatorContext context) throws EvaluatorException {
         log.debug("processSelector(): element={}, context={}", new Object[]{element, context});
 
         int startIdx = 0;
         Node ctx;
-        if (element.get(0).isJsonArray()) {
-            ctx = processNode(element.get(startIdx++).getAsJsonArray(), context);
-        } else if ("this".equals(element.get(0).getAsString())) {
+        if (element.get(0).isArray()) {
+            ctx = processNode(element.get(startIdx++), context);
+        } else if ("this".equals(element.get(0).asText())) {
             ctx = context.getInitialContext();
             startIdx++;
-        } else if ("global".equals(element.get(0).getAsString())) {
+        } else if ("global".equals(element.get(0).asText())) {
             ctx = context.getGlobal();
             startIdx++;
         } else {
@@ -957,15 +962,15 @@ public class Evaluator {
         }
 
         for (int j = startIdx; j < element.size(); j++) {
-            JsonElement selector = element.get(j);
+            JsonNode selector = element.get(j);
             String propName;
 
-            if (selector.isJsonPrimitive() && selector.getAsJsonPrimitive().isString()) {
+            if (selector.isTextual()) {
                 // selector is written as it is
-                propName = selector.getAsString();
+                propName = selector.asText();
             } else {
                 // selector is written inside ['..'], like access to array
-                propName = processNode(selector.getAsJsonArray(), context).getAsString().getValue();
+                propName = processNode(selector, context).getAsString().getValue();
             }
 
             if (ctx.hasProp(propName)) {
@@ -983,7 +988,7 @@ public class Evaluator {
 
         if (ctx == null) {
             Histone.runtime_log_warn("Property value was null, returning 'undefined()'");
-            result = Node.UNDEFINED;
+            result = nodeFactory.UNDEFINED;
         } else {
             result = ctx;
         }

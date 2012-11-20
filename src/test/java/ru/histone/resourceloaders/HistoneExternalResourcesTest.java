@@ -15,8 +15,6 @@
  */
 package ru.histone.resourceloaders;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import org.junit.Before;
 import org.junit.Test;
 import ru.histone.GlobalProperty;
@@ -35,10 +33,7 @@ public class HistoneExternalResourcesTest {
 
     @Before
     public void before() throws HistoneException {
-        GsonBuilder gsonBuilder = new GsonBuilder();
-        Gson gson = gsonBuilder.create();
         builder = new HistoneBuilder();
-        builder.setGson(gson);
 
         testResourceRelativePath = "resourceloader/test.txt";
         testResourceFullLocation = this.getClass().getClassLoader().getResource(testResourceRelativePath).toString();

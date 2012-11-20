@@ -17,13 +17,18 @@ package ru.histone.evaluator.functions.node.number;
 
 import ru.histone.evaluator.functions.node.NodeFunction;
 import ru.histone.evaluator.nodes.Node;
-import ru.histone.evaluator.nodes.NumberNode;
-import ru.histone.evaluator.nodes.StringNode;
+import ru.histone.evaluator.nodes.NodeFactory;
+import ru.histone.evaluator.nodes.NumberHistoneNode;
+import ru.histone.evaluator.nodes.StringHistoneNode;
 
 /**
  * Converts target value to char according to ASCII table
  */
-public class ToChar implements NodeFunction<NumberNode>{
+public class ToChar extends NodeFunction<NumberHistoneNode>{
+
+    public ToChar(NodeFactory nodeFactory) {
+        super(nodeFactory);
+    }
 
     @Override
     public String getName() {
@@ -31,13 +36,13 @@ public class ToChar implements NodeFunction<NumberNode>{
     }
 
     @Override
-    public Node execute(NumberNode target, Node... args) {
+    public Node execute(NumberHistoneNode target, Node... args) {
         if (target.isInteger()) {
             int chInt = target.getValue().intValue();
             String ch = Character.toString((char) chInt);
-            return StringNode.create(ch);
+            return getNodeFactory().string(ch);
         } else {
-            return Node.UNDEFINED;
+            return getNodeFactory().UNDEFINED;
         }
     }
 }

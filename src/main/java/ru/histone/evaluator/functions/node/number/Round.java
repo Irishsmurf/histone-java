@@ -19,12 +19,18 @@ import java.math.RoundingMode;
 
 import ru.histone.evaluator.functions.node.NodeFunction;
 import ru.histone.evaluator.nodes.Node;
-import ru.histone.evaluator.nodes.NumberNode;
+import ru.histone.evaluator.nodes.NodeFactory;
+import ru.histone.evaluator.nodes.NumberHistoneNode;
+import ru.histone.evaluator.nodes.NumberHistoneNode;
 
 /**
  * Return standard math round value form target value
  */
-public class Round implements NodeFunction<NumberNode> {
+public class Round extends NodeFunction<NumberHistoneNode> {
+
+    public Round(NodeFactory nodeFactory) {
+        super(nodeFactory);
+    }
 
     @Override
     public String getName() {
@@ -32,7 +38,7 @@ public class Round implements NodeFunction<NumberNode> {
     }
 
     @Override
-    public Node execute(NumberNode target, Node... args) {
-        return NumberNode.create(target.getValue().setScale(0, RoundingMode.HALF_UP));
+    public Node execute(NumberHistoneNode target, Node... args) {
+        return getNodeFactory().number(target.getValue().setScale(0, RoundingMode.HALF_UP));
     }
 }

@@ -20,12 +20,18 @@ import java.util.GregorianCalendar;
 
 import ru.histone.Histone;
 import ru.histone.evaluator.nodes.Node;
-import ru.histone.evaluator.nodes.NumberNode;
+import ru.histone.evaluator.nodes.NodeFactory;
+import ru.histone.evaluator.nodes.NumberHistoneNode;
+import ru.histone.evaluator.nodes.NumberHistoneNode;
 
 /**
  * Return number of days in specified month
  */
-public class DaysInMonth implements GlobalFunction {
+public class DaysInMonth extends GlobalFunction {
+    public DaysInMonth(NodeFactory nodeFactory) {
+        super(nodeFactory);
+    }
+
     @Override
     public String getName() {
         return "daysInMonth";
@@ -35,29 +41,29 @@ public class DaysInMonth implements GlobalFunction {
     public Node execute(Node... args) throws GlobalFunctionExecutionException {
         if (args.length < 2) {
             Histone.runtime_log_warn("Function range() needs to have two arguments, but you provided '{}' arguments", args.length);
-            return Node.UNDEFINED;
+            return getNodeFactory().UNDEFINED;
         }
 
         if (args.length > 2) {
             Histone.runtime_log_warn("Function range() has only two arguments, but you provided '{}' arguments", args.length);
         }
 
-        NumberNode year = args[0].getAsNumber();
-        NumberNode month = args[1].getAsNumber();
+        NumberHistoneNode year = args[0].getAsNumber();
+        NumberHistoneNode month = args[1].getAsNumber();
 
         if (year.isUndefined() || !year.isInteger()) {
             Histone.runtime_log_warn("Can't cast first argument '{}' to integer Number for function dayOfWeek", year.getAsString());
-            return Node.UNDEFINED;
+            return getNodeFactory().UNDEFINED;
         }
 
         if (month.isUndefined() || !year.isInteger()) {
             Histone.runtime_log_warn("Can't cast second argument '{}' to integer Number for function dayOfWeek", month.getAsString());
-            return Node.UNDEFINED;
+            return getNodeFactory().UNDEFINED;
         }
 
         if ((month.getValue().intValue() <= 0) || (month.getValue().intValue() > 12)) {
             Histone.runtime_log_warn("Second argument for function dayOfWeek should be between 1 and 12, you provided '{}' ", month.getAsString());
-            return Node.UNDEFINED;
+            return getNodeFactory().UNDEFINED;
         }
 
         GregorianCalendar calendar = new GregorianCalendar();
@@ -71,11 +77,11 @@ public class DaysInMonth implements GlobalFunction {
             calendar.getTimeInMillis();
         } catch (IllegalArgumentException e) {
             Histone.runtime_log_warn_e("Arguments specified for dayOfWeek function is incorrect date (y:{},m:{},d:{})", e, year.getAsString(), month.getAsString());
-            return Node.UNDEFINED;
+            return getNodeFactory().UNDEFINED;
         }
 
         int daysInMonth = calendar.getActualMaximum(Calendar.DAY_OF_MONTH);
 
-        return NumberNode.create(daysInMonth);
+        return getNodeFactory().number(daysInMonth);
     }
 }

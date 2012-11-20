@@ -26,7 +26,7 @@
         </property>
         <property name="nodeFunctions">
             <map key-type="java.lang.Class">
-                <entry key="ru.histone.evaluator.nodes.NumberNode">
+                <entry key="ru.histone.evaluator.nodes.NumberHistoneNode">
                     <set>
                         <bean class="ru.histone.spring.stubs.NumberNodeUserFunction_A">
                             <!-- NumberNodeUserFunction_A properties and initializations here -->
@@ -36,7 +36,7 @@
                         </bean>
                     </set>
                 </entry>
-                <entry key="ru.histone.evaluator.nodes.StringNode">
+                <entry key="ru.histone.evaluator.nodes.StringHistoneNode">
                     <set>
                         <bean class="ru.histone.spring.stubs.StringNodeUserFunction_A">
                             <!-- StringNodeUserFunction_A properties and initializations here -->
