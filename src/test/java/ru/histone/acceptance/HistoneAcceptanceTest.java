@@ -63,7 +63,7 @@ public class HistoneAcceptanceTest extends Runner {
     public HistoneAcceptanceTest(Class<?> testClass) {
         testSuiteDescription = Description.createSuiteDescription("Histone Acceptance Test Cases");
         jackson = new ObjectMapper();
-        nodeFactory = new NodeFactory(jackson);
+        nodeFactory = new NodeFactory(null);
     }
 
     @Override
@@ -76,18 +76,19 @@ public class HistoneAcceptanceTest extends Runner {
         MDC.put(MDC_TEST_NAME, "before");
         Reader reader = new InputStreamReader(getClass().getResourceAsStream("/acceptance-test-cases.json"));
         try {
-            Iterator<JsonNode> iter = jackson.readTree(reader).iterator();
+            JsonNode testCasesList = jackson.readTree(reader);
+            Iterator<JsonNode> iter = testCasesList.iterator();
             while (iter.hasNext()) {
                 JsonNode element = iter.next();
-                runTestCasesFromXmlFile(notifier, element.asText());
+                runTestCasesFromJsonFile(notifier, element.asText());
             }
         } catch (IOException e) {
             throw new RuntimeException("Error reading json", e);
         }
-
     }
 
-    private void runTestCasesFromXmlFile(RunNotifier notifier, String fileName) {
+    private void runTestCasesFromJsonFile(RunNotifier notifier, String fileName) {
+        //TODO change all this stuff to using ObjectMapper to read json files
         try {
             XMLStreamReader xmlStreamReader = new StreamReaderDelegate(inputFactory.createXMLStreamReader(getClass().getResourceAsStream("/evaluator/" + fileName))) {
                 public int next() throws XMLStreamException {
