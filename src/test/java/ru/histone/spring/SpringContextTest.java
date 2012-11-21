@@ -18,6 +18,7 @@ package ru.histone.spring;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import ru.histone.Histone;
@@ -36,6 +37,7 @@ import static org.junit.Assert.assertSame;
 /**
  * Test Histone initialization via spring context file
  */
+@Ignore
 public class SpringContextTest {
 
     private ObjectMapper jackson;

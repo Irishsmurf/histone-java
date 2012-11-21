@@ -18,6 +18,7 @@ package ru.histone.acceptance;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.ComparisonFailure;
+import org.junit.Ignore;
 import org.junit.runner.Description;
 import org.junit.runner.RunWith;
 import org.junit.runner.Runner;
@@ -42,6 +43,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.Iterator;
 
+@Ignore
 @RunWith(ParserAcceptanceTest.class)
 public class ParserAcceptanceTest extends Runner {
 

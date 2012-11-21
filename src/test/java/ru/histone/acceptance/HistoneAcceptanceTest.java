@@ -17,9 +17,7 @@ package ru.histone.acceptance;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.junit.ComparisonFailure;
-import org.junit.Ignore;
 import org.junit.runner.Description;
 import org.junit.runner.RunWith;
 import org.junit.runner.Runner;
@@ -51,10 +49,9 @@ import java.io.StringReader;
 import java.net.URL;
 import java.util.*;
 
-@Ignore
-@RunWith(EvaluatorAcceptanceTest.class)
-public class EvaluatorAcceptanceTest extends Runner {
-    private static final Logger log = LoggerFactory.getLogger(EvaluatorAcceptanceTest.class);
+@RunWith(HistoneAcceptanceTest.class)
+public class HistoneAcceptanceTest extends Runner {
+    private static final Logger log = LoggerFactory.getLogger(HistoneAcceptanceTest.class);
     protected static final String MDC_TEST_NAME = "testCaseName";
 
     private Description testSuiteDescription;
@@ -63,8 +60,8 @@ public class EvaluatorAcceptanceTest extends Runner {
     private ObjectMapper jackson;
     private NodeFactory nodeFactory;
 
-    public EvaluatorAcceptanceTest(Class<?> testClass) {
-        testSuiteDescription = Description.createSuiteDescription("Evaluator XML Test Cases");
+    public HistoneAcceptanceTest(Class<?> testClass) {
+        testSuiteDescription = Description.createSuiteDescription("Histone Acceptance Test Cases");
         jackson = new ObjectMapper();
         nodeFactory = new NodeFactory(jackson);
     }
@@ -77,7 +74,7 @@ public class EvaluatorAcceptanceTest extends Runner {
     @Override
     public void run(RunNotifier notifier) {
         MDC.put(MDC_TEST_NAME, "before");
-        Reader reader = new InputStreamReader(getClass().getResourceAsStream("/evaluator/cases.json"));
+        Reader reader = new InputStreamReader(getClass().getResourceAsStream("/acceptance-test-cases.json"));
         try {
             Iterator<JsonNode> iter = jackson.readTree(reader).iterator();
             while (iter.hasNext()) {
@@ -335,29 +332,6 @@ public class EvaluatorAcceptanceTest extends Runner {
 
         return result;
     }
-
-//    private Set<ResourceLoader> toResourceResolvers(Set<MockFileDataHolder> mockFiles) {
-//        Map<String, Set<MockFileDataHolder>> mockFilesMap = new HashMap<String, Set<MockFileDataHolder>>();
-//        for (MockFileDataHolder mockFile : mockFiles) {
-//            Set<MockFileDataHolder> mocks = mockFilesMap.get(mockFile.getScheme());
-//            if (mocks == null) {
-//                mocks = new HashSet<MockFileDataHolder>();
-//                mockFilesMap.put(mockFile.getScheme(), mocks);
-//            }
-//            mocks.add(mockFile);
-//        }
-//
-//        Set<ResourceLoader> loaders = new HashSet<ResourceLoader>();
-//        for (final Map.Entry<String, Set<MockFileDataHolder>> entry : mockFilesMap.entrySet()) {
-//            final Map<URI, MockFileDataHolder> mockData = new HashMap<URI, MockFileDataHolder>();
-//            for (final MockFileDataHolder dataHolder : entry.getValue()) {
-//                mockData.put(dataHolder.getLocation(), dataHolder);
-//            }
-//            //TODO: refactor //
-////            loaders.add(new MockResourceLoader(entry.getKey(), mockData));
-//        }
-//        return loaders;
-//    }
 
     private Set<GlobalFunction> toGlobalFunctions(Set<MockGlobalFunctionHolder> mockFunctions) {
         Set<GlobalFunction> globalFunctions = new HashSet<GlobalFunction>();
