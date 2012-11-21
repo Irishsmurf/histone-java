@@ -15,25 +15,36 @@
  */
 package ru.histone.evaluator.nodes;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonPrimitive;
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import ru.histone.Histone;
 
 public abstract class Node {
 
-    public static final NullNode NULL = new NullNode();
-	public static final BooleanNode TRUE = BooleanNode.create(true);
-	public static final BooleanNode FALSE = BooleanNode.create(false);
-	public static final UndefinedNode UNDEFINED = UndefinedNode.INSTANCE;
-	public static final NumberNode UNDEFINED_NUMBER = UndefinedNumberNode.INSTANCE;
+    private NodeFactory nodeFactory = null;
 
-	// Methods for type checking
+    public NodeFactory getNodeFactory() {
+        return nodeFactory;
+    }
+
+//    public static final NullHistoneNode NULL = new NullHistoneNode();
+//	public static final BooleanHistoneNode TRUE = BooleanHistoneNode.create(true);
+//	public static final BooleanHistoneNode FALSE = BooleanHistoneNode.create(false);
+//	public static final UndefinedNode UNDEFINED = UndefinedNode.INSTANCE;
+//	public static final NumberHistoneNode UNDEFINED_NUMBER = UndefinedNumberHistoneNode.INSTANCE;
+
+    protected Node(NodeFactory nodeFactory) {
+        this.nodeFactory = nodeFactory;
+    }
+
+    // Methods for type checking
 	public boolean isBoolean() {
-        return this instanceof BooleanNode;
+        return this instanceof BooleanHistoneNode;
 	}
 
 	public boolean isNumber() {
-        return !(this instanceof UndefinedNumberNode) && (this instanceof NumberNode);
+        return !(this instanceof UndefinedNumberHistoneNode) && (this instanceof NumberHistoneNode);
 	}
 
 	public boolean isFloat() {
@@ -45,58 +56,32 @@ public abstract class Node {
 	}
 
 	public boolean isString() {
-        return this instanceof StringNode;
+        return this instanceof StringHistoneNode;
 	}
 
 	public boolean isNull() {
-        return this instanceof NullNode;
+        return this instanceof NullHistoneNode;
 	}
 
 	public boolean isUndefined() {
-		return (this instanceof  UndefinedNode) || (this instanceof  UndefinedNumberNode);
+		return (this instanceof  UndefinedNode) || (this instanceof UndefinedNumberHistoneNode);
 	}
 
 	public boolean isObject() {
-        return this instanceof ObjectNode;
+        return this instanceof ObjectHistoneNode;
 	}
 
     public boolean isAst() {
         return this instanceof AstNode;
     }
 
-    public abstract BooleanNode getAsBoolean();
+    public abstract BooleanHistoneNode getAsBoolean();
 
-	public abstract NumberNode getAsNumber();
+	public abstract NumberHistoneNode getAsNumber();
 
-	public abstract StringNode getAsString();
+	public abstract StringHistoneNode getAsString();
 
-	public abstract ObjectNode getAsObject();
-
-    public static Node jsonToNode(JsonElement json) {
-        if(json == null || json.isJsonNull()) {
-            return Node.NULL;
-        }
-        if(json.isJsonArray()) {
-            return ObjectNode.create(json.getAsJsonArray());
-        }
-        if(json.isJsonObject()) {
-            return ObjectNode.create(json.getAsJsonObject());
-        }
-        if(!json.isJsonPrimitive()) {
-            throw new IllegalArgumentException(String.format("Unknown type of JsonElement = '%s'", json.toString()));
-        }
-        JsonPrimitive primitive = json.getAsJsonPrimitive();
-        if(primitive.isBoolean()) {
-            return primitive.getAsBoolean() ? Node.TRUE : Node.FALSE;
-        }
-        if(primitive.isNumber()) {
-            return NumberNode.create(primitive.getAsBigDecimal());
-        }
-        if(primitive.isString()) {
-            return StringNode.create(primitive.getAsString());
-        }
-        throw new IllegalArgumentException(String.format("Unknown type of JsonElement = '%s'", json.toString()));
-	}
+	public abstract ObjectHistoneNode getAsObject();
 
 	public abstract Node oper_add(Node right);
 
@@ -129,7 +114,7 @@ public abstract class Node {
 	}
 
 	public final Node oper_notEqual(Node right) {
-		return oper_equal(right).getAsBoolean().getValue() ? Node.FALSE : Node.TRUE;
+        return oper_equal(right).getAsBoolean().getValue() ? nodeFactory.FALSE : nodeFactory.TRUE;
 	}
 
 	public abstract Node oper_equal(Node right);
@@ -153,8 +138,8 @@ public abstract class Node {
 
 	public Node getProp(String name) {
 		Histone.runtime_log_warn("Object '{}' doesn't have property '{}', returning 'undefined()'", toString(), name);
-		return Node.UNDEFINED;
+		return nodeFactory.UNDEFINED;
 	}
 
-	public abstract JsonElement getAsJsonElement();
+	public abstract JsonNode getAsJsonNode();
 }

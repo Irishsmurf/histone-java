@@ -15,18 +15,6 @@
  */
 package ru.histone.optimizer;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonNull;
-import com.google.gson.JsonPrimitive;
-import ru.histone.Histone;
-import ru.histone.HistoneException;
-import ru.histone.parser.AstNodeFactory;
-import ru.histone.parser.AstNodeType;
-
-import java.util.HashSet;
-import java.util.Set;
-
 public class AstMarker {
 
     private AstOptimizer optimizer;
@@ -35,25 +23,25 @@ public class AstMarker {
     public AstMarker(AstOptimizer optimizer) {
         this.optimizer = optimizer;
     }
-
-    public JsonArray mark(JsonArray ast) throws HistoneException {
+/*
+    public ArrayNode mark(ArrayNode ast) throws HistoneException {
         OptimizerContext context = new OptimizerContext();
         return markInternal(ast, context);
     }
 
-    private JsonArray markInternal(JsonArray ast, OptimizerContext context) throws HistoneException {
-        JsonArray result = new JsonArray();
+    private ArrayNode markInternal(ArrayNode ast, OptimizerContext context) throws HistoneException {
+        ArrayNode result = new ArrayNode();
 
-        for (JsonElement element : ast) {
-            JsonElement node = markNode(element, context);
+        for (JsonNode element : ast) {
+            JsonNode node = markNode(element, context);
             result.add(node);
         }
 
         return result;
     }
 
-//    private JsonArray markStatements(JsonArray statements, OptimizerContext context) throws HistoneException {
-//        JsonArray result = new JsonArray();
+//    private ArrayNode markStatements(ArrayNode statements, OptimizerContext context) throws HistoneException {
+//        ArrayNode result = new ArrayNode();
 //
 //        result.add(markInternal(statements, context));
 //
@@ -61,17 +49,17 @@ public class AstMarker {
 //
 //    }
 
-    private JsonElement markNode(JsonElement element, OptimizerContext context) throws HistoneException {
+    private JsonNode markNode(JsonNode element, OptimizerContext context) throws HistoneException {
         if (isString(element)) {
             return element;
         }
 
-        if (!element.isJsonArray()) {
+        if (!element.isArrayNode()) {
             Histone.runtime_log_warn("Invalid JSON element! Neither 'string', nor 'array'. Element: '{}'", element.toString());
             return element;
         }
 
-        JsonArray astArray = element.getAsJsonArray();
+        ArrayNode astArray = element.getAsArrayNode();
 
         int nodeType = getNodeType(astArray);
         switch (nodeType) {
@@ -86,60 +74,60 @@ public class AstMarker {
 //            case AstNodeType.MAP:
             //TODO:
 //            case AstNodeType.ARRAY:
-//                return markArray(astArray.get(1).getAsJsonArray(), context);
+//                return markArray(astArray.get(1).getAsArrayNode(), context);
 //
 //            case AstNodeType.OBJECT:
-//                return markObject(astArray.get(1).getAsJsonArray(), context);
+//                return markObject(astArray.get(1).getAsArrayNode(), context);
 
             case AstNodeType.ADD:
-                return markBinaryOperation(AstNodeType.ADD, astArray.get(1).getAsJsonArray(), astArray.get(2).getAsJsonArray(), context);
+                return markBinaryOperation(AstNodeType.ADD, astArray.get(1).getAsArrayNode(), astArray.get(2).getAsArrayNode(), context);
             case AstNodeType.SUB:
-                return markBinaryOperation(AstNodeType.SUB, astArray.get(1).getAsJsonArray(), astArray.get(2).getAsJsonArray(), context);
+                return markBinaryOperation(AstNodeType.SUB, astArray.get(1).getAsArrayNode(), astArray.get(2).getAsArrayNode(), context);
             case AstNodeType.MUL:
-                return markBinaryOperation(AstNodeType.MUL, astArray.get(1).getAsJsonArray(), astArray.get(2).getAsJsonArray(), context);
+                return markBinaryOperation(AstNodeType.MUL, astArray.get(1).getAsArrayNode(), astArray.get(2).getAsArrayNode(), context);
             case AstNodeType.DIV:
-                return markBinaryOperation(AstNodeType.DIV, astArray.get(1).getAsJsonArray(), astArray.get(2).getAsJsonArray(), context);
+                return markBinaryOperation(AstNodeType.DIV, astArray.get(1).getAsArrayNode(), astArray.get(2).getAsArrayNode(), context);
             case AstNodeType.MOD:
-                return markBinaryOperation(AstNodeType.MOD, astArray.get(1).getAsJsonArray(), astArray.get(2).getAsJsonArray(), context);
+                return markBinaryOperation(AstNodeType.MOD, astArray.get(1).getAsArrayNode(), astArray.get(2).getAsArrayNode(), context);
 
             case AstNodeType.NEGATE:
-                return markUnaryOperation(AstNodeType.NEGATE, astArray.get(1).getAsJsonArray(), context);
+                return markUnaryOperation(AstNodeType.NEGATE, astArray.get(1).getAsArrayNode(), context);
 
             case AstNodeType.OR:
-                return markBinaryOperation(AstNodeType.OR, astArray.get(1).getAsJsonArray(), astArray.get(2).getAsJsonArray(), context);
+                return markBinaryOperation(AstNodeType.OR, astArray.get(1).getAsArrayNode(), astArray.get(2).getAsArrayNode(), context);
             case AstNodeType.AND:
-                return markBinaryOperation(AstNodeType.AND, astArray.get(1).getAsJsonArray(), astArray.get(2).getAsJsonArray(), context);
+                return markBinaryOperation(AstNodeType.AND, astArray.get(1).getAsArrayNode(), astArray.get(2).getAsArrayNode(), context);
             case AstNodeType.NOT:
-                return markUnaryOperation(AstNodeType.NOT, astArray.get(1).getAsJsonArray(), context);
+                return markUnaryOperation(AstNodeType.NOT, astArray.get(1).getAsArrayNode(), context);
 
             case AstNodeType.EQUAL:
-                return markBinaryOperation(AstNodeType.EQUAL, astArray.get(1).getAsJsonArray(), astArray.get(2).getAsJsonArray(), context);
+                return markBinaryOperation(AstNodeType.EQUAL, astArray.get(1).getAsArrayNode(), astArray.get(2).getAsArrayNode(), context);
             case AstNodeType.NOT_EQUAL:
-                return markBinaryOperation(AstNodeType.NOT_EQUAL, astArray.get(1).getAsJsonArray(), astArray.get(2).getAsJsonArray(), context);
+                return markBinaryOperation(AstNodeType.NOT_EQUAL, astArray.get(1).getAsArrayNode(), astArray.get(2).getAsArrayNode(), context);
 
             case AstNodeType.LESS_OR_EQUAL:
-                return markBinaryOperation(AstNodeType.LESS_OR_EQUAL, astArray.get(1).getAsJsonArray(), astArray.get(2).getAsJsonArray(), context);
+                return markBinaryOperation(AstNodeType.LESS_OR_EQUAL, astArray.get(1).getAsArrayNode(), astArray.get(2).getAsArrayNode(), context);
             case AstNodeType.LESS_THAN:
-                return markBinaryOperation(AstNodeType.LESS_THAN, astArray.get(1).getAsJsonArray(), astArray.get(2).getAsJsonArray(), context);
+                return markBinaryOperation(AstNodeType.LESS_THAN, astArray.get(1).getAsArrayNode(), astArray.get(2).getAsArrayNode(), context);
             case AstNodeType.GREATER_OR_EQUAL:
-                return markBinaryOperation(AstNodeType.GREATER_OR_EQUAL, astArray.get(1).getAsJsonArray(), astArray.get(2).getAsJsonArray(), context);
+                return markBinaryOperation(AstNodeType.GREATER_OR_EQUAL, astArray.get(1).getAsArrayNode(), astArray.get(2).getAsArrayNode(), context);
             case AstNodeType.GREATER_THAN:
-                return markBinaryOperation(AstNodeType.GREATER_THAN, astArray.get(1).getAsJsonArray(), astArray.get(2).getAsJsonArray(), context);
+                return markBinaryOperation(AstNodeType.GREATER_THAN, astArray.get(1).getAsArrayNode(), astArray.get(2).getAsArrayNode(), context);
             case AstNodeType.TERNARY:
-                return markTernary(astArray.get(1).getAsJsonArray(), astArray.get(2).getAsJsonArray(), (astArray.size() > 3) ? astArray.get(3).getAsJsonArray() : null, context);
+                return markTernary(astArray.get(1).getAsArrayNode(), astArray.get(2).getAsArrayNode(), (astArray.size() > 3) ? astArray.get(3).getAsArrayNode() : null, context);
             case AstNodeType.IF:
-                return markIf(astArray.get(1).getAsJsonArray(), context);
+                return markIf(astArray.get(1).getAsArrayNode(), context);
             case AstNodeType.FOR:
-                return markFor(astArray.get(1).getAsJsonArray(), astArray.get(2).getAsJsonArray(), astArray.get(3).getAsJsonArray(), context);
+                return markFor(astArray.get(1).getAsArrayNode(), astArray.get(2).getAsArrayNode(), astArray.get(3).getAsArrayNode(), context);
 
             case AstNodeType.STATEMENTS:
-                return markStatements(astArray.get(1).getAsJsonArray(), context);
+                return markStatements(astArray.get(1).getAsArrayNode(), context);
 
             case AstNodeType.VAR:
-                return markVar(astArray.get(1).getAsJsonPrimitive(), astArray.get(2).getAsJsonArray(), context);
+                return markVar(astArray.get(1).getAsJsonPrimitive(), astArray.get(2).getAsArrayNode(), context);
 
             case AstNodeType.SELECTOR:
-                return markSelector(astArray.get(1).getAsJsonArray(), context);
+                return markSelector(astArray.get(1).getAsArrayNode(), context);
 
             case AstNodeType.CALL:
                 return markCall(astArray.get(1), astArray.get(2), astArray.get(3), context);
@@ -148,7 +136,7 @@ public class AstMarker {
 //                return markImport(astArray.get(1), context);
 //
             case AstNodeType.MACRO:
-                return markMacro(astArray.get(1).getAsJsonPrimitive(), astArray.get(2).getAsJsonArray(), astArray.get(3).getAsJsonArray(), context);
+                return markMacro(astArray.get(1).getAsJsonPrimitive(), astArray.get(2).getAsArrayNode(), astArray.get(3).getAsArrayNode(), context);
 
             default:
                 Histone.runtime_log_error("Unknown node type '{}', marking is skipped.", null, nodeType);
@@ -156,22 +144,22 @@ public class AstMarker {
         }
     }
 
-    private JsonElement markStatements(JsonArray ast, OptimizerContext context) throws HistoneException {
-        JsonArray markedStatements = markInternal(ast, context);
+    private JsonNode markStatements(ArrayNode ast, OptimizerContext context) throws HistoneException {
+        ArrayNode markedStatements = markInternal(ast, context);
         boolean isSafe = true;
-        for (JsonElement item : markedStatements) {
-            if (item.isJsonArray() && getNodeType(item.getAsJsonArray()) < 0) {
+        for (JsonNode item : markedStatements) {
+            if (item.isArrayNode() && getNodeType(item.getAsArrayNode()) < 0) {
                 isSafe = false;
             }
         }
         return AstNodeFactory.createNode(isSafe ? AstNodeType.STATEMENTS : -AstNodeType.STATEMENTS, markedStatements);
     }
 
-    private JsonElement markVar(JsonPrimitive name, JsonArray expr, OptimizerContext context) throws HistoneException {
+    private JsonNode markVar(JsonPrimitive name, ArrayNode expr, OptimizerContext context) throws HistoneException {
         String varName = name.getAsString();
-        JsonArray exprMarked = markNode(expr, context).getAsJsonArray();
+        ArrayNode exprMarked = markNode(expr, context).getAsArrayNode();
 
-        JsonArray result = AstNodeFactory.createNode(AstNodeType.VAR, name, exprMarked);
+        ArrayNode result = AstNodeFactory.createNode(AstNodeType.VAR, name, exprMarked);
 
         if (getNodeType(exprMarked) < 0) {
             return makeElementUnsafe(result);
@@ -181,25 +169,25 @@ public class AstMarker {
     }
 
 
-    private JsonElement markMacro(JsonPrimitive ident, JsonArray args, JsonArray statements, OptimizerContext context) throws HistoneException {
-        JsonArray result = AstNodeFactory.createNode(AstNodeType.MACRO, ident, args, statements);
+    private JsonNode markMacro(JsonPrimitive ident, ArrayNode args, ArrayNode statements, OptimizerContext context) throws HistoneException {
+        ArrayNode result = AstNodeFactory.createNode(AstNodeType.MACRO, ident, args, statements);
 
         context.save();
         context.addSafeVar("self");
 
         Set<String> argNames = new HashSet<String>();
         if (!args.isJsonNull()) {
-            for (JsonElement arg : args) {
+            for (JsonNode arg : args) {
                 argNames.add(arg.getAsString());
                 context.addSafeVar(arg.getAsString());
             }
         }
-        JsonArray statementsOpt = markInternal(statements, context).getAsJsonArray();
+        ArrayNode statementsOpt = markInternal(statements, context).getAsArrayNode();
         context.restore();
 
         boolean isSafe = true;
-        for (JsonElement st : statementsOpt) {
-            if (st.isJsonArray() && getNodeType(st.getAsJsonArray()) < 0) {
+        for (JsonNode st : statementsOpt) {
+            if (st.isArrayNode() && getNodeType(st.getAsArrayNode()) < 0) {
                 isSafe = false;
                 break;
             }
@@ -213,7 +201,7 @@ public class AstMarker {
         }
     }
 
-    private JsonArray markCall(JsonElement target, JsonElement name, JsonElement args, OptimizerContext context) throws HistoneException {
+    private ArrayNode markCall(JsonNode target, JsonNode name, JsonNode args, OptimizerContext context) throws HistoneException {
         if (!target.isJsonNull() || !isString(name)) {
             return makeElementUnsafe(AstNodeFactory.createNode(AstNodeType.CALL, target, name, args));
         }
@@ -226,35 +214,35 @@ public class AstMarker {
 
         boolean isSafe = context.isMacroSafe(macroName);
 
-        JsonElement argsMarked = new JsonArray();
+        JsonNode argsMarked = new ArrayNode();
         if (!args.isJsonNull()) {
-            for (JsonElement arg : args.getAsJsonArray()) {
-                JsonArray argMarked = null;
-                if (getNodeType(arg.getAsJsonArray()) == AstNodeType.STATEMENTS) {
+            for (JsonNode arg : args.getAsArrayNode()) {
+                ArrayNode argMarked = null;
+                if (getNodeType(arg.getAsArrayNode()) == AstNodeType.STATEMENTS) {
                     boolean isArgSafe = true;
-                    JsonArray argStatements = new JsonArray();
-                    for (JsonElement stItem : arg.getAsJsonArray().get(1).getAsJsonArray()) {
-                        JsonElement stItemMarked = markNode(stItem, context);
-                        if (stItemMarked.isJsonArray() && getNodeType(stItemMarked.getAsJsonArray()) < 0) {
+                    ArrayNode argStatements = new ArrayNode();
+                    for (JsonNode stItem : arg.getAsArrayNode().get(1).getAsArrayNode()) {
+                        JsonNode stItemMarked = markNode(stItem, context);
+                        if (stItemMarked.isArrayNode() && getNodeType(stItemMarked.getAsArrayNode()) < 0) {
                             isArgSafe = false;
                         }
                         argStatements.add(stItemMarked);
                     }
                     argMarked = AstNodeFactory.createNode(isArgSafe ? AstNodeType.STATEMENTS : -AstNodeType.STATEMENTS, argStatements);
                 } else {
-                    argMarked = markNode(arg, context).getAsJsonArray();
+                    argMarked = markNode(arg, context).getAsArrayNode();
                 }
 
                 if (getNodeType(argMarked) < 0) {
                     isSafe = false;
                 }
-                argsMarked.getAsJsonArray().add(argMarked);
+                argsMarked.getAsArrayNode().add(argMarked);
             }
         } else {
             argsMarked = JsonNull.INSTANCE;
         }
 
-        JsonArray result = AstNodeFactory.createNode(AstNodeType.CALL, target, name, argsMarked);
+        ArrayNode result = AstNodeFactory.createNode(AstNodeType.CALL, target, name, argsMarked);
 
         if (isSafe) {
             return result;
@@ -263,21 +251,21 @@ public class AstMarker {
         }
     }
 
-    private JsonElement markSelector(JsonArray selector, OptimizerContext context) throws HistoneException {
+    private JsonNode markSelector(ArrayNode selector, OptimizerContext context) throws HistoneException {
         boolean isSafe = false;
 //        boolean isForInline = false;
 
-        JsonElement varElement = selector.get(0);
+        JsonNode varElement = selector.get(0);
         if (varElement.isJsonPrimitive()) {
             String varName = varElement.getAsJsonPrimitive().getAsString();
             isSafe = context.isVarSafe(varName) || "global".equals(varName) || "this".equals(varName) || "self".equals(varName);
 //            isForInline = "global".equals(varName);
         } else {
-            JsonArray varElemMarked = markNode(varElement, context).getAsJsonArray();
+            ArrayNode varElemMarked = markNode(varElement, context).getAsArrayNode();
             isSafe = getNodeType(varElemMarked) > 0;
         }
 
-        JsonArray result = AstNodeFactory.createNode(AstNodeType.SELECTOR, selector);
+        ArrayNode result = AstNodeFactory.createNode(AstNodeType.SELECTOR, selector);
 
         if (isSafe) {
 //            if (isForInline) {
@@ -291,8 +279,8 @@ public class AstMarker {
         }
     }
 
-    private JsonElement markFor(JsonArray vars, JsonArray collection, JsonArray statements, OptimizerContext context) throws HistoneException {
-        JsonArray collectionOpt = markNode(collection, context).getAsJsonArray();
+    private JsonNode markFor(ArrayNode vars, ArrayNode collection, ArrayNode statements, OptimizerContext context) throws HistoneException {
+        ArrayNode collectionOpt = markNode(collection, context).getAsArrayNode();
 
         String iterVal = vars.get(0).getAsString();
         String iterKey = (vars.size() > 1) ? vars.get(1).getAsString() : null;
@@ -303,24 +291,24 @@ public class AstMarker {
         if (iterKey != null) {
             context.addSafeVar(iterKey);
         }
-        JsonArray statementsOpt = markInternal(statements.get(0).getAsJsonArray(), context).getAsJsonArray();
-        JsonArray statementsElseOpt = statements.size() > 1 ? markInternal(statements.get(1).getAsJsonArray(), context).getAsJsonArray() : null;
+        ArrayNode statementsOpt = markInternal(statements.get(0).getAsArrayNode(), context).getAsArrayNode();
+        ArrayNode statementsElseOpt = statements.size() > 1 ? markInternal(statements.get(1).getAsArrayNode(), context).getAsArrayNode() : null;
         context.restore();
 
         boolean statementsHasUnsafeNode = false;
-        for (JsonElement st : statementsOpt) {
-            if (st.isJsonArray() && getNodeType(st.getAsJsonArray()) < 0) {
+        for (JsonNode st : statementsOpt) {
+            if (st.isArrayNode() && getNodeType(st.getAsArrayNode()) < 0) {
                 statementsHasUnsafeNode = true;
                 break;
             }
         }
         boolean isNotSafe = getNodeType(collectionOpt) < 0 || statementsHasUnsafeNode;
 
-        JsonArray statementsMarked = AstNodeFactory.createArray(statementsOpt);
+        ArrayNode statementsMarked = AstNodeFactory.createArray(statementsOpt);
         if (statementsElseOpt != null) {
             statementsMarked.add(statementsElseOpt);
         }
-        JsonArray result = AstNodeFactory.createNode(AstNodeType.FOR, vars, collectionOpt, statementsMarked);
+        ArrayNode result = AstNodeFactory.createNode(AstNodeType.FOR, vars, collectionOpt, statementsMarked);
 
         if (isNotSafe) {
             return makeElementUnsafe(result);
@@ -330,32 +318,32 @@ public class AstMarker {
 
     }
 
-    private JsonElement markIf(JsonArray conditions, OptimizerContext context) throws HistoneException {
+    private JsonNode markIf(ArrayNode conditions, OptimizerContext context) throws HistoneException {
         boolean isSafe = true;
-        JsonArray conditionsOut = new JsonArray();
+        ArrayNode conditionsOut = new ArrayNode();
 
         context.save();
-        for (JsonElement condition : conditions) {
-            JsonArray expressionAst = markNode(condition.getAsJsonArray().get(0).getAsJsonArray(), context).getAsJsonArray();
+        for (JsonNode condition : conditions) {
+            ArrayNode expressionAst = markNode(condition.getAsArrayNode().get(0).getAsArrayNode(), context).getAsArrayNode();
             if (getNodeType(expressionAst) < 0) {
                 isSafe = false;
             }
-            JsonArray statementsAst = markInternal(condition.getAsJsonArray().get(1).getAsJsonArray(), context);
+            ArrayNode statementsAst = markInternal(condition.getAsArrayNode().get(1).getAsArrayNode(), context);
 
-            for (JsonElement st : statementsAst) {
-                if (st.isJsonArray() && getNodeType(st.getAsJsonArray()) < 0) {
+            for (JsonNode st : statementsAst) {
+                if (st.isArrayNode() && getNodeType(st.getAsArrayNode()) < 0) {
                     isSafe = false;
                 }
             }
 
-            JsonArray conditionOut = new JsonArray();
+            ArrayNode conditionOut = new ArrayNode();
             conditionOut.add(expressionAst);
             conditionOut.add(statementsAst);
             conditionsOut.add(conditionOut);
         }
         context.restore();
 
-        JsonArray result = AstNodeFactory.createNode(AstNodeType.IF, conditionsOut);
+        ArrayNode result = AstNodeFactory.createNode(AstNodeType.IF, conditionsOut);
 
         if (isSafe) {
             return result;
@@ -364,20 +352,20 @@ public class AstMarker {
         }
     }
 
-    private JsonElement markArray(JsonArray elements, OptimizerContext context) throws HistoneException {
+    private JsonNode markArray(ArrayNode elements, OptimizerContext context) throws HistoneException {
         boolean isSafe = true;
 
-        JsonArray elementsMarked = new JsonArray();
-        for (JsonElement element : elements) {
+        ArrayNode elementsMarked = new ArrayNode();
+        for (JsonNode element : elements) {
             element = markNode(element, context);
-            if (getNodeType(element.getAsJsonArray()) < 0) {
+            if (getNodeType(element.getAsArrayNode()) < 0) {
                 isSafe = false;
             }
             elementsMarked.add(element);
         }
 
         //TODO: check array->map
-        JsonArray result = AstNodeFactory.createNode(AstNodeType.MAP, elementsMarked);
+        ArrayNode result = AstNodeFactory.createNode(AstNodeType.MAP, elementsMarked);
 
         if (isSafe) {
             return result;
@@ -386,25 +374,25 @@ public class AstMarker {
         }
     }
 
-    private JsonElement markObject(JsonArray elements, OptimizerContext context) throws HistoneException {
+    private JsonNode markObject(ArrayNode elements, OptimizerContext context) throws HistoneException {
         boolean isSafe = true;
 
-        JsonArray elementsMarked = new JsonArray();
-        for (JsonElement element : elements) {
-            JsonElement elementKey = element.getAsJsonArray().get(0);
-            JsonElement elementVal = markNode(element.getAsJsonArray().get(1), context);
-            if (getNodeType(elementVal.getAsJsonArray()) < 0) {
+        ArrayNode elementsMarked = new ArrayNode();
+        for (JsonNode element : elements) {
+            JsonNode elementKey = element.getAsArrayNode().get(0);
+            JsonNode elementVal = markNode(element.getAsArrayNode().get(1), context);
+            if (getNodeType(elementVal.getAsArrayNode()) < 0) {
                 isSafe = false;
             }
 
-            JsonArray elementOut = new JsonArray();
+            ArrayNode elementOut = new ArrayNode();
             elementOut.add(elementKey);
             elementOut.add(elementVal);
             elementsMarked.add(elementOut);
         }
 
         //TODO: check array->map
-        JsonArray result = AstNodeFactory.createNode(AstNodeType.MAP, elementsMarked);
+        ArrayNode result = AstNodeFactory.createNode(AstNodeType.MAP, elementsMarked);
 
         if (isSafe) {
             return result;
@@ -413,12 +401,12 @@ public class AstMarker {
         }
     }
 
-    private JsonElement markUnaryOperation(int type, JsonArray arg, OptimizerContext context) throws HistoneException {
-        JsonArray argOpt = markNode(arg, context).getAsJsonArray();
+    private JsonNode markUnaryOperation(int type, ArrayNode arg, OptimizerContext context) throws HistoneException {
+        ArrayNode argOpt = markNode(arg, context).getAsArrayNode();
 
         int argType = getNodeType(argOpt);
 
-        JsonArray result = AstNodeFactory.createNode(type, argOpt);
+        ArrayNode result = AstNodeFactory.createNode(type, argOpt);
 
         if (argType > 0) {
             return result;
@@ -427,14 +415,14 @@ public class AstMarker {
         }
     }
 
-    private JsonElement markBinaryOperation(int type, JsonArray left, JsonArray right, OptimizerContext context) throws HistoneException {
-        JsonArray leftOpt = markNode(left, context).getAsJsonArray();
-        JsonArray rightOpt = markNode(right, context).getAsJsonArray();
+    private JsonNode markBinaryOperation(int type, ArrayNode left, ArrayNode right, OptimizerContext context) throws HistoneException {
+        ArrayNode leftOpt = markNode(left, context).getAsArrayNode();
+        ArrayNode rightOpt = markNode(right, context).getAsArrayNode();
 
         int leftType = getNodeType(leftOpt);
         int rightType = getNodeType(rightOpt);
 
-        JsonArray result = AstNodeFactory.createNode(type, leftOpt, rightOpt);
+        ArrayNode result = AstNodeFactory.createNode(type, leftOpt, rightOpt);
 
         if (leftType < 0 || rightType < 0) {
             return makeElementUnsafe(result);
@@ -443,16 +431,16 @@ public class AstMarker {
         }
     }
 
-    private JsonElement markTernary(JsonArray expr, JsonArray trueAst, JsonArray falseAst, OptimizerContext context) throws HistoneException {
-        JsonArray exprMarked = markNode(expr, context).getAsJsonArray();
-        JsonArray trueMarked = markNode(trueAst, context).getAsJsonArray();
-        JsonArray falseMarked = falseAst != null ? markNode(falseAst, context).getAsJsonArray() : null;
+    private JsonNode markTernary(ArrayNode expr, ArrayNode trueAst, ArrayNode falseAst, OptimizerContext context) throws HistoneException {
+        ArrayNode exprMarked = markNode(expr, context).getAsArrayNode();
+        ArrayNode trueMarked = markNode(trueAst, context).getAsArrayNode();
+        ArrayNode falseMarked = falseAst != null ? markNode(falseAst, context).getAsArrayNode() : null;
 
         int exprType = getNodeType(exprMarked);
         int trueType = getNodeType(trueMarked);
         int falseType = falseAst != null ? getNodeType(falseMarked) : 0;
 
-        JsonArray result = AstNodeFactory.createNode(AstNodeType.TERNARY, exprMarked, trueMarked, falseAst != null ? falseMarked : null);
+        ArrayNode result = AstNodeFactory.createNode(AstNodeType.TERNARY, exprMarked, trueMarked, falseAst != null ? falseMarked : null);
 
         if (exprType < 0 || trueType < 0 || falseType < 0) {
             return makeElementUnsafe(result);
@@ -462,10 +450,10 @@ public class AstMarker {
     }
 
 
-    private JsonArray makeElementUnsafe(JsonArray element) {
+    private ArrayNode makeElementUnsafe(ArrayNode element) {
         boolean typeUpdated = false;
-        JsonArray result = new JsonArray();
-        for (JsonElement item : element) {
+        ArrayNode result = new ArrayNode();
+        for (JsonNode item : element) {
             if (typeUpdated) {
                 result.add(item);
             } else {
@@ -477,12 +465,12 @@ public class AstMarker {
         return result;
     }
 
-    private boolean isString(JsonElement element) {
+    private boolean isString(JsonNode element) {
         return element.isJsonPrimitive() && element.getAsJsonPrimitive().isString();
     }
 
-    private int getNodeType(JsonArray astArray) {
+    private int getNodeType(ArrayNode astArray) {
         return astArray.get(0).getAsJsonPrimitive().getAsInt();
     }
-
+        */
 }

@@ -15,10 +15,8 @@
  */
 package ru.histone;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -37,8 +35,6 @@ public class HistonePlaygroundTest {
 
     @Before
     public void before() throws HistoneException, UnsupportedEncodingException {
-        Gson gson = new GsonBuilder().serializeNulls().create();
-
         HistoneBuilder builder = new HistoneBuilder();
         histone = builder.build();
     }

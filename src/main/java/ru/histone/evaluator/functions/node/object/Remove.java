@@ -17,12 +17,18 @@ package ru.histone.evaluator.functions.node.object;
 
 import ru.histone.evaluator.functions.node.NodeFunction;
 import ru.histone.evaluator.nodes.Node;
-import ru.histone.evaluator.nodes.ObjectNode;
+import ru.histone.evaluator.nodes.NodeFactory;
+import ru.histone.evaluator.nodes.ObjectHistoneNode;
+import ru.histone.evaluator.nodes.ObjectHistoneNode;
 
 /**
  * Removes specified property from target object using key name
  */
-public class Remove implements NodeFunction<ObjectNode> {
+public class Remove extends NodeFunction<ObjectHistoneNode> {
+
+    public Remove(NodeFactory nodeFactory) {
+        super(nodeFactory);
+    }
 
     @Override
     public String getName() {
@@ -30,8 +36,8 @@ public class Remove implements NodeFunction<ObjectNode> {
     }
 
     @Override
-    public Node execute(ObjectNode target, Node... args) {
-        ObjectNode result = ObjectNode.create(target);
+    public Node execute(ObjectHistoneNode target, Node... args) {
+        ObjectHistoneNode result = getNodeFactory().object(target);
         for(Node arg : args){
             result.remove(arg.getAsString().getValue());
         }

@@ -15,18 +15,7 @@
  */
 package ru.histone.optimizer;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonPrimitive;
-import ru.histone.Histone;
-import ru.histone.HistoneException;
 import ru.histone.evaluator.Evaluator;
-import ru.histone.evaluator.EvaluatorContext;
-import ru.histone.evaluator.EvaluatorException;
-import ru.histone.evaluator.MacroFunc;
-import ru.histone.evaluator.nodes.*;
-import ru.histone.parser.AstNodeFactory;
-import ru.histone.parser.AstNodeType;
 
 public class AstOptimizer {
     private final Evaluator evaluator;
@@ -35,21 +24,21 @@ public class AstOptimizer {
         this.evaluator = evaluator;
     }
 
-    public JsonArray optimize(JsonArray ast) throws HistoneException {
-        JsonArray result = new JsonArray();
+/*    public ArrayNode optimize(ArrayNode ast) throws HistoneException {
+        ArrayNode result = new ArrayNode();
 
         EvaluatorContext context = EvaluatorContext.createEmpty(new GlobalObjectNode());
         StringBuilder buf = new StringBuilder();
-        for (JsonElement element : ast) {
+        for (JsonNode element : ast) {
             Node node = optimizeNode(element, context);
             if (node instanceof AstNode) {
                 if (buf.length() > 0) {
                     result.add(new JsonPrimitive(buf.toString()));
                     buf.setLength(0);
                 }
-                JsonElement astValue = ((AstNode) node).getValue();
-                if (astValue.isJsonArray() && isString(astValue.getAsJsonArray().get(0))) {
-                    for (JsonElement elem : astValue.getAsJsonArray()) {
+                JsonNode astValue = ((AstNode) node).getValue();
+                if (astValue.isArrayNode() && isString(astValue.getAsArrayNode().get(0))) {
+                    for (JsonNode elem : astValue.getAsArrayNode()) {
                         result.add(elem);
                     }
                 } else {
@@ -66,11 +55,11 @@ public class AstOptimizer {
         return result;
     }
 
-    private Node optimizeStatements(JsonElement statements, EvaluatorContext context) throws HistoneException {
-        JsonArray result = new JsonArray();
+    private Node optimizeStatements(JsonNode statements, EvaluatorContext context) throws HistoneException {
+        ArrayNode result = new ArrayNode();
 
         StringBuilder buf = new StringBuilder();
-        for (JsonElement element : statements.getAsJsonArray()) {
+        for (JsonNode element : statements.getAsArrayNode()) {
             if (isString(element)) {
                 buf.append(element.getAsString());
             } else {
@@ -93,17 +82,17 @@ public class AstOptimizer {
         return AstNode.create(result);
     }
 
-    private Node optimizeNode(JsonElement element, EvaluatorContext context) throws HistoneException {
+    private Node optimizeNode(JsonNode element, EvaluatorContext context) throws HistoneException {
         if (isString(element)) {
-            return StringNode.create(element.getAsString());
+            return StringHistoneNode.create(element.getAsString());
         }
 
-        if (!element.isJsonArray()) {
+        if (!element.isArrayNode()) {
             Histone.runtime_log_warn("Invalid JSON element! Neither 'string', nor 'array'. Element: '{}'", element.toString());
             return AstNode.create(element);
         }
 
-        JsonArray astArray = element.getAsJsonArray();
+        ArrayNode astArray = element.getAsArrayNode();
 
         int nodeType = astArray.get(0).getAsJsonPrimitive().getAsInt();
         switch (nodeType) {
@@ -117,63 +106,63 @@ public class AstOptimizer {
                 return Node.NULL;
 
             case AstNodeType.INT:
-                return NumberNode.create(astArray.get(1).getAsBigDecimal());
+                return NumberHistoneNode.create(astArray.get(1).getAsBigDecimal());
 
             case AstNodeType.DOUBLE:
-                return NumberNode.create(astArray.get(1).getAsBigDecimal());
+                return NumberHistoneNode.create(astArray.get(1).getAsBigDecimal());
 
             case AstNodeType.STRING:
-                return StringNode.create(astArray.get(1).getAsString());
+                return StringHistoneNode.create(astArray.get(1).getAsString());
 
 
 //            case AstNodeType.MAP:
 //            TODO:
 //            case AstNodeType.ARRAY:
-//                return optimizeArray(astArray.get(1).getAsJsonArray(), context);
+//                return optimizeArray(astArray.get(1).getAsArrayNode(), context);
 //
 //            case AstNodeType.OBJECT:
-//                return optimizeObject(astArray.get(1).getAsJsonArray(), context);
+//                return optimizeObject(astArray.get(1).getAsArrayNode(), context);
 
             case AstNodeType.ADD:
-                return optimizeAdd(astArray.get(1).getAsJsonArray(), astArray.get(2).getAsJsonArray(), context);
+                return optimizeAdd(astArray.get(1).getAsArrayNode(), astArray.get(2).getAsArrayNode(), context);
             case AstNodeType.SUB:
-                return optimizeSub(astArray.get(1).getAsJsonArray(), astArray.get(2).getAsJsonArray(), context);
+                return optimizeSub(astArray.get(1).getAsArrayNode(), astArray.get(2).getAsArrayNode(), context);
             case AstNodeType.MUL:
-                return optimizeMul(astArray.get(1).getAsJsonArray(), astArray.get(2).getAsJsonArray(), context);
+                return optimizeMul(astArray.get(1).getAsArrayNode(), astArray.get(2).getAsArrayNode(), context);
             case AstNodeType.DIV:
-                return optimizeDiv(astArray.get(1).getAsJsonArray(), astArray.get(2).getAsJsonArray(), context);
+                return optimizeDiv(astArray.get(1).getAsArrayNode(), astArray.get(2).getAsArrayNode(), context);
             case AstNodeType.MOD:
-                return optimizeMod(astArray.get(1).getAsJsonArray(), astArray.get(2).getAsJsonArray(), context);
+                return optimizeMod(astArray.get(1).getAsArrayNode(), astArray.get(2).getAsArrayNode(), context);
 
             case AstNodeType.NEGATE:
-                return optimizeNegate(astArray.get(1).getAsJsonArray(), context);
+                return optimizeNegate(astArray.get(1).getAsArrayNode(), context);
 
             case AstNodeType.OR:
-                return optimizeOr(astArray.get(1).getAsJsonArray(), astArray.get(2).getAsJsonArray(), context);
+                return optimizeOr(astArray.get(1).getAsArrayNode(), astArray.get(2).getAsArrayNode(), context);
             case AstNodeType.AND:
-                return optimizeAnd(astArray.get(1).getAsJsonArray(), astArray.get(2).getAsJsonArray(), context);
+                return optimizeAnd(astArray.get(1).getAsArrayNode(), astArray.get(2).getAsArrayNode(), context);
             case AstNodeType.NOT:
-                return optimizeNot(astArray.get(1).getAsJsonArray(), context);
+                return optimizeNot(astArray.get(1).getAsArrayNode(), context);
 
             case AstNodeType.EQUAL:
-                return optimizeEqual(astArray.get(1).getAsJsonArray(), astArray.get(2).getAsJsonArray(), context);
+                return optimizeEqual(astArray.get(1).getAsArrayNode(), astArray.get(2).getAsArrayNode(), context);
             case AstNodeType.NOT_EQUAL:
-                return optimizeNotEqual(astArray.get(1).getAsJsonArray(), astArray.get(2).getAsJsonArray(), context);
+                return optimizeNotEqual(astArray.get(1).getAsArrayNode(), astArray.get(2).getAsArrayNode(), context);
 
             case AstNodeType.LESS_OR_EQUAL:
-                return optimizeLessOrEqual(astArray.get(1).getAsJsonArray(), astArray.get(2).getAsJsonArray(), context);
+                return optimizeLessOrEqual(astArray.get(1).getAsArrayNode(), astArray.get(2).getAsArrayNode(), context);
             case AstNodeType.LESS_THAN:
-                return optimizeLessThan(astArray.get(1).getAsJsonArray(), astArray.get(2).getAsJsonArray(), context);
+                return optimizeLessThan(astArray.get(1).getAsArrayNode(), astArray.get(2).getAsArrayNode(), context);
             case AstNodeType.GREATER_OR_EQUAL:
-                return optimizeGreaterOrEqual(astArray.get(1).getAsJsonArray(), astArray.get(2).getAsJsonArray(), context);
+                return optimizeGreaterOrEqual(astArray.get(1).getAsArrayNode(), astArray.get(2).getAsArrayNode(), context);
             case AstNodeType.GREATER_THAN:
-                return optimizeGreaterThan(astArray.get(1).getAsJsonArray(), astArray.get(2).getAsJsonArray(), context);
+                return optimizeGreaterThan(astArray.get(1).getAsArrayNode(), astArray.get(2).getAsArrayNode(), context);
             case AstNodeType.TERNARY:
-                return optimizeTernary(astArray.get(1).getAsJsonArray(), astArray.get(2).getAsJsonArray(), (astArray.size() > 3) ? astArray.get(3).getAsJsonArray() : null, context);
+                return optimizeTernary(astArray.get(1).getAsArrayNode(), astArray.get(2).getAsArrayNode(), (astArray.size() > 3) ? astArray.get(3).getAsArrayNode() : null, context);
             case -AstNodeType.IF:
-                return optimizeIf(astArray.get(1).getAsJsonArray(), context);
+                return optimizeIf(astArray.get(1).getAsArrayNode(), context);
             case -AstNodeType.FOR:
-                return optimizeFor(astArray.get(1).getAsJsonArray(), astArray.get(2).getAsJsonArray(), astArray.get(3).getAsJsonArray(), context);
+                return optimizeFor(astArray.get(1).getAsArrayNode(), astArray.get(2).getAsArrayNode(), astArray.get(3).getAsArrayNode(), context);
             case AstNodeType.FOR:
             case AstNodeType.IF:
             case AstNodeType.CALL:
@@ -186,10 +175,10 @@ public class AstOptimizer {
                 return optimizeStatements(astArray.get(1), context);
 //
 //            case AstNodeType.VAR:
-//                return optimizeVar(astArray.get(1).getAsJsonPrimitive(), astArray.get(2).getAsJsonArray(), context);
+//                return optimizeVar(astArray.get(1).getAsJsonPrimitive(), astArray.get(2).getAsArrayNode(), context);
 //
 //            case AstNodeType.SELECTOR:
-//                return optimizeSelector(astArray.get(1).getAsJsonArray(), context);
+//                return optimizeSelector(astArray.get(1).getAsArrayNode(), context);
 //
             case -AstNodeType.CALL:
                 return optimizeCall(astArray.get(1), astArray.get(2), astArray.get(3), context);
@@ -198,7 +187,7 @@ public class AstOptimizer {
 //                return optimizeImport(astArray.get(1), context);
 //
             case AstNodeType.MACRO:
-                return optimizeMacro(astArray.get(1).getAsJsonPrimitive(), astArray.get(2).getAsJsonArray(), astArray.get(3).getAsJsonArray(), context);
+                return optimizeMacro(astArray.get(1).getAsJsonPrimitive(), astArray.get(2).getAsArrayNode(), astArray.get(3).getAsArrayNode(), context);
 
             default:
                 Histone.runtime_log_error("Optimization is unsupported for node type {}", null, nodeType);
@@ -206,16 +195,16 @@ public class AstOptimizer {
         }
     }
 
-    private Node evaluate(JsonArray astArray, EvaluatorContext context) throws HistoneException {
-        return StringNode.create(evaluator.process(AstNodeFactory.createArray(astArray), context));
+    private Node evaluate(ArrayNode astArray, EvaluatorContext context) throws HistoneException {
+        return StringHistoneNode.create(evaluator.process(AstNodeFactory.createArray(astArray), context));
     }
 
-    private Node optimizeCall(JsonElement target, JsonElement nameElement, JsonElement args, EvaluatorContext context) throws HistoneException {
-        JsonArray argsOpt = new JsonArray();
-        for (JsonElement arg : args.getAsJsonArray()) {
+    private Node optimizeCall(JsonNode target, JsonNode nameElement, JsonNode args, EvaluatorContext context) throws HistoneException {
+        ArrayNode argsOpt = new ArrayNode();
+        for (JsonNode arg : args.getAsArrayNode()) {
             Node node = optimizeNode(arg, context);
             if (node.isAst()) {
-                argsOpt.add(makeElementSafe(((AstNode) node).getValue().getAsJsonArray()));
+                argsOpt.add(makeElementSafe(((AstNode) node).getValue().getAsArrayNode()));
             } else {
                 argsOpt.add(node2Ast(node));
             }
@@ -224,7 +213,7 @@ public class AstOptimizer {
         return AstNode.create(AstNodeFactory.createNode(AstNodeType.CALL, target, nameElement, argsOpt));
     }
 
-    private Node optimizeMacro(JsonPrimitive ident, JsonArray args, JsonArray statements, EvaluatorContext context) throws EvaluatorException {
+    private Node optimizeMacro(JsonPrimitive ident, ArrayNode args, ArrayNode statements, EvaluatorContext context) throws EvaluatorException {
         String name = ident.getAsString();
 
         MacroFunc func = new MacroFunc();
@@ -236,7 +225,7 @@ public class AstOptimizer {
     }
 
 
-    private Node optimizeAdd(JsonArray nodeLeft, JsonArray nodeRight, EvaluatorContext context) throws HistoneException {
+    private Node optimizeAdd(ArrayNode nodeLeft, ArrayNode nodeRight, EvaluatorContext context) throws HistoneException {
         Node left = optimizeNode(nodeLeft, context);
         Node right = optimizeNode(nodeRight, context);
 
@@ -260,7 +249,7 @@ public class AstOptimizer {
     }
 
 
-    private Node optimizeSub(JsonArray nodeLeft, JsonArray nodeRight, EvaluatorContext context) throws HistoneException {
+    private Node optimizeSub(ArrayNode nodeLeft, ArrayNode nodeRight, EvaluatorContext context) throws HistoneException {
         Node left = optimizeNode(nodeLeft, context);
         Node right = optimizeNode(nodeRight, context);
 
@@ -283,7 +272,7 @@ public class AstOptimizer {
         }
     }
 
-    private Node optimizeMul(JsonArray nodeLeft, JsonArray nodeRight, EvaluatorContext context) throws HistoneException {
+    private Node optimizeMul(ArrayNode nodeLeft, ArrayNode nodeRight, EvaluatorContext context) throws HistoneException {
         Node left = optimizeNode(nodeLeft, context);
         Node right = optimizeNode(nodeRight, context);
 
@@ -306,7 +295,7 @@ public class AstOptimizer {
         }
     }
 
-    private Node optimizeDiv(JsonArray nodeLeft, JsonArray nodeRight, EvaluatorContext context) throws HistoneException {
+    private Node optimizeDiv(ArrayNode nodeLeft, ArrayNode nodeRight, EvaluatorContext context) throws HistoneException {
         Node left = optimizeNode(nodeLeft, context);
         Node right = optimizeNode(nodeRight, context);
 
@@ -329,7 +318,7 @@ public class AstOptimizer {
         }
     }
 
-    private Node optimizeMod(JsonArray nodeLeft, JsonArray nodeRight, EvaluatorContext context) throws HistoneException {
+    private Node optimizeMod(ArrayNode nodeLeft, ArrayNode nodeRight, EvaluatorContext context) throws HistoneException {
         Node left = optimizeNode(nodeLeft, context);
         Node right = optimizeNode(nodeRight, context);
 
@@ -352,7 +341,7 @@ public class AstOptimizer {
         }
     }
 
-    private Node optimizeNegate(JsonArray left, EvaluatorContext context) throws HistoneException {
+    private Node optimizeNegate(ArrayNode left, EvaluatorContext context) throws HistoneException {
         Node nodeLeft = optimizeNode(left, context);
         if (nodeLeft.isAst()) {
             return AstNode.create(AstNodeFactory.createNode(AstNodeType.NEGATE, left));
@@ -361,7 +350,7 @@ public class AstOptimizer {
         }
     }
 
-    private Node optimizeOr(JsonArray nodeLeft, JsonArray nodeRight, EvaluatorContext context) throws HistoneException {
+    private Node optimizeOr(ArrayNode nodeLeft, ArrayNode nodeRight, EvaluatorContext context) throws HistoneException {
         Node left = optimizeNode(nodeLeft, context);
         Node right = optimizeNode(nodeRight, context);
 
@@ -384,7 +373,7 @@ public class AstOptimizer {
         }
     }
 
-    private Node optimizeAnd(JsonArray nodeLeft, JsonArray nodeRight, EvaluatorContext context) throws HistoneException {
+    private Node optimizeAnd(ArrayNode nodeLeft, ArrayNode nodeRight, EvaluatorContext context) throws HistoneException {
         Node left = optimizeNode(nodeLeft, context);
         Node right = optimizeNode(nodeRight, context);
 
@@ -407,7 +396,7 @@ public class AstOptimizer {
         }
     }
 
-    private Node optimizeNot(JsonArray left, EvaluatorContext context) throws HistoneException {
+    private Node optimizeNot(ArrayNode left, EvaluatorContext context) throws HistoneException {
         Node nodeLeft = optimizeNode(left, context);
         if (nodeLeft.isAst()) {
             return AstNode.create(AstNodeFactory.createNode(AstNodeType.NOT, left));
@@ -416,7 +405,7 @@ public class AstOptimizer {
         }
     }
 
-    private Node optimizeEqual(JsonArray nodeLeft, JsonArray nodeRight, EvaluatorContext context) throws HistoneException {
+    private Node optimizeEqual(ArrayNode nodeLeft, ArrayNode nodeRight, EvaluatorContext context) throws HistoneException {
         Node left = optimizeNode(nodeLeft, context);
         Node right = optimizeNode(nodeRight, context);
 
@@ -439,7 +428,7 @@ public class AstOptimizer {
         }
     }
 
-    private Node optimizeNotEqual(JsonArray nodeLeft, JsonArray nodeRight, EvaluatorContext context) throws HistoneException {
+    private Node optimizeNotEqual(ArrayNode nodeLeft, ArrayNode nodeRight, EvaluatorContext context) throws HistoneException {
         Node left = optimizeNode(nodeLeft, context);
         Node right = optimizeNode(nodeRight, context);
 
@@ -462,7 +451,7 @@ public class AstOptimizer {
         }
     }
 
-    private Node optimizeLessOrEqual(JsonArray nodeLeft, JsonArray nodeRight, EvaluatorContext context) throws HistoneException {
+    private Node optimizeLessOrEqual(ArrayNode nodeLeft, ArrayNode nodeRight, EvaluatorContext context) throws HistoneException {
         Node left = optimizeNode(nodeLeft, context);
         Node right = optimizeNode(nodeRight, context);
 
@@ -485,7 +474,7 @@ public class AstOptimizer {
         }
     }
 
-    private Node optimizeLessThan(JsonArray nodeLeft, JsonArray nodeRight, EvaluatorContext context) throws HistoneException {
+    private Node optimizeLessThan(ArrayNode nodeLeft, ArrayNode nodeRight, EvaluatorContext context) throws HistoneException {
         Node left = optimizeNode(nodeLeft, context);
         Node right = optimizeNode(nodeRight, context);
 
@@ -508,7 +497,7 @@ public class AstOptimizer {
         }
     }
 
-    private Node optimizeGreaterOrEqual(JsonArray nodeLeft, JsonArray nodeRight, EvaluatorContext context) throws HistoneException {
+    private Node optimizeGreaterOrEqual(ArrayNode nodeLeft, ArrayNode nodeRight, EvaluatorContext context) throws HistoneException {
         Node left = optimizeNode(nodeLeft, context);
         Node right = optimizeNode(nodeRight, context);
 
@@ -531,7 +520,7 @@ public class AstOptimizer {
         }
     }
 
-    private Node optimizeGreaterThan(JsonArray nodeLeft, JsonArray nodeRight, EvaluatorContext context) throws HistoneException {
+    private Node optimizeGreaterThan(ArrayNode nodeLeft, ArrayNode nodeRight, EvaluatorContext context) throws HistoneException {
         Node left = optimizeNode(nodeLeft, context);
         Node right = optimizeNode(nodeRight, context);
 
@@ -554,13 +543,13 @@ public class AstOptimizer {
         }
     }
 
-//    private Node optimizeObject(JsonArray items, EvaluatorContext context) throws HistoneException {
+//    private Node optimizeObject(ArrayNode items, EvaluatorContext context) throws HistoneException {
 //        boolean isSafe = true;
 //
-//        ObjectNode result = ObjectNode.create();
-//        for (JsonElement item : items) {
-//            JsonPrimitive key = item.getAsJsonArray().get(0).getAsJsonPrimitive();
-//            JsonElement val = item.getAsJsonArray().get(1);
+//        ObjectHistoneNode result = ObjectHistoneNode.create();
+//        for (JsonNode item : items) {
+//            JsonPrimitive key = item.getAsArrayNode().get(0).getAsJsonPrimitive();
+//            JsonNode val = item.getAsArrayNode().get(1);
 //            Node itemNode = optimizeNode(val, context);
 //            if (itemNode instanceof AstNode) {
 //                isSafe = false;
@@ -576,7 +565,7 @@ public class AstOptimizer {
 //        }
 //    }
 
-    private Node optimizeTernary(JsonArray condition, JsonArray trueNode, JsonArray falseNode, EvaluatorContext context) throws HistoneException {
+    private Node optimizeTernary(ArrayNode condition, ArrayNode trueNode, ArrayNode falseNode, EvaluatorContext context) throws HistoneException {
         Node optCondition = optimizeNode(condition, context);
         Node optTrueNode = optimizeNode(trueNode, context);
         Node optFalseNode = falseNode != null ? optimizeNode(falseNode, context) : Node.NULL;
@@ -597,16 +586,16 @@ public class AstOptimizer {
         }
     }
 
-    private Node optimizeIf(JsonArray conditions, EvaluatorContext context) throws HistoneException {
-        JsonArray conditionsOut = new JsonArray();
+    private Node optimizeIf(ArrayNode conditions, EvaluatorContext context) throws HistoneException {
+        ArrayNode conditionsOut = new ArrayNode();
 
         context.saveState();
-        for (JsonElement condition : conditions) {
-            JsonArray expressionAst = condition.getAsJsonArray().get(0).getAsJsonArray();
+        for (JsonNode condition : conditions) {
+            ArrayNode expressionAst = condition.getAsArrayNode().get(0).getAsArrayNode();
             Node expressionResult = optimizeNode(expressionAst, context);
 
-            JsonArray statementsAst = condition.getAsJsonArray().get(1).getAsJsonArray();
-            Node statementsResult = optimizeStatements(statementsAst.getAsJsonArray(), context);
+            ArrayNode statementsAst = condition.getAsArrayNode().get(1).getAsArrayNode();
+            Node statementsResult = optimizeStatements(statementsAst.getAsArrayNode(), context);
 
             if (!expressionResult.isAst() && expressionResult.getAsBoolean().getValue()) {
                 if (statementsResult.isAst()) {
@@ -615,7 +604,7 @@ public class AstOptimizer {
                     return statementsResult.getAsString();
                 }
             } else {
-                JsonArray conditionOut = new JsonArray();
+                ArrayNode conditionOut = new ArrayNode();
                 if (expressionResult.isAst()) {
                     conditionOut.add(expressionAst);
 
@@ -637,33 +626,33 @@ public class AstOptimizer {
         return AstNode.create(AstNodeFactory.createNode(AstNodeType.IF, conditionsOut));
     }
 
-    private Node optimizeFor(JsonArray iterator, JsonArray collection, JsonArray statements, EvaluatorContext context) throws HistoneException {
+    private Node optimizeFor(ArrayNode iterator, ArrayNode collection, ArrayNode statements, EvaluatorContext context) throws HistoneException {
         Node collectionOpt = optimizeNode(collection, context);
-        Node statementsForOpt = optimizeStatements(statements.getAsJsonArray().get(0), context);
-        Node statementsElseOpt = statements.getAsJsonArray().size() > 1 ? optimizeStatements(statements.getAsJsonArray().get(1), context) : null;
+        Node statementsForOpt = optimizeStatements(statements.getAsArrayNode().get(0), context);
+        Node statementsElseOpt = statements.getAsArrayNode().size() > 1 ? optimizeStatements(statements.getAsArrayNode().get(1), context) : null;
 
         if (!collectionOpt.isAst()) { // we can't mark 'for' loop if loop collection can't be optimized to Node object (either array or object)
             String iterVal = iterator.get(0).getAsString();
             String iterKey = (iterator.size() > 1) ? iterator.get(1).getAsString() : null;
 
             // run evaluator with 'for' AST subtree
-            JsonArray forAst = new JsonArray();
-            forAst.add(AstNodeFactory.createNode(AstNodeType.FOR, iterator, collection, statements).getAsJsonArray());
-            return StringNode.create(evaluator.process(forAst, context));
+            ArrayNode forAst = new ArrayNode();
+            forAst.add(AstNodeFactory.createNode(AstNodeType.FOR, iterator, collection, statements).getAsArrayNode());
+            return StringHistoneNode.create(evaluator.process(forAst, context));
         }
 
-        JsonArray statementsArr = new JsonArray();
+        ArrayNode statementsArr = new ArrayNode();
         if (!statementsForOpt.isAst()) {
             statementsArr.add(node2Ast(statementsForOpt));
         } else {
-            statementsArr.add(statements.getAsJsonArray().get(0));
+            statementsArr.add(statements.getAsArrayNode().get(0));
         }
 
         if (statementsElseOpt != null) {
             if (!statementsElseOpt.isAst()) {
                 statementsArr.add(node2Ast(statementsElseOpt));
             } else {
-                statementsArr.add(statements.getAsJsonArray().get(1));
+                statementsArr.add(statements.getAsArrayNode().get(1));
             }
         }
 
@@ -671,20 +660,20 @@ public class AstOptimizer {
 
     }
 
-//    private boolean isSafe(JsonArray ast, String... varNames) {
+//    private boolean isSafe(ArrayNode ast, String... varNames) {
 //        Set<String> varNamesSet = new HashSet<String>();
 //        for (String name : varNames) {
 //            varNamesSet.add(name);
 //        }
 //
-//        for (JsonElement item : ast) {
-//            if (item.isJsonArray()) {
-//                JsonArray asJsonArray = item.getAsJsonArray();
-//                JsonElement firstElem = asJsonArray.get(0);
+//        for (JsonNode item : ast) {
+//            if (item.isArrayNode()) {
+//                ArrayNode asArrayNode = item.getAsArrayNode();
+//                JsonNode firstElem = asArrayNode.get(0);
 //                if (!isString(firstElem)) {
 //                    switch (firstElem.getAsJsonPrimitive().getAsInt()) {
 //                        case AstNodeType.SELECTOR:
-//                            if (!varNamesSet.contains(asJsonArray.get(1).getAsJsonArray().get(0).getAsString())) {
+//                            if (!varNamesSet.contains(asArrayNode.get(1).getAsArrayNode().get(0).getAsString())) {
 //                                return false;
 //                            }
 //                            break;
@@ -693,7 +682,7 @@ public class AstOptimizer {
 //                        case AstNodeType.CALL:
 //                            return false;
 //                        default:
-//                            if (!isSafe(asJsonArray, varNames)) {
+//                            if (!isSafe(asArrayNode, varNames)) {
 //                                return false;
 //                            }
 //                    }
@@ -704,7 +693,7 @@ public class AstOptimizer {
 //        return true;
 //    }
 
-    private JsonElement node2Ast(Node node) {
+    private JsonNode node2Ast(Node node) {
         if (node.isBoolean()) {
             return node.getAsBoolean().getValue() ? AstNodeFactory.createNode(AstNodeType.TRUE) : AstNodeFactory.createNode(AstNodeType.FALSE);
         } else if (node.isInteger()) {
@@ -717,7 +706,7 @@ public class AstOptimizer {
             return AstNodeFactory.createNode(AstNodeType.NULL);
             //TODO: implement array->map
 //        } else if (node.isArray()) {
-//            JsonArray elems = new JsonArray();
+//            ArrayNode elems = new ArrayNode();
 //
 //            for (Node elem : node.getAsArray().getElements()) {
 //                elems.add(node2Ast(elem));
@@ -725,10 +714,10 @@ public class AstOptimizer {
 //
 //            return AstNodeFactory.createNode(AstNodeType.ARRAY, elems);
 //        } else if (node.isObject()) {
-//            JsonArray props = new JsonArray();
+//            ArrayNode props = new ArrayNode();
 //
 //            for (Map.Entry<String, Node> entry : node.getAsObject().entries()) {
-//                JsonArray prop = new JsonArray();
+//                ArrayNode prop = new ArrayNode();
 //                prop.add(new JsonPrimitive(entry.getKey()));
 //                prop.add(node2Ast(entry.getValue()));
 //                props.add(prop);
@@ -740,21 +729,21 @@ public class AstOptimizer {
     }
 
 
-    private boolean isString(JsonElement element) {
+    private boolean isString(JsonNode element) {
         return element.isJsonPrimitive() && element.getAsJsonPrimitive().isString();
     }
 
-    private int getNodeType(JsonArray astArray) {
+    private int getNodeType(ArrayNode astArray) {
         return astArray.get(0).getAsJsonPrimitive().getAsInt();
     }
 
-    private JsonArray makeElementSafe(JsonArray element) throws HistoneException {
+    private ArrayNode makeElementSafe(ArrayNode element) throws HistoneException {
         boolean typeUpdated = false;
-        JsonArray result = new JsonArray();
-        for (JsonElement item : element) {
+        ArrayNode result = new ArrayNode();
+        for (JsonNode item : element) {
             if (typeUpdated) {
-                if (item.isJsonArray() && item.getAsJsonArray().get(0).isJsonPrimitive() && item.getAsJsonArray().get(0).getAsJsonPrimitive().isNumber()) {
-                    result.add(makeElementSafe(item.getAsJsonArray()));
+                if (item.isArrayNode() && item.getAsArrayNode().get(0).isJsonPrimitive() && item.getAsArrayNode().get(0).getAsJsonPrimitive().isNumber()) {
+                    result.add(makeElementSafe(item.getAsArrayNode()));
                 } else {
                     result.add(item);
                 }
@@ -766,5 +755,5 @@ public class AstOptimizer {
         }
         return result;
     }
-
+        */
 }

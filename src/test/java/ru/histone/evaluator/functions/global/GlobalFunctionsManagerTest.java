@@ -15,12 +15,14 @@
  */
 package ru.histone.evaluator.functions.global;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import ru.histone.evaluator.nodes.Node;
-import ru.histone.evaluator.nodes.StringNode;
+import ru.histone.evaluator.nodes.NodeFactory;
+import ru.histone.evaluator.nodes.StringHistoneNode;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -38,10 +40,13 @@ public class GlobalFunctionsManagerTest {
     private GlobalFunction emptyFunction1_DuplicatedName;
     private GlobalFunction emptyFunction1_DifferentCase;
     private GlobalFunction functionWithException;
+    private NodeFactory nodeFactory;
 
     @Before
     public void before() {
-        emptyFunction1 = new GlobalFunction() {
+        nodeFactory = new NodeFactory(new ObjectMapper());
+        
+        emptyFunction1 = new GlobalFunction(nodeFactory) {
             @Override
             public String getName() {
                 return "emptyFunction1";
@@ -49,11 +54,11 @@ public class GlobalFunctionsManagerTest {
 
             @Override
             public Node execute(Node... args) throws GlobalFunctionExecutionException {
-                return StringNode.create(getName());
+                return getNodeFactory().string(getName());
             }
         };
 
-        emptyFunction2 = new GlobalFunction() {
+        emptyFunction2 = new GlobalFunction(nodeFactory) {
             @Override
             public String getName() {
                 return "emptyFunction2";
@@ -61,11 +66,11 @@ public class GlobalFunctionsManagerTest {
 
             @Override
             public Node execute(Node... args) throws GlobalFunctionExecutionException {
-                return StringNode.create(getName());
+                return getNodeFactory().string(getName());
             }
         };
 
-        emptyFunction1_DuplicatedName = new GlobalFunction() {
+        emptyFunction1_DuplicatedName = new GlobalFunction(nodeFactory) {
             @Override
             public String getName() {
                 return "emptyFunction1";
@@ -73,11 +78,11 @@ public class GlobalFunctionsManagerTest {
 
             @Override
             public Node execute(Node... args) throws GlobalFunctionExecutionException {
-                return StringNode.create(getName());
+                return getNodeFactory().string(getName());
             }
         };
 
-        emptyFunction1_DifferentCase = new GlobalFunction() {
+        emptyFunction1_DifferentCase = new GlobalFunction(nodeFactory) {
             @Override
             public String getName() {
                 return "emptyfunction1";
@@ -85,11 +90,11 @@ public class GlobalFunctionsManagerTest {
 
             @Override
             public Node execute(Node... args) throws GlobalFunctionExecutionException {
-                return StringNode.create(getName());
+                return getNodeFactory().string(getName());
             }
         };
 
-        functionWithException = new GlobalFunction() {
+        functionWithException = new GlobalFunction(nodeFactory) {
             @Override
             public String getName() {
                 return "functionWithException";
@@ -196,7 +201,7 @@ public class GlobalFunctionsManagerTest {
 
     @Test
     public void functionResultWithArgs() {
-        GlobalFunction globalFunction = new GlobalFunction() {
+        GlobalFunction globalFunction = new GlobalFunction(nodeFactory) {
             @Override
             public String getName() {
                 return "myGlobalFunction";
@@ -215,7 +220,7 @@ public class GlobalFunctionsManagerTest {
                     addSeparator = true;
                 }
                 sb.append("]");
-                return StringNode.create(sb.toString());
+                return getNodeFactory().string(sb.toString());
             }
         };
 
@@ -224,7 +229,7 @@ public class GlobalFunctionsManagerTest {
         manager.registerFunction(globalFunction);
 
 
-        Node node = manager.execute("myGlobalFunction", StringNode.create("A"), StringNode.create("B"), StringNode.create("C"));
+        Node node = manager.execute("myGlobalFunction", nodeFactory.string("A"), nodeFactory.string("B"), nodeFactory.string("C"));
         assertNotNull(node);
         assertTrue(node.isString());
         assertEquals(node.getAsString().getValue(), "myGlobalFunction = [A-B-C]");

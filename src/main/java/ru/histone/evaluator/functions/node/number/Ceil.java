@@ -19,12 +19,18 @@ import java.math.RoundingMode;
 
 import ru.histone.evaluator.functions.node.NodeFunction;
 import ru.histone.evaluator.nodes.Node;
-import ru.histone.evaluator.nodes.NumberNode;
+import ru.histone.evaluator.nodes.NodeFactory;
+import ru.histone.evaluator.nodes.NumberHistoneNode;
+import ru.histone.evaluator.nodes.NumberHistoneNode;
 
 /**
  * Return ceil from target value
  */
-public class Ceil implements NodeFunction<NumberNode> {
+public class Ceil extends NodeFunction<NumberHistoneNode> {
+
+    public Ceil(NodeFactory nodeFactory) {
+        super(nodeFactory);
+    }
 
     @Override
     public String getName() {
@@ -32,7 +38,7 @@ public class Ceil implements NodeFunction<NumberNode> {
     }
 
     @Override
-    public Node execute(NumberNode target, Node... args) {
-        return NumberNode.create(target.getValue().setScale(0, RoundingMode.CEILING));
+    public Node execute(NumberHistoneNode target, Node... args) {
+        return getNodeFactory().number(target.getValue().setScale(0, RoundingMode.CEILING));
     }
 }

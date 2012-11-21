@@ -15,18 +15,16 @@
  */
 package ru.histone.evaluator.functions.node;
 
-import com.google.gson.Gson;
 import ru.histone.evaluator.nodes.Node;
-import ru.histone.evaluator.nodes.StringNode;
+import ru.histone.evaluator.nodes.NodeFactory;
+import ru.histone.evaluator.nodes.StringHistoneNode;
 
 /**
  * Convert current target to JSON string
  */
-public class ToJson implements NodeFunction<Node> {
-    private Gson gson;
-
-    public ToJson(Gson gson) {
-        this.gson = gson;
+public class ToJson extends NodeFunction<Node> {
+    public ToJson(NodeFactory nodeFactory) {
+        super(nodeFactory);
     }
 
     @Override
@@ -36,7 +34,7 @@ public class ToJson implements NodeFunction<Node> {
 
     @Override
     public Node execute(Node target, Node... args) {
-        String json = gson.toJson(target.getAsJsonElement());
-        return StringNode.create(json);
+        String json = getNodeFactory().toJsonString(target.getAsJsonNode());
+        return getNodeFactory().string(json);
     }
 }

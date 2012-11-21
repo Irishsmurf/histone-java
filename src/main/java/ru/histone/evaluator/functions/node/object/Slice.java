@@ -19,13 +19,18 @@ import java.util.Map;
 
 import ru.histone.evaluator.functions.node.NodeFunction;
 import ru.histone.evaluator.nodes.Node;
-import ru.histone.evaluator.nodes.ObjectNode;
+import ru.histone.evaluator.nodes.NodeFactory;
+import ru.histone.evaluator.nodes.ObjectHistoneNode;
 
 /**
  * Return slice from current array<br/>
  * Slice is specified by start and end indexes. They could have negative values, and it will mean number of elements from opposite side.
  */
-public class Slice implements NodeFunction<ObjectNode> {
+public class Slice extends NodeFunction<ObjectHistoneNode> {
+
+    public Slice(NodeFactory nodeFactory) {
+        super(nodeFactory);
+    }
 
     @Override
     public String getName() {
@@ -33,14 +38,14 @@ public class Slice implements NodeFunction<ObjectNode> {
     }
 
     @Override
-    public Node execute(ObjectNode target, Node... args) {
+    public Node execute(ObjectHistoneNode target, Node... args) {
         if (args.length == 0) {
             return target;
         }
 
         Node start = args[0];
         if (!start.isInteger()) {
-            return Node.UNDEFINED;
+            return getNodeFactory().UNDEFINED;
         }
 
 
@@ -76,7 +81,7 @@ public class Slice implements NodeFunction<ObjectNode> {
         }
 
         if (startIdx >= stopIdx) {
-            return ObjectNode.create();
+            return getNodeFactory().object();
         } else {
 
             if (startIdx < 0) {
@@ -87,7 +92,7 @@ public class Slice implements NodeFunction<ObjectNode> {
                 stopIdx = 0;
             }
 
-            ObjectNode result = ObjectNode.create();
+            ObjectHistoneNode result = getNodeFactory().object();
             int currentIdx = 0;
             for (Object key : elements.keySet()) {
                 if ((currentIdx >= startIdx) && (currentIdx < stopIdx)) {

@@ -16,14 +16,20 @@
 package ru.histone.evaluator.functions.global;
 
 import ru.histone.evaluator.nodes.Node;
-import ru.histone.evaluator.nodes.NumberNode;
+import ru.histone.evaluator.nodes.NodeFactory;
+import ru.histone.evaluator.nodes.NumberHistoneNode;
+import ru.histone.evaluator.nodes.NumberHistoneNode;
 import ru.histone.utils.ArrayUtils;
 
 /**
  * Return minimum value from specified arguments<br/>
  * When calculating min value, all arguments are casted to number type
  */
-public class Min implements GlobalFunction {
+public class Min extends GlobalFunction {
+    public Min(NodeFactory nodeFactory) {
+        super(nodeFactory);
+    }
+
     @Override
     public String getName() {
         return "min";
@@ -32,16 +38,16 @@ public class Min implements GlobalFunction {
     @Override
     public Node execute(Node... args) {
         if (ArrayUtils.isEmpty(args)) {
-            return Node.UNDEFINED;
+            return getNodeFactory().UNDEFINED;
         }
-        NumberNode result = null;
+        NumberHistoneNode result = null;
         for (Node arg : args) {
             if (!arg.isNumber()) {
                 continue;
             }
-            NumberNode argNum = (NumberNode) arg;
+            NumberHistoneNode argNum = (NumberHistoneNode) arg;
             result = (result == null || result.compareTo(argNum) > 0) ? argNum : result;
         }
-        return result == null ? Node.UNDEFINED : result;
+        return result == null ? getNodeFactory().UNDEFINED : result;
     }
 }

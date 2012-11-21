@@ -16,12 +16,17 @@
 package ru.histone.evaluator.functions.node;
 
 import ru.histone.evaluator.nodes.Node;
+import ru.histone.evaluator.nodes.NodeFactory;
+import ru.histone.evaluator.nodes.NumberHistoneNode;
+import ru.histone.evaluator.nodes.UndefinedNumberHistoneNode;
 
 /**
  * Return if current target is of number type and this number is integer
  */
-public class IsInteger implements NodeFunction<Node> {
-    private static final IsNumber IS_NUMBER = new IsNumber();
+public class IsInteger extends IsNumber {
+    public IsInteger(NodeFactory nodeFactory) {
+        super(nodeFactory);
+    }
 
     @Override
     public String getName() {
@@ -30,10 +35,6 @@ public class IsInteger implements NodeFunction<Node> {
 
     @Override
     public Node execute(Node target, Node... args) {
-        return isNumber(target) && target.getAsNumber().getValue().stripTrailingZeros().scale() <= 0 ? Node.TRUE : Node.FALSE;
-    }
-    
-    private boolean isNumber(Node target) {
-        return Node.TRUE == IS_NUMBER.execute(target);
+        return isNumber(target) && target.getAsNumber().getValue().stripTrailingZeros().scale() <= 0 ? getNodeFactory().TRUE : getNodeFactory().FALSE;
     }
 }

@@ -15,15 +15,11 @@
  */
 package ru.histone;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.io.StringReader;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.Before;
 
 import static org.junit.Assert.assertEquals;
@@ -37,23 +33,24 @@ public class HistoneInputOutputMethodsTest {
     private static final String CONTEXT_STRING = "";
     private static final String EXPECTED_AST = "[\"a \",[16],\" b \",[9,[101,1],[101,2]],\" c \",[103,\"русский\"],\" d\"]";
     private static final String EXPECTED_OUT = "a true b 3 c русский d";
-    private static JsonArray INPUT_AST;
+    private static ArrayNode INPUT_AST;
 
     private StringReader INPUT_READER;
     private InputStream INPUT_STREAM;
-    private JsonElement CONTEXT_JSON;
+    private JsonNode CONTEXT_JSON;
 
     @Before
-    public void before() throws HistoneException, UnsupportedEncodingException {
-        Gson gson = new GsonBuilder().serializeNulls().create();
+    public void before() throws HistoneException, IOException {
+        ObjectMapper jackson = new ObjectMapper();
+
 
         HistoneBuilder builder = new HistoneBuilder();
         histone = builder.build();
 
         INPUT_READER = new StringReader(INPUT_STRING);
-        CONTEXT_JSON = new Gson().fromJson(CONTEXT_STRING, JsonElement.class);
+        CONTEXT_JSON = jackson.readTree(CONTEXT_STRING);
         INPUT_STREAM = new ByteArrayInputStream(INPUT_STRING.getBytes("UTF-8"));
-        INPUT_AST = gson.fromJson(EXPECTED_AST,JsonElement.class).getAsJsonArray();
+        INPUT_AST = (ArrayNode) jackson.readTree(EXPECTED_AST);
     }
 
 //    @Test
@@ -76,19 +73,19 @@ public class HistoneInputOutputMethodsTest {
 //
 //    @Test
 //    public void testParseToJsonString() throws HistoneException {
-//        JsonArray result = histone.parseToJson(INPUT_STRING);
+//        ArrayNode result = histone.parseToJson(INPUT_STRING);
 //        assertEquals(EXPECTED_AST, result.toString());
 //    }
 //
 //    @Test
 //    public void testParseToJsonReader() throws HistoneException {
-//        JsonArray result = histone.parseToJson(INPUT_READER);
+//        ArrayNode result = histone.parseToJson(INPUT_READER);
 //        assertEquals(EXPECTED_AST, result.toString());
 //    }
 //
 //    @Test
 //    public void testParseToJsonInputStream() throws HistoneException, UnsupportedEncodingException {
-//        JsonArray result = histone.parseToJson(INPUT_STREAM);
+//        ArrayNode result = histone.parseToJson(INPUT_STREAM);
 //        assertEquals(EXPECTED_AST, result.toString());
 //    }
 //
@@ -117,7 +114,7 @@ public class HistoneInputOutputMethodsTest {
 //    }
 //
 //    @Test
-//    public void testProcessStringJsonElement() throws HistoneException {
+//    public void testProcessStringJsonNode() throws HistoneException {
 //        String result = histone.process(INPUT_STRING, CONTEXT_JSON);
 //        assertEquals(EXPECTED_OUT, result);
 //    }
@@ -129,7 +126,7 @@ public class HistoneInputOutputMethodsTest {
 //    }
 //
 //    @Test
-//    public void testProcessReaderJsonElement() throws HistoneException {
+//    public void testProcessReaderJsonNode() throws HistoneException {
 //        String result = histone.process(INPUT_READER, CONTEXT_JSON);
 //        assertEquals(EXPECTED_OUT, result);
 //    }
@@ -141,7 +138,7 @@ public class HistoneInputOutputMethodsTest {
 //    }
 //
 //    @Test
-//    public void testProcessInputStreamJsonElement() throws HistoneException, UnsupportedEncodingException {
+//    public void testProcessInputStreamJsonNode() throws HistoneException, UnsupportedEncodingException {
 //        String result = histone.process(INPUT_STREAM, CONTEXT_JSON);
 //        assertEquals(EXPECTED_OUT, result);
 //    }
@@ -154,7 +151,7 @@ public class HistoneInputOutputMethodsTest {
 //    }
 //
 //    @Test
-//    public void testProcessStringJsonElementWriter() throws HistoneException, UnsupportedEncodingException {
+//    public void testProcessStringJsonNodeWriter() throws HistoneException, UnsupportedEncodingException {
 //        StringWriter result = new StringWriter();
 //        histone.process(INPUT_STRING, CONTEXT_JSON, result);
 //        assertEquals(EXPECTED_OUT, result.getBuffer().toString());
@@ -168,7 +165,7 @@ public class HistoneInputOutputMethodsTest {
 //    }
 //
 //    @Test
-//    public void testProcessReaderJsonElementWriter() throws HistoneException, UnsupportedEncodingException {
+//    public void testProcessReaderJsonNodeWriter() throws HistoneException, UnsupportedEncodingException {
 //        StringWriter result = new StringWriter();
 //        histone.process(INPUT_READER, CONTEXT_JSON, result);
 //        assertEquals(EXPECTED_OUT, result.getBuffer().toString());
@@ -182,7 +179,7 @@ public class HistoneInputOutputMethodsTest {
 //    }
 //
 //    @Test
-//    public void testProcessInputStreamJsonElementWriter() throws HistoneException, UnsupportedEncodingException {
+//    public void testProcessInputStreamJsonNodeWriter() throws HistoneException, UnsupportedEncodingException {
 //        StringWriter result = new StringWriter();
 //        histone.process(INPUT_STREAM, CONTEXT_JSON, result);
 //        assertEquals(EXPECTED_OUT, result.getBuffer().toString());
@@ -197,7 +194,7 @@ public class HistoneInputOutputMethodsTest {
 //    }
 //
 //    @Test
-//    public void testProcessStringJsonElementOutputStream() throws HistoneException, UnsupportedEncodingException {
+//    public void testProcessStringJsonNodeOutputStream() throws HistoneException, UnsupportedEncodingException {
 //        ByteArrayOutputStream result = new ByteArrayOutputStream();
 //        OutputStream output = result;
 //        histone.process(INPUT_STRING, CONTEXT_JSON, output);
@@ -213,7 +210,7 @@ public class HistoneInputOutputMethodsTest {
 //    }
 //
 //    @Test
-//    public void testProcessReaderJsonElementOutputStream() throws HistoneException, UnsupportedEncodingException {
+//    public void testProcessReaderJsonNodeOutputStream() throws HistoneException, UnsupportedEncodingException {
 //        ByteArrayOutputStream result = new ByteArrayOutputStream();
 //        OutputStream output = result;
 //        histone.process(INPUT_READER, CONTEXT_JSON, output);
@@ -229,7 +226,7 @@ public class HistoneInputOutputMethodsTest {
 //    }
 //
 //    @Test
-//    public void testProcessInputStreamJsonElementOutputStream() throws HistoneException, UnsupportedEncodingException {
+//    public void testProcessInputStreamJsonNodeOutputStream() throws HistoneException, UnsupportedEncodingException {
 //        ByteArrayOutputStream result = new ByteArrayOutputStream();
 //        OutputStream output = result;
 //        histone.process(INPUT_STREAM, CONTEXT_JSON, output);
@@ -249,7 +246,7 @@ public class HistoneInputOutputMethodsTest {
 //    }
 //
 //    @Test
-//    public void testProcessASTStringJsonElement() throws HistoneException {
+//    public void testProcessASTStringJsonNode() throws HistoneException {
 //        String result = histone.processAST(INPUT_AST, CONTEXT_JSON);
 //        assertEquals(EXPECTED_OUT, result);
 //    }
@@ -264,7 +261,7 @@ public class HistoneInputOutputMethodsTest {
 //    }
 //
 //    @Test
-//    public void testProcessASTStringJsonElementOutputStream() throws HistoneException, UnsupportedEncodingException {
+//    public void testProcessASTStringJsonNodeOutputStream() throws HistoneException, UnsupportedEncodingException {
 //        ByteArrayOutputStream result = new ByteArrayOutputStream();
 //        OutputStream output = result;
 //        histone.processAST(INPUT_AST, CONTEXT_JSON, output);
@@ -279,7 +276,7 @@ public class HistoneInputOutputMethodsTest {
 //    }
 //
 //    @Test
-//    public void testProcessASTStringJsonElementWriter() throws HistoneException, UnsupportedEncodingException {
+//    public void testProcessASTStringJsonNodeWriter() throws HistoneException, UnsupportedEncodingException {
 //        StringWriter result = new StringWriter();
 //        histone.processAST(INPUT_AST, CONTEXT_JSON, result);
 //        assertEquals(EXPECTED_OUT, result.getBuffer().toString());

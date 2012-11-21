@@ -20,51 +20,57 @@ import java.util.GregorianCalendar;
 
 import ru.histone.Histone;
 import ru.histone.evaluator.nodes.Node;
-import ru.histone.evaluator.nodes.NumberNode;
+import ru.histone.evaluator.nodes.NodeFactory;
+import ru.histone.evaluator.nodes.NumberHistoneNode;
+import ru.histone.evaluator.nodes.NumberHistoneNode;
 
 /**
  * Returns day of week as a number for specified date<br/>
  * 1 - monday, 7 - sunday
  */
-public class DayOfWeek implements GlobalFunction {
+public class DayOfWeek extends GlobalFunction {
+    public DayOfWeek(NodeFactory nodeFactory) {
+        super(nodeFactory);
+    }
+
     @Override
     public String getName() {
         return "dayOfWeek";
     }
 
     @Override
-    public Node execute(Node... args) throws GlobalFunctionExecutionException {
+    public Node execute(Node ... args) throws GlobalFunctionExecutionException {
         if (args.length < 3) {
             Histone.runtime_log_warn("Function dayOfWeek() needs to have three arguments, but you provided '{}' arguments", args.length);
-            return Node.UNDEFINED;
+            return getNodeFactory().UNDEFINED;
         }
 
         if (args.length > 3) {
             Histone.runtime_log_warn("Function dayOfWeek() has only three arguments, but you provided '{}' arguments", args.length);
         }
 
-        NumberNode year = args[0].getAsNumber();
-        NumberNode month = args[1].getAsNumber();
-        NumberNode day = args[2].getAsNumber();
+        NumberHistoneNode year = args[0].getAsNumber();
+        NumberHistoneNode month = args[1].getAsNumber();
+        NumberHistoneNode day = args[2].getAsNumber();
 
         if (year.isUndefined() || !year.isInteger()) {
             Histone.runtime_log_warn("Can't cast first argument '{}' to integer Number for function dayOfWeek", year.getAsString());
-            return Node.UNDEFINED;
+            return getNodeFactory().UNDEFINED;
         }
 
         if (month.isUndefined() || !year.isInteger()) {
             Histone.runtime_log_warn("Can't cast second argument '{}' to integer Number for function dayOfWeek", month.getAsString());
-            return Node.UNDEFINED;
+            return getNodeFactory().UNDEFINED;
         }
 
         if ((month.getValue().intValue() <= 0) || (month.getValue().intValue() > 12)) {
             Histone.runtime_log_warn("Second argument for function dayOfWeek should be between 1 and 12, you provided '{}' ", month.getAsString());
-            return Node.UNDEFINED;
+            return getNodeFactory().UNDEFINED;
         }
 
         if (day.isUndefined() || !year.isInteger()) {
             Histone.runtime_log_warn("Can't cast third argument '{}' to integer Number for function dayOfWeek", day.getAsString());
-            return Node.UNDEFINED;
+            return getNodeFactory().UNDEFINED;
         }
 
         GregorianCalendar calendar = new GregorianCalendar();
@@ -78,12 +84,12 @@ public class DayOfWeek implements GlobalFunction {
             calendar.getTimeInMillis();
         } catch (IllegalArgumentException e) {
             Histone.runtime_log_warn_e("Arguments specified for dayOfWeek function is incorrect date (y:{},m:{},d:{})", e, year.getAsString(), month.getAsString(), day.getAsString());
-            return Node.UNDEFINED;
+            return getNodeFactory().UNDEFINED;
         }
 
         if (!isLeapYear(year.getValue().intValue()) && (month.getValue().intValue() == 2) && (day.getValue().intValue() > 28)) {
             Histone.runtime_log_warn("Arguments specified for dayOfWeek function is incorrect date (y:{},m:{},d:{})", year.getAsString(), month.getAsString(), day.getAsString());
-            return Node.UNDEFINED;
+            return getNodeFactory().UNDEFINED;
         }
 
         int dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK) - 1;
@@ -91,7 +97,7 @@ public class DayOfWeek implements GlobalFunction {
             dayOfWeek = 7;
         }
 
-        return NumberNode.create(dayOfWeek);
+        return getNodeFactory().number(dayOfWeek);
     }
 
     private static boolean isLeapYear(int year) {

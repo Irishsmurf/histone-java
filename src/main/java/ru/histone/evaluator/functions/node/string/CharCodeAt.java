@@ -17,13 +17,18 @@ package ru.histone.evaluator.functions.node.string;
 
 import ru.histone.evaluator.functions.node.NodeFunction;
 import ru.histone.evaluator.nodes.Node;
-import ru.histone.evaluator.nodes.NumberNode;
-import ru.histone.evaluator.nodes.StringNode;
+import ru.histone.evaluator.nodes.NodeFactory;
+import ru.histone.evaluator.nodes.NumberHistoneNode;
+import ru.histone.evaluator.nodes.StringHistoneNode;
 
 /**
  * Return ASCII char code of target value for specified char index
  */
-public class CharCodeAt implements NodeFunction<StringNode> {
+public class CharCodeAt extends NodeFunction<StringHistoneNode> {
+
+    public CharCodeAt(NodeFactory nodeFactory) {
+        super(nodeFactory);
+    }
 
     @Override
     public String getName() {
@@ -31,17 +36,17 @@ public class CharCodeAt implements NodeFunction<StringNode> {
     }
 
     @Override
-    public Node execute(StringNode target, Node... args) {
+    public Node execute(StringHistoneNode target, Node... args) {
         if (args.length > 0 && args[0].isInteger()) {
 
             int charIdx = args[0].getAsNumber().getValue().intValue();
             String value = target.getValue();
             if (charIdx >= 0 && charIdx < value.length()) {
-                return NumberNode.create(value.codePointAt(charIdx));
+                return getNodeFactory().number(value.codePointAt(charIdx));
             }
 
         }
 
-        return Node.UNDEFINED;
+        return getNodeFactory().UNDEFINED;
     }
 }

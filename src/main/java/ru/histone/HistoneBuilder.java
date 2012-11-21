@@ -15,9 +15,9 @@
  */
 package ru.histone;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonPrimitive;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.histone.evaluator.Evaluator;
@@ -26,13 +26,7 @@ import ru.histone.evaluator.functions.global.GlobalFunction;
 import ru.histone.evaluator.functions.global.GlobalFunctionsManager;
 import ru.histone.evaluator.functions.node.NodeFunction;
 import ru.histone.evaluator.functions.node.NodeFunctionsManager;
-import ru.histone.evaluator.nodes.BooleanNode;
-import ru.histone.evaluator.nodes.GlobalObjectNode;
-import ru.histone.evaluator.nodes.Node;
-import ru.histone.evaluator.nodes.NullNode;
-import ru.histone.evaluator.nodes.NumberNode;
-import ru.histone.evaluator.nodes.ObjectNode;
-import ru.histone.evaluator.nodes.StringNode;
+import ru.histone.evaluator.nodes.*;
 import ru.histone.optimizer.AstImportResolver;
 import ru.histone.optimizer.AstInlineOptimizer;
 import ru.histone.optimizer.AstMarker;
@@ -67,7 +61,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public class HistoneBuilder {
     private static final Logger log = LoggerFactory.getLogger(HistoneBuilder.class);
 
-    private Gson gson = new Gson();
+//    private Gson gson = new Gson();
+    private NodeFactory nodeFactory = new NodeFactory(new ObjectMapper());
 
     private ConcurrentHashMap<GlobalProperty, Node> globalProperties = new ConcurrentHashMap<GlobalProperty, Node>();
     private ConcurrentHashMap<String, GlobalFunction> globalFunctions = new ConcurrentHashMap<String, GlobalFunction>();
@@ -78,14 +73,13 @@ public class HistoneBuilder {
     }
 
     /**
-     * Set preconfigured Gson engine<br/>
-     * In most cases you don't need to have custom Gson engine, and defaut Histone Gson engine will be enoughe.
+     * Set preconfigured Jackson engine<br/>
      *
-     * @param gson
+     * @param jackson
      */
-    public void setGson(Gson gson) {
-        log.debug("setGson({})", gson);
-        this.gson = gson;
+    public void setJackson(ObjectMapper jackson) {
+        log.debug("setJackson({})", jackson);
+        this.nodeFactory = new NodeFactory(jackson);
     }
 
     /**
@@ -172,7 +166,7 @@ public class HistoneBuilder {
      * @param value    property value
      */
     public void setGlobalProperty(GlobalProperty property, String value) {
-        globalProperties.put(property, StringNode.create(value));
+        globalProperties.put(property, nodeFactory.string(value));
     }
 
     /**
@@ -187,7 +181,7 @@ public class HistoneBuilder {
      * @see #setGlobalProperty
      */
     public void setGlobalProperty(GlobalProperty property, Integer value) {
-        globalProperties.put(property, NumberNode.create(value));
+        globalProperties.put(property, nodeFactory.number(value));
     }
 
     /**
@@ -202,7 +196,7 @@ public class HistoneBuilder {
      * @see #setGlobalProperty
      */
     public void setGlobalProperty(GlobalProperty property, Long value) {
-        globalProperties.put(property, NumberNode.create(value));
+        globalProperties.put(property, nodeFactory.number(value));
     }
 
     /**
@@ -217,7 +211,7 @@ public class HistoneBuilder {
      * @see #setGlobalProperty
      */
     public void setGlobalProperty(GlobalProperty property, BigDecimal value) {
-        globalProperties.put(property, NumberNode.create(value));
+        globalProperties.put(property, nodeFactory.number(value));
     }
 
     /**
@@ -232,7 +226,7 @@ public class HistoneBuilder {
      * @see #setGlobalProperty
      */
     public void setGlobalProperty(GlobalProperty property, Boolean value) {
-        globalProperties.put(property, value ? BooleanNode.TRUE : BooleanNode.FALSE);
+        globalProperties.put(property, value ? nodeFactory.TRUE : nodeFactory.FALSE);
     }
 
     /**
@@ -253,21 +247,21 @@ public class HistoneBuilder {
      * @see #setGlobalProperty
      * @see #setGlobalProperty
      */
-    public void setGlobalProperty(GlobalProperty property, JsonElement value) {
-        if (value.isJsonArray()) {
-            globalProperties.put(property, ObjectNode.create(value.getAsJsonArray()));
-        } else if (value.isJsonObject()) {
-            globalProperties.put(property, ObjectNode.create(value.getAsJsonObject()));
-        } else if (value.isJsonNull()) {
-            globalProperties.put(property, NullNode.NULL);
-        } else if (value.isJsonPrimitive()) {
-            JsonPrimitive primitiveValue = value.getAsJsonPrimitive();
-            if (primitiveValue.isBoolean()) {
-                globalProperties.put(property, value.getAsBoolean() ? BooleanNode.TRUE : BooleanNode.FALSE);
-            } else if (primitiveValue.isString()) {
-                globalProperties.put(property, StringNode.create(primitiveValue.getAsString()));
-            } else if (primitiveValue.isNumber()) {
-                globalProperties.put(property, NumberNode.create(primitiveValue.getAsBigDecimal()));
+    public void setGlobalProperty(GlobalProperty property, JsonNode value) {
+        if (value.isArray()) {
+//            globalProperties.put(property, ObjectHistoneNode.create(value.getAsArrayNode()));
+            globalProperties.put(property, nodeFactory.object());
+        } else if (value.isObject()) {
+            globalProperties.put(property, nodeFactory.object((ObjectNode) value));
+        } else if (value.isNull()) {
+            globalProperties.put(property, nodeFactory.NULL);
+        } else if (value.isValueNode()) {
+            if (value.isBoolean()) {
+                globalProperties.put(property, value.booleanValue() ? nodeFactory.TRUE : nodeFactory.FALSE);
+            } else if (value.isTextual()) {
+                globalProperties.put(property, nodeFactory.string(value.asText()));
+            } else if (value.isNumber()) {
+                globalProperties.put(property, nodeFactory.number(value.decimalValue()));
             }
         }
     }
@@ -297,10 +291,10 @@ public class HistoneBuilder {
         log.debug("Building new Histone template engine");
 
         TokenizerFactory tokenizerFactory = new TokenizerFactory(HistoneTokensHolder.getTokens());
-        Parser parser = new Parser(tokenizerFactory);
+        Parser parser = new Parser(tokenizerFactory,nodeFactory);
 
         EvaluatorBootstrap evaluatorBootstrap = new EvaluatorBootstrap();
-        evaluatorBootstrap.setGson(gson);
+        evaluatorBootstrap.setNodeFactory(nodeFactory);
         evaluatorBootstrap.setParser(parser);
         URI baseURI = extractBaseURI(globalProperties);
         if (baseURI != null) {
@@ -318,7 +312,7 @@ public class HistoneBuilder {
         evaluatorBootstrap.setGlobalFunctionsManager(globalFunctionsManager);
         evaluatorBootstrap.setNodeFunctionsManager(nodeFunctionsManager);
 
-        GlobalObjectNode global = new GlobalObjectNode();
+        GlobalObjectNode global = new GlobalObjectNode(nodeFactory);
         for (Map.Entry<GlobalProperty, Node> entry : globalProperties.entrySet()) {
             global.add(entry.getKey().getName(), entry.getValue());
         }
@@ -327,14 +321,20 @@ public class HistoneBuilder {
         Evaluator evaluator = new Evaluator(evaluatorBootstrap);
 
         AstImportResolver astImportResolver = new AstImportResolver(parser, resourceLoader);
-
         AstOptimizer astOptimizer = new AstOptimizer(evaluator);
         AstMarker astMarker = new AstMarker(astOptimizer);
-
         AstInlineOptimizer astInlineOptimizer = new AstInlineOptimizer();
 
+        HistoneBootstrap histoneBootstrap = new HistoneBootstrap();
+        histoneBootstrap.setNodeFactory(nodeFactory);
+        histoneBootstrap.setParser(parser);
+        histoneBootstrap.setEvaluator(evaluator);
+        histoneBootstrap.setAstMarker(astMarker);
+        histoneBootstrap.setAstImportResolver(astImportResolver);
+        histoneBootstrap.setAstInlineOptimizer(astInlineOptimizer);
+        histoneBootstrap.setAstAstOptimizer(astOptimizer);
 
-        return new Histone(parser, evaluator, astImportResolver, astMarker, astInlineOptimizer, astOptimizer, gson);
+        return new Histone(histoneBootstrap);
     }
 
     private URI extractBaseURI(Map<GlobalProperty, Node> globalProperties) throws HistoneException {
@@ -347,11 +347,5 @@ public class HistoneBuilder {
         } catch (URISyntaxException e) {
             throw new HistoneException(e);
         }
-    }
-
-    //those methods are here for testing purposes only
-    //we need to refactor classes dependencies in order to have better testable architecture
-    protected Gson getGson() {
-        return gson;
     }
 }

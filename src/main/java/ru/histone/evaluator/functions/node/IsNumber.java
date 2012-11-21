@@ -15,14 +15,18 @@
  */
 package ru.histone.evaluator.functions.node;
 
-import ru.histone.evaluator.nodes.Node;
-import ru.histone.evaluator.nodes.NumberNode;
-import ru.histone.evaluator.nodes.UndefinedNumberNode;
+import ru.histone.evaluator.nodes.*;
+import ru.histone.evaluator.nodes.NumberHistoneNode;
+import ru.histone.evaluator.nodes.UndefinedNumberHistoneNode;
 
 /**
  * Return if current target is of number type
  */
-public class IsNumber implements NodeFunction<Node> {
+public class IsNumber extends NodeFunction<Node> {
+    public IsNumber(NodeFactory nodeFactory) {
+        super(nodeFactory);
+    }
+
     @Override
     public String getName() {
         return "isNumber";
@@ -30,6 +34,10 @@ public class IsNumber implements NodeFunction<Node> {
 
     @Override
     public Node execute(Node target, Node... args) {
-        return !(target instanceof UndefinedNumberNode) && (target instanceof NumberNode) ? Node.TRUE : Node.FALSE;
+        return isNumber(target) ? getNodeFactory().TRUE : getNodeFactory().FALSE;
+    }
+
+    protected boolean isNumber(Node target) {
+        return !(target instanceof UndefinedNumberHistoneNode) && (target instanceof NumberHistoneNode);
     }
 }

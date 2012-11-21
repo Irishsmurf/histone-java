@@ -19,21 +19,19 @@ import java.math.BigDecimal;
 
 import ru.histone.evaluator.functions.global.GlobalFunction;
 import ru.histone.evaluator.functions.global.GlobalFunctionExecutionException;
-import ru.histone.evaluator.nodes.BooleanNode;
-import ru.histone.evaluator.nodes.Node;
-import ru.histone.evaluator.nodes.NumberNode;
-import ru.histone.evaluator.nodes.StringNode;
+import ru.histone.evaluator.nodes.*;
 
 /**
  *
  *
  */
-public class MockGlobalFunction implements GlobalFunction {
+public class MockGlobalFunction extends GlobalFunction {
     private String name;
     private String data;
     private String resultType;
 
-    public MockGlobalFunction(String name, String resultType, String data) {
+    public MockGlobalFunction(NodeFactory nodeFactory, String name, String resultType, String data) {
+        super(nodeFactory);
         this.name = name;
         this.resultType = resultType;
         this.data = data;
@@ -68,11 +66,11 @@ public class MockGlobalFunction implements GlobalFunction {
                 data = data.replace(":args:", sb.toString());
             }
 
-            node = StringNode.create(data);
+            node = getNodeFactory().string(data);
         } else if ("number".equals(resultType.toLowerCase())) {
-            node = NumberNode.create(new BigDecimal(data));
+            node = getNodeFactory().number(new BigDecimal(data));
         } else if ("boolean".equals(resultType.toLowerCase())) {
-            node = "true".equalsIgnoreCase(data) ? BooleanNode.TRUE : BooleanNode.FALSE;
+            node = "true".equalsIgnoreCase(data) ? getNodeFactory().TRUE : getNodeFactory().FALSE;
         } else {
             throw new RuntimeException(String.format("ResultType '%s' not supported by tests", resultType));
         }

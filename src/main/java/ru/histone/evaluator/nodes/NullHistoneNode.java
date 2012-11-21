@@ -15,25 +15,25 @@
  */
 package ru.histone.evaluator.nodes;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonNull;
+import com.fasterxml.jackson.databind.JsonNode;
 import ru.histone.Histone;
 
 /**
  * Class representing Null type in Histone
  */
-public class NullNode extends Node {
+public class NullHistoneNode extends Node {
 
-//	public static final NullNode INSTANCE = new NullNode();
+//	public static final NullHistoneNode INSTANCE = new NullHistoneNode();
 
-	protected NullNode() {
+	protected NullHistoneNode(NodeFactory nodeFactory) {
+        super(nodeFactory);
 	}
 
 	@Override
 	public Node oper_add(Node right) {
 		if (right.isNumber()) {
 			Histone.runtime_log_warn("Null: operation '+' is undefined for '{}' and '{}'", this, right);
-			return Node.UNDEFINED;
+			return getNodeFactory().UNDEFINED;
 		} else {
 			return this.getAsString().oper_add(right.getAsString());
 		}
@@ -42,41 +42,41 @@ public class NullNode extends Node {
 	@Override
 	public Node oper_mul(Node right) {
 		Histone.runtime_log_warn("Null: operation '*' is undefined for '{}' and '{}'", this, right);
-		return Node.UNDEFINED;
+		return getNodeFactory().UNDEFINED;
 	}
 
 	@Override
 	public Node oper_div(Node right) {
 		Histone.runtime_log_warn("Null: operation '/' is undefined for '{}' and '{}'", this, right);
-		return Node.UNDEFINED;
+		return getNodeFactory().UNDEFINED;
 	}
 
 	@Override
 	public Node oper_mod(Node right) {
 		Histone.runtime_log_warn("Null: operation '%' is undefined for '{}' and '{}'", this, right);
-		return Node.UNDEFINED;
+		return getNodeFactory().UNDEFINED;
 	}
 
 	@Override
 	public Node oper_negate() {
 		Histone.runtime_log_warn("Null: operation '- (negate)' is undefined for '{}'", this);
-		return Node.UNDEFINED;
+		return getNodeFactory().UNDEFINED;
 	}
 
 	@Override
 	public Node oper_sub(Node right) {
 		Histone.runtime_log_warn("Null: operation '-' is undefined for '{}' and '{}'", this, right);
-		return Node.UNDEFINED;
+		return getNodeFactory().UNDEFINED;
 	}
 
 	@Override
 	public Node oper_not() {
-		return Node.TRUE;
+		return getNodeFactory().TRUE;
 	}
 
 	@Override
 	public Node oper_equal(Node right) {
-		return (this.getAsBoolean() == right.getAsBoolean()) ? Node.TRUE : Node.FALSE;
+		return (this.getAsBoolean() == right.getAsBoolean()) ? getNodeFactory().TRUE : getNodeFactory().FALSE;
 	}
 
 	@Override
@@ -100,28 +100,28 @@ public class NullNode extends Node {
 	}
 
 	@Override
-	public BooleanNode getAsBoolean() {
-		return Node.FALSE;
+	public BooleanHistoneNode getAsBoolean() {
+		return getNodeFactory().FALSE;
 	}
 
 	@Override
-	public NumberNode getAsNumber() {
-		return NumberNode.create(0);
+	public NumberHistoneNode getAsNumber() {
+		return  getNodeFactory().number(0);
 	}
 
 	@Override
-	public StringNode getAsString() {
-		return StringNode.create("null");
+	public StringHistoneNode getAsString() {
+		return getNodeFactory().string("null");
 	}
 
 	@Override
-	public ObjectNode getAsObject() {
-		return ObjectNode.create();
+	public ObjectHistoneNode getAsObject() {
+		return getNodeFactory().object();
 	}
 
 	@Override
-	public JsonElement getAsJsonElement() {
-		return JsonNull.INSTANCE;
+	public JsonNode getAsJsonNode() {
+		return getNodeFactory().jsonNull();
 	}
 
 	@Override

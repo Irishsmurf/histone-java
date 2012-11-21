@@ -24,23 +24,23 @@ import ru.histone.evaluator.EvaluatorContext;
  * Special class for wrapping Histone context as object type object<br/>
  * This class is used for evaluating deep selectors (e.g. &#125;&#125;one.field.val&#125;&#125;)
  */
-public class ContextWrapperNode extends ObjectNode {
+public class ContextWrapperNode extends ObjectHistoneNode {
 
     private EvaluatorContext context;
 
-    private ContextWrapperNode(EvaluatorContext context) {
-        super();
+    private ContextWrapperNode(NodeFactory nodeFactory, EvaluatorContext context) {
+        super(nodeFactory);
         this.context = context;
     }
 
-    /**
-     * Create context wrapper at evaluator context
-     *
-     * @param context evaluator context
-     * @return object type object with internal values copied from evaluator context
-     */
-    public static ContextWrapperNode create(EvaluatorContext context) {
-        return new ContextWrapperNode(context);
+//    /**
+//     * Create context wrapper at evaluator context
+//     *
+//     * @param context evaluator context
+//     * @return object type object with internal values copied from evaluator context
+//     */
+    public static ContextWrapperNode create(NodeFactory nodeFactory, EvaluatorContext context) {
+        return new ContextWrapperNode(nodeFactory, context);
     }
 
     @Override

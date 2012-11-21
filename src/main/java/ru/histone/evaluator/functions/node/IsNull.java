@@ -16,12 +16,17 @@
 package ru.histone.evaluator.functions.node;
 
 import ru.histone.evaluator.nodes.Node;
-import ru.histone.evaluator.nodes.NullNode;
+import ru.histone.evaluator.nodes.NodeFactory;
+import ru.histone.evaluator.nodes.NullHistoneNode;
 
 /**
  * Return if current target is null value
  */
-public class IsNull implements NodeFunction<Node> {
+public class IsNull extends NodeFunction<Node> {
+    public IsNull(NodeFactory nodeFactory) {
+        super(nodeFactory);
+    }
+
     @Override
     public String getName() {
         return "isNull";
@@ -29,6 +34,6 @@ public class IsNull implements NodeFunction<Node> {
 
     @Override
     public Node execute(Node target, Node... args) {
-        return (target instanceof NullNode) ? Node.TRUE : Node.FALSE;
+        return (target instanceof NullHistoneNode) ? getNodeFactory().TRUE : getNodeFactory().FALSE;
     }
 }

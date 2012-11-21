@@ -17,12 +17,17 @@ package ru.histone.evaluator.functions.node.object;
 
 import ru.histone.evaluator.functions.node.NodeFunction;
 import ru.histone.evaluator.nodes.Node;
-import ru.histone.evaluator.nodes.ObjectNode;
+import ru.histone.evaluator.nodes.NodeFactory;
+import ru.histone.evaluator.nodes.ObjectHistoneNode;
 
 /**
  * Check if target object has property with specified key name
  */
-public class HasKey implements NodeFunction<ObjectNode> {
+public class HasKey extends NodeFunction<ObjectHistoneNode> {
+
+    public HasKey(NodeFactory nodeFactory) {
+        super(nodeFactory);
+    }
 
     @Override
     public String getName() {
@@ -30,11 +35,11 @@ public class HasKey implements NodeFunction<ObjectNode> {
     }
 
     @Override
-    public Node execute(ObjectNode target, Node... args) {
+    public Node execute(ObjectHistoneNode target, Node... args) {
         if (args.length > 0) {
             String key = args[0].getAsString().getValue();
-            return target.hasProp(key) ? Node.TRUE : Node.FALSE;
+            return target.hasProp(key) ? getNodeFactory().TRUE : getNodeFactory().FALSE;
         }
-        return Node.UNDEFINED;
+        return getNodeFactory().UNDEFINED;
     }
 }

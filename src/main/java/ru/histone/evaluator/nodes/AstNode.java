@@ -15,48 +15,49 @@
  */
 package ru.histone.evaluator.nodes;
 
-import com.google.gson.JsonElement;
+import com.fasterxml.jackson.databind.JsonNode;
 
 /**
  * Special class, used in AST optimizer module
  */
 public class AstNode extends Node {
-    private JsonElement value;
+    private JsonNode value;
 
-    public static AstNode create(JsonElement element) {
+    public static AstNode create(JsonNode element) {
         return new AstNode(element);
     }
 
-    private AstNode(JsonElement value) {
+    protected AstNode(JsonNode value) {
+        super(null);
         this.value = value;
     }
 
-    public JsonElement getValue() {
+    public JsonNode getValue() {
         return value;
     }
 
     @Override
-    public BooleanNode getAsBoolean() {
+    public BooleanHistoneNode getAsBoolean() {
         throw new UnsupportedOperationException("AstNode doesn't support this method");
     }
 
     @Override
-    public NumberNode getAsNumber() {
+    public NumberHistoneNode getAsNumber() {
         throw new UnsupportedOperationException("AstNode doesn't support this method");
     }
 
     @Override
-    public StringNode getAsString() {
+    public StringHistoneNode getAsString() {
         throw new UnsupportedOperationException("AstNode doesn't support this method");
     }
 
     @Override
-    public ObjectNode getAsObject() {
+    public ObjectHistoneNode getAsObject() {
         throw new UnsupportedOperationException("AstNode doesn't support this method");
     }
 
     @Override
-    public JsonElement getAsJsonElement() {
+    public JsonNode getAsJsonNode() {
         throw new UnsupportedOperationException("AstNode doesn't support this method");
     }
 

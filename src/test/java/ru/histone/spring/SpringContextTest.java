@@ -15,8 +15,8 @@
  */
 package ru.histone.spring;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonElement;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
@@ -24,6 +24,7 @@ import ru.histone.Histone;
 import ru.histone.HistoneBuilder;
 import ru.histone.HistoneException;
 
+import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 
@@ -37,7 +38,7 @@ import static org.junit.Assert.assertSame;
  */
 public class SpringContextTest {
 
-    private Gson gson;
+    private ObjectMapper jackson;
     private Histone histone;
     private ClassPathXmlApplicationContext context;
     private HistoneBuilder histoneBuilder;
@@ -47,7 +48,7 @@ public class SpringContextTest {
         String[] configLocations = {"classpath:/spring-context.xml"};
         context = new ClassPathXmlApplicationContext(configLocations);
         histoneBuilder = context.getBean("histoneBuilder", HistoneBuilder.class);
-        gson = context.getBean("gson", Gson.class);
+        jackson = context.getBean("jackson", ObjectMapper.class);
         histone = histoneBuilder.build();
 
         assertNotNull(context);
@@ -73,9 +74,9 @@ public class SpringContextTest {
     }
 
     @Test
-    public void general() throws HistoneException {
+    public void general() throws HistoneException, IOException {
         Reader input = new StringReader("a {{true}} b {{x}} c");
-        JsonElement context = gson.fromJson("{'x':123}",JsonElement.class);
+        JsonNode context = jackson.readTree("{'x':123}");
         String output = histone.evaluate(input, context);
         assertEquals("a true b 123 c", output);
     }

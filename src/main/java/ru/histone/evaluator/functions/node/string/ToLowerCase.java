@@ -17,12 +17,17 @@ package ru.histone.evaluator.functions.node.string;
 
 import ru.histone.evaluator.functions.node.NodeFunction;
 import ru.histone.evaluator.nodes.Node;
-import ru.histone.evaluator.nodes.StringNode;
+import ru.histone.evaluator.nodes.NodeFactory;
+import ru.histone.evaluator.nodes.StringHistoneNode;
 
 /**
  * Convert target string to lower case
  */
-public class ToLowerCase implements NodeFunction<StringNode> {
+public class ToLowerCase extends NodeFunction<StringHistoneNode> {
+
+    public ToLowerCase(NodeFactory nodeFactory) {
+        super(nodeFactory);
+    }
 
     @Override
     public String getName() {
@@ -30,7 +35,7 @@ public class ToLowerCase implements NodeFunction<StringNode> {
     }
 
     @Override
-    public Node execute(StringNode target, Node... args) {
-        return StringNode.create(target.getValue().toLowerCase());
+    public Node execute(StringHistoneNode target, Node... args) {
+        return getNodeFactory().string(target.getValue().toLowerCase());
     }
 }

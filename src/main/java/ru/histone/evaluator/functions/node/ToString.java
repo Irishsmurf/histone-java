@@ -16,11 +16,16 @@
 package ru.histone.evaluator.functions.node;
 
 import ru.histone.evaluator.nodes.Node;
+import ru.histone.evaluator.nodes.NodeFactory;
 
 /**
  * Convert current target to string type
  */
-public class ToString implements NodeFunction<Node> {
+public class ToString extends NodeFunction<Node> {
+    public ToString(NodeFactory nodeFactory) {
+        super(nodeFactory);
+    }
+
     @Override
     public String getName() {
         return "toString";

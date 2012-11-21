@@ -19,13 +19,18 @@ import java.math.BigDecimal;
 
 import ru.histone.evaluator.functions.node.NodeFunction;
 import ru.histone.evaluator.nodes.Node;
-import ru.histone.evaluator.nodes.NumberNode;
-import ru.histone.evaluator.nodes.StringNode;
+import ru.histone.evaluator.nodes.NodeFactory;
+import ru.histone.evaluator.nodes.NumberHistoneNode;
+import ru.histone.evaluator.nodes.StringHistoneNode;
 
 /**
  * Convert target string to number<br/>
  */
-public class ToNumber implements NodeFunction<StringNode> {
+public class ToNumber extends NodeFunction<StringHistoneNode> {
+
+    public ToNumber(NodeFactory nodeFactory) {
+        super(nodeFactory);
+    }
 
     @Override
     public String getName() {
@@ -33,13 +38,13 @@ public class ToNumber implements NodeFunction<StringNode> {
     }
 
     @Override
-    public Node execute(StringNode target, Node... args) {
-        NumberNode result;
+    public Node execute(StringHistoneNode target, Node... args) {
+        NumberHistoneNode result;
         try {
             BigDecimal v = new BigDecimal(strip(target.getAsString().getValue()));
-            result = NumberNode.create(v);
+            result = getNodeFactory().number(v);
         } catch (NumberFormatException nfe) {
-            result = Node.UNDEFINED_NUMBER;
+            result = getNodeFactory().UNDEFINED_NUMBER;
         }
         return result;
     }

@@ -17,13 +17,18 @@ package ru.histone.evaluator.functions.node.object;
 
 import ru.histone.evaluator.functions.node.NodeFunction;
 import ru.histone.evaluator.nodes.Node;
-import ru.histone.evaluator.nodes.NumberNode;
-import ru.histone.evaluator.nodes.ObjectNode;
+import ru.histone.evaluator.nodes.NodeFactory;
+import ru.histone.evaluator.nodes.NumberHistoneNode;
+import ru.histone.evaluator.nodes.ObjectHistoneNode;
 
 /**
  * Check if target object has property with specified key name
  */
-public class Size implements NodeFunction<ObjectNode> {
+public class Size extends NodeFunction<ObjectHistoneNode> {
+
+    public Size(NodeFactory nodeFactory) {
+        super(nodeFactory);
+    }
 
     @Override
     public String getName() {
@@ -31,7 +36,7 @@ public class Size implements NodeFunction<ObjectNode> {
     }
 
     @Override
-    public Node execute(ObjectNode target, Node... args) {
-        return NumberNode.create(target.size());
+    public Node execute(ObjectHistoneNode target, Node... args) {
+        return getNodeFactory().number(target.size());
     }
 }
