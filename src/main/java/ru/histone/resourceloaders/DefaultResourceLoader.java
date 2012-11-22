@@ -93,6 +93,10 @@ public class DefaultResourceLoader implements ResourceLoader {
             throw new ResourceLoadException("Base HREF is empty and resource location is not absolute!");
         }
 
+		if (baseLocation != null) {
+			baseLocation = baseLocation.replace("\\", "/");
+			baseLocation = baseLocation.replace("file://", "file:/");
+		}
         URI baseLocationURI = (baseLocation != null) ? URI.create(baseLocation) : null;
 
         if (!locationURI.isAbsolute() && baseLocation != null) {
