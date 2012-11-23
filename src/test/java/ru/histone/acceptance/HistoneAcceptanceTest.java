@@ -15,8 +15,12 @@
  */
 package ru.histone.acceptance;
 
+import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import org.junit.ComparisonFailure;
 import org.junit.runner.Description;
 import org.junit.runner.RunWith;
@@ -48,6 +52,7 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.net.URL;
 import java.util.*;
+import java.util.Map.Entry;
 
 @RunWith(HistoneAcceptanceTest.class)
 public class HistoneAcceptanceTest extends Runner {
@@ -90,42 +95,81 @@ public class HistoneAcceptanceTest extends Runner {
     private void runTestCasesFromJsonFile(RunNotifier notifier, String fileName) {
         //TODO change all this stuff to using ObjectMapper to read json files
         try {
-            XMLStreamReader xmlStreamReader = new StreamReaderDelegate(inputFactory.createXMLStreamReader(getClass().getResourceAsStream("/evaluator/" + fileName))) {
-                public int next() throws XMLStreamException {
-                    while (true) {
-                        int event = super.next();
-                        switch (event) {
-                            case XMLStreamConstants.COMMENT:
-                            case XMLStreamConstants.PROCESSING_INSTRUCTION:
-                                continue;
-                            default:
-                                return event;
-                        }
-                    }
+            Reader reader = new InputStreamReader(getClass().getResourceAsStream("/"+fileName));
+            try {
+                JsonNode list = jackson.readTree(reader);
+                final JsonNode mainElement = list.get(0);
+                final String name = mainElement.get("name").asText();
+                final ArrayNode cases = (ArrayNode) mainElement.get("cases");
+                Iterator<JsonNode> iter = cases.iterator();
+                while (iter.hasNext()) {
+                	JsonNode element = iter.next();
+                    readCase(notifier, element);
                 }
-            };
-
-            TestSuiteHolder suite = null;
-            while (xmlStreamReader.hasNext()) {
-                int event = xmlStreamReader.next();
-                log.debug("run(): event={}", new Object[]{event});
-
-                if (event == XMLStreamConstants.START_ELEMENT) {
-                    if ("suite".equals(xmlStreamReader.getLocalName())) {
-                        suite = new TestSuiteHolder(fileName, xmlStreamReader.getAttributeValue(null, "name"));
-                    } else if ("case".equals(xmlStreamReader.getLocalName())) {
-                        readCase(notifier, xmlStreamReader, suite);
-                    }
-                } else if (event == XMLStreamConstants.END_ELEMENT) {
-                    if ("suite".equals(xmlStreamReader.getLocalName())) {
-                        suite = null;
-                    }
-                }
+            } catch (IOException e) {
+                throw new RuntimeException("Error reading json", e);
             }
+//            XMLStreamReader xmlStreamReader = new StreamReaderDelegate(inputFactory.createXMLStreamReader(getClass().getResourceAsStream("/evaluator/" + fileName))) {
+//                public int next() throws XMLStreamException {
+//                    while (true) {
+//                        int event = super.next();
+//                        switch (event) {
+//                            case XMLStreamConstants.COMMENT:
+//                            case XMLStreamConstants.PROCESSING_INSTRUCTION:
+//                                continue;
+//                            default:
+//                                return event;
+//                        }
+//                    }
+//                }
+//            };
+//
+//            TestSuiteHolder suite = null;
+//            while (xmlStreamReader.hasNext()) {
+//                int event = xmlStreamReader.next();
+//                log.debug("run(): event={}", new Object[]{event});
+//
+//                if (event == XMLStreamConstants.START_ELEMENT) {
+//                    if ("suite".equals(xmlStreamReader.getLocalName())) {
+//                        suite = new TestSuiteHolder(fileName, xmlStreamReader.getAttributeValue(null, "name"));
+//                    } else if ("case".equals(xmlStreamReader.getLocalName())) {
+//                        readCase(notifier, xmlStreamReader, suite);
+//                    }
+//                } else if (event == XMLStreamConstants.END_ELEMENT) {
+//                    if ("suite".equals(xmlStreamReader.getLocalName())) {
+//                        suite = null;
+//                    }
+//                }
+//            }
         } catch (Exception e) {
             notifier.fireTestFailure(new Failure(Description.createTestDescription(this.getClass(), fileName), e));
         }
     }
+
+	private void readCase(RunNotifier notifier, JsonNode caseNode) {
+		log.debug("readCase(): {}", new Object[] { caseNode });
+		TestCaseHolder testCase = new TestCaseHolder(null);
+		if (caseNode.get("input") != null) {
+			testCase.setInput(caseNode.get("input").asText());
+		}
+		if (caseNode.get("expectedResult") != null) {
+			testCase.setExpected(caseNode.get("expectedResult").asText());
+		}
+		if (caseNode.get("data") != null) {
+			throw new RuntimeException("Not supported tagName: data");
+		}
+		if (caseNode.get("function") != null) { 
+			throw new RuntimeException("Not supported tagName: function");
+		}
+		if (caseNode.get("global") != null) {
+			throw new RuntimeException("Not supported tagName: global");
+		}
+		if (caseNode.get("exception") != null) {
+			throw new RuntimeException("Not supported tagName: exception");
+		}
+		runTestCase(notifier, testCase);
+		log.debug("readCase(): >>>", new Object[] {});
+	}
 
     private void readCase(RunNotifier notifier, XMLStreamReader xmlStreamReader, TestSuiteHolder suite) throws XMLStreamException {
         log.debug("readCase(): >>>", new Object[]{});
@@ -244,13 +288,13 @@ public class HistoneAcceptanceTest extends Runner {
         Histone histone;
         try {
 
-            String baseURI = findBaseURI();
-            testCase.setInput(testCase.getInput().replaceAll("\\:baseURI\\:", baseURI));
-            testCase.setExpected(testCase.getExpected().replaceAll("\\:baseURI\\:", baseURI));
-            if (testCase.getGlobalProperties().containsKey(GlobalProperty.BASE_URI)) {
-                String oldBaseURI = testCase.getGlobalProperties().get(GlobalProperty.BASE_URI);
-                testCase.getGlobalProperties().put(GlobalProperty.BASE_URI, oldBaseURI.replaceAll("\\:baseURI\\:", baseURI));
-            }
+//            String baseURI = findBaseURI();
+//            testCase.setInput(testCase.getInput().replaceAll("\\:baseURI\\:", baseURI));
+//            testCase.setExpected(testCase.getExpected().replaceAll("\\:baseURI\\:", baseURI));
+//            if (testCase.getGlobalProperties().containsKey(GlobalProperty.BASE_URI)) {
+//                String oldBaseURI = testCase.getGlobalProperties().get(GlobalProperty.BASE_URI);
+//                testCase.getGlobalProperties().put(GlobalProperty.BASE_URI, oldBaseURI.replaceAll("\\:baseURI\\:", baseURI));
+//            }
 
             HistoneBuilder histoneBuilder = new HistoneBuilder();
             histoneBuilder.setJackson(jackson);
