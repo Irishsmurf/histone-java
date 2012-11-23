@@ -99,12 +99,12 @@ public class HistoneAcceptanceTest extends Runner {
            Reader reader = new InputStreamReader(getClass().getResourceAsStream("/"+fileName));
             try {
             	//get constructions from filename
-            	String constructions = fileName.substring(fileName.lastIndexOf("/"),fileName.lastIndexOf(".json"));
+            	final String constructions = fileName.substring(fileName.lastIndexOf("/") + 1,fileName.lastIndexOf(".json"));
                 JsonNode list = jackson.readTree(reader);
                 final JsonNode mainElement = list.get(0);
                 final String name = mainElement.get("name").asText();
                 final ArrayNode cases = (ArrayNode) mainElement.get("cases");
-				final TestSuiteHolder suite = new TestSuiteHolder(constructions, name);
+				final TestSuiteHolder suite = new TestSuiteHolder(name, constructions);
 				Iterator<JsonNode> iter = cases.iterator();
 				while (iter.hasNext()) {
                 	JsonNode element = iter.next();
