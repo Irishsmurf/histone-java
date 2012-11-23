@@ -94,17 +94,21 @@ public class HistoneAcceptanceTest extends Runner {
 
     private void runTestCasesFromJsonFile(RunNotifier notifier, String fileName) {
         //TODO change all this stuff to using ObjectMapper to read json files
+    	
         try {
-            Reader reader = new InputStreamReader(getClass().getResourceAsStream("/"+fileName));
+           Reader reader = new InputStreamReader(getClass().getResourceAsStream("/"+fileName));
             try {
+            	//get constructions from filename
+            	String constructions = fileName.substring(fileName.lastIndexOf("/"),fileName.lastIndexOf(".json"));
                 JsonNode list = jackson.readTree(reader);
                 final JsonNode mainElement = list.get(0);
                 final String name = mainElement.get("name").asText();
                 final ArrayNode cases = (ArrayNode) mainElement.get("cases");
-                Iterator<JsonNode> iter = cases.iterator();
-                while (iter.hasNext()) {
+				final TestSuiteHolder suite = new TestSuiteHolder(constructions, name);
+				Iterator<JsonNode> iter = cases.iterator();
+				while (iter.hasNext()) {
                 	JsonNode element = iter.next();
-                    readCase(notifier, element);
+                    readCase(notifier, element, suite);
                 }
             } catch (IOException e) {
                 throw new RuntimeException("Error reading json", e);
@@ -146,9 +150,9 @@ public class HistoneAcceptanceTest extends Runner {
         }
     }
 
-	private void readCase(RunNotifier notifier, JsonNode caseNode) {
+	private void readCase(RunNotifier notifier, JsonNode caseNode, TestSuiteHolder suite) {
 		log.debug("readCase(): {}", new Object[] { caseNode });
-		TestCaseHolder testCase = new TestCaseHolder(null);
+		TestCaseHolder testCase = new TestCaseHolder(suite);
 		if (caseNode.get("input") != null) {
 			testCase.setInput(caseNode.get("input").asText());
 		}
@@ -288,13 +292,13 @@ public class HistoneAcceptanceTest extends Runner {
         Histone histone;
         try {
 
-//            String baseURI = findBaseURI();
-//            testCase.setInput(testCase.getInput().replaceAll("\\:baseURI\\:", baseURI));
-//            testCase.setExpected(testCase.getExpected().replaceAll("\\:baseURI\\:", baseURI));
-//            if (testCase.getGlobalProperties().containsKey(GlobalProperty.BASE_URI)) {
-//                String oldBaseURI = testCase.getGlobalProperties().get(GlobalProperty.BASE_URI);
-//                testCase.getGlobalProperties().put(GlobalProperty.BASE_URI, oldBaseURI.replaceAll("\\:baseURI\\:", baseURI));
-//            }
+            String baseURI = findBaseURI();
+            testCase.setInput(testCase.getInput().replaceAll("\\:baseURI\\:", baseURI));
+            testCase.setExpected(testCase.getExpected().replaceAll("\\:baseURI\\:", baseURI));
+            if (testCase.getGlobalProperties().containsKey(GlobalProperty.BASE_URI)) {
+                String oldBaseURI = testCase.getGlobalProperties().get(GlobalProperty.BASE_URI);
+                testCase.getGlobalProperties().put(GlobalProperty.BASE_URI, oldBaseURI.replaceAll("\\:baseURI\\:", baseURI));
+            }
 
             HistoneBuilder histoneBuilder = new HistoneBuilder();
             histoneBuilder.setJackson(jackson);
@@ -367,7 +371,7 @@ public class HistoneAcceptanceTest extends Runner {
     }
 
     private String findBaseURI() throws HistoneException {
-        URL baseURI = this.getClass().getClassLoader().getResource("evaluator/cases.json");
+        URL baseURI = this.getClass().getClassLoader().getResource("acceptance-test-cases.json");
 
         if (baseURI == null) {
             throw new HistoneException("Error searching for \"/evaluator/cases.json\" in classpath. Can't determine baseURI value.");
