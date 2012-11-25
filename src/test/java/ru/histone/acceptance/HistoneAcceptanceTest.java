@@ -34,11 +34,15 @@ import ru.histone.GlobalProperty;
 import ru.histone.Histone;
 import ru.histone.HistoneBuilder;
 import ru.histone.HistoneException;
+import ru.histone.HistoneTokensHolder;
 import ru.histone.acceptance.helpers.*;
 import ru.histone.evaluator.EvaluatorException;
 import ru.histone.evaluator.functions.global.GlobalFunction;
 import ru.histone.evaluator.functions.node.NodeFunction;
 import ru.histone.evaluator.nodes.*;
+import ru.histone.parser.Parser;
+import ru.histone.parser.ParserException;
+import ru.histone.tokenizer.TokenizerFactory;
 import ru.histone.utils.CollectionUtils;
 
 import javax.xml.stream.XMLInputFactory;
@@ -50,6 +54,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
+import java.net.URI;
 import java.net.URL;
 import java.util.*;
 import java.util.Map.Entry;
@@ -63,6 +68,7 @@ public class HistoneAcceptanceTest extends Runner {
     private static final XMLInputFactory inputFactory = XMLInputFactory.newInstance();
 
     private ObjectMapper jackson;
+    private Parser parser;
     private NodeFactory nodeFactory;
 
     public HistoneAcceptanceTest(Class<?> testClass) {
@@ -156,6 +162,12 @@ public class HistoneAcceptanceTest extends Runner {
 		if (caseNode.get("input") != null) {
 			testCase.setInput(caseNode.get("input").asText());
 		}
+		if (caseNode.get("context") != null) {
+            testCase.setContext(caseNode.get("context").asText());
+		}
+		if (caseNode.get("expectedAST") != null) {
+			testCase.setExpectedAST((ArrayNode) caseNode.get("expectedAST"));
+		}
 		if (caseNode.get("expectedResult") != null) {
 			testCase.setExpected(caseNode.get("expectedResult").asText());
 		}
@@ -163,17 +175,34 @@ public class HistoneAcceptanceTest extends Runner {
 			throw new RuntimeException("Not supported tagName: data");
 		}
 		if (caseNode.get("function") != null) { 
+			final JsonNode node = caseNode.get("function"); 			
+            final String name = node.get("name").asText();
+            final String result = node.get("result").asText();
+            final String nodeType = node.get("node") == null ? null:  node.get("node").asText();
+//            String data = null);
+//            if (nodeType == null) {
+//                testCase.addMockGlobalFunction(new MockGlobalFunctionHolder(name, returnType, data));
+//            } else {
+//                testCase.addMockNodeFunction(new MockNodeFunctionHolder(name, nodeType, returnType, data));
+//            }
 			throw new RuntimeException("Not supported tagName: function");
 		}
 		if (caseNode.get("global") != null) {
 			throw new RuntimeException("Not supported tagName: global");
 		}
-		if (caseNode.get("exception") != null) {
-			throw new RuntimeException("Not supported tagName: exception");
+		if (caseNode.get("expectedException") != null) {
+			 testCase.setException(readException(caseNode.get("expectedException")));
 		}
 		runTestCase(notifier, testCase);
 		log.debug("readCase(): >>>", new Object[] {});
 	}
+
+    private EvaluatorException readException(JsonNode node) {
+        final int line = node.get("line").asInt();
+        final String expected = node.get("expected").asText();
+        final String found = node.get("found").asText();
+        return new EvaluatorException(line, expected, found);
+    }
 
     private void readCase(RunNotifier notifier, XMLStreamReader xmlStreamReader, TestSuiteHolder suite) throws XMLStreamException {
         log.debug("readCase(): >>>", new Object[]{});
@@ -292,12 +321,14 @@ public class HistoneAcceptanceTest extends Runner {
         Histone histone;
         try {
 
-            String baseURI = findBaseURI();
-            testCase.setInput(testCase.getInput().replaceAll("\\:baseURI\\:", baseURI));
-            testCase.setExpected(testCase.getExpected().replaceAll("\\:baseURI\\:", baseURI));
+            final String baseURI = findBaseURI();
+            testCase.setInput(testCase.getInput() == null ? null: testCase.getInput().replaceAll("\\:baseURI\\:", baseURI));
+            testCase.setExpected(testCase.getExpected() == null ? null: testCase.getExpected().replaceAll("\\:baseURI\\:", baseURI));
             if (testCase.getGlobalProperties().containsKey(GlobalProperty.BASE_URI)) {
                 String oldBaseURI = testCase.getGlobalProperties().get(GlobalProperty.BASE_URI);
                 testCase.getGlobalProperties().put(GlobalProperty.BASE_URI, oldBaseURI.replaceAll("\\:baseURI\\:", baseURI));
+            } else {
+                testCase.getGlobalProperties().put(GlobalProperty.BASE_URI, baseURI);
             }
 
             HistoneBuilder histoneBuilder = new HistoneBuilder();
@@ -320,55 +351,101 @@ public class HistoneAcceptanceTest extends Runner {
             notifier.fireTestFailure(new Failure(description, e));
             return;
         }
+        //***** RUN TESTS *****
+		final ArrayNode expectedAST = testCase.getExpectedAST();
+		final EvaluatorException expectedException = testCase.getException();
+		try {
+			if (expectedAST != null) {
+				// TEST FOR EXPECTEDAST
+				Reader input = new StringReader(testCase.getInput());
+				ArrayNode ast = histone.parseTemplateToAST(input);
+				final String expectedASTString = ast.toString();
+				final String aSTString = ast.toString();
+				log.debug("case({}): tree.json={}", new Object[] { testIdx, aSTString });
+				boolean result = expectedASTString.equals(aSTString);
+				log.debug("case({}): result={}", new Object[] { testIdx, result });
+				if (result) {
+					notifier.fireTestFinished(description);
+				} else {
+					String msgF = "For input='" + testCase.getInput() + "'";
+					notifier.fireTestFailure(new Failure(description,
+							new ComparisonFailure(msgF, expectedASTString, aSTString)));
+				}
+			} else if (expectedException != null) {
+				// TEST FOR EXPECTEDEXCEPTION
+				// we need to check for ParserException and EvaluatorException
+				// separately
+				final String msgF = "For input='" + testCase.getInput() + "'";
+				ArrayNode ast;
+				try {
+					Reader input = new StringReader(testCase.getInput());
+					ast = histone.parseTemplateToAST(input);
+					log.debug("case({}): tree.json={}", new Object[] { testIdx, ast.toString() });
+				} catch (ParserException e) {
+					log.debug("case({}): e.message={}", new Object[] { testIdx, e.getMessage() });
+					checkExpectedExceptionAndFireTest(notifier, description, msgF, expectedException, e);
+					return;
+				}
 
-        EvaluatorException expectedException = testCase.getException();
-        try {
-            if (expectedException != null) {
-                try {
-                    Reader input = new StringReader(testCase.getInput());
-                    JsonNode context = jackson.readTree(testCase.getContext());
-                    String output = histone.evaluate(input, context);
-//                    String output = histone.process(testCase.getInput(), testCase.getContext());
-                    log.debug("case({}): output={}", new Object[]{testIdx, output});
-                } catch (EvaluatorException e) {
-                    log.debug("case({}): e.message={}", new Object[]{testIdx, e.getMessage()});
-                    if (e.equals(expectedException)) {
-                        notifier.fireTestFinished(description);
-                        return;
-                    } else {
-                        String msgF = "For input='" + testCase.getInput() + "'";
-                        String expectedF = "line=" + expectedException.getLineNumber() + ", expected=" + expectedException.getExpected() + ", found=" + expectedException.getFound();
-                        String actualF = "line=" + e.getLineNumber() + ", expected=" + e.getExpected() + ", found=" + e.getFound();
-                        notifier.fireTestFailure(new Failure(description, new ComparisonFailure(msgF, expectedF, actualF)));
-                        return;
-                    }
-                }
+				try {
+					JsonNode context = testCase.getContext() == null ? null : jackson.readTree(testCase.getContext());
+					String output = histone.evaluateAST(ast, context);
+					log.debug("case({}): output={}", new Object[] { testIdx, output });
+				} catch (EvaluatorException e) {
+					log.debug("case({}): e.message={}", new Object[] { testIdx, e.getMessage() });
+					checkExpectedExceptionAndFireTest(notifier, description, msgF, expectedException, e);
+					return;
+				}
 
-                String msgF = "For input='" + testCase.getInput() + "'";
-                String expectedF = "expected=" + expectedException.getExpected() + ", found=" + expectedException.getFound();
-                notifier.fireTestFailure(new Failure(description, new ComparisonFailure(msgF, expectedF, "")));
-            } else {
-                Reader input = new StringReader(testCase.getInput());
-                JsonNode context = (testCase.getContext()==null) ? jackson.getNodeFactory().nullNode() : jackson.readTree(testCase.getContext());
-                String output = histone.evaluate(input, context);
-//                String output = histone.process(testCase.getInput(), testCase.getContext());
-                log.debug("case({}): output={}", new Object[]{testIdx, output});
+				String expectedF = "expected=" + expectedException.getExpected() + ", found=" + expectedException.getFound();
+				notifier.fireTestFailure(new Failure(description, new ComparisonFailure(msgF, expectedF, "")));
+			} else {
+				// TEST FOR OUTPUT
+				Reader input = new StringReader(testCase.getInput());
+				JsonNode context = (testCase.getContext() == null) ? jackson.getNodeFactory().nullNode() : jackson.readTree(testCase
+						.getContext());
+				String output = histone.evaluate(input, context);
+				log.debug("case({}): output={}", new Object[] { testIdx, output });
 
-                boolean result = output.equals(testCase.getExpected());
-                log.debug("case({}): result={}", new Object[]{testIdx, result});
-                if (result) {
-                    notifier.fireTestFinished(description);
-                } else {
-                    String msgF = "For input='" + testCase.getInput() + "'";
-                    notifier.fireTestFailure(new Failure(description, new ComparisonFailure(msgF, testCase.getExpected(), output)));
-                }
-            }
-        } catch (Exception e) {
-            String msg = "For input='" + testCase.getInput() + "', expected=" + testCase.getExpected() + ", but exception occured=" + e.getMessage();
-            log.debug("Error msg={}", msg, e);
-            notifier.fireTestFailure(new Failure(description, e));
-        }
-    }
+				boolean result = output.equals(testCase.getExpected());
+				log.debug("case({}): result={}", new Object[] { testIdx, result });
+				if (result) {
+					notifier.fireTestFinished(description);
+				} else {
+					String msgF = "For input='" + testCase.getInput() + "'";
+					notifier.fireTestFailure(new Failure(description, new ComparisonFailure(msgF, testCase.getExpected(), output)));
+				}
+			}
+		} catch (Exception e) {
+			String msg = "For input='" + testCase.getInput() + "', expected=" + testCase.getExpected() + ", but exception occured="
+					+ e.getMessage();
+			log.debug("Error msg={}", msg, e);
+			notifier.fireTestFailure(new Failure(description, e));
+		}
+	}
+
+	private void checkExpectedExceptionAndFireTest(RunNotifier notifier, Description description, String msgF, EvaluatorException expected,
+			HistoneException real) {
+		final int errLine = real instanceof ParserException ? ((ParserException) real).getLineNumber() : ((EvaluatorException) real)
+				.getLineNumber();
+		final String errExpectedToken = real instanceof ParserException ? ((ParserException) real).getExpected()
+				: ((EvaluatorException) real).getExpected();
+		final String errFoundToken = real instanceof ParserException ? ((ParserException) real).getFound() : ((EvaluatorException) real)
+				.getFound();
+		boolean matchOk = (expected.getLineNumber() == errLine) && expected.getExpected().equals(errExpectedToken)
+				&& expected.getFound().equals(errFoundToken);
+
+		if (matchOk) {
+			notifier.fireTestFinished(description);
+			return;
+		} else {
+			String expectedF = "line=" + expected.getLineNumber() + ", expected=" + expected.getExpected() + ", found="
+					+ expected.getFound();
+			String actualF = "line=" + errLine + ", expected=" + errExpectedToken + ", found=" + errFoundToken;
+			notifier.fireTestFailure(new Failure(description, new ComparisonFailure(msgF, expectedF, actualF)));
+			return;
+		}
+	}
 
     private String findBaseURI() throws HistoneException {
         URL baseURI = this.getClass().getClassLoader().getResource("acceptance-test-cases.json");
@@ -377,7 +454,7 @@ public class HistoneAcceptanceTest extends Runner {
             throw new HistoneException("Error searching for \"/evaluator/cases.json\" in classpath. Can't determine baseURI value.");
         }
 
-        String result = baseURI.toString().substring(0,baseURI.toString().indexOf("cases.json"));
+        String result = baseURI.toString().substring(0,baseURI.toString().indexOf("acceptance-test-cases.json"));
 
         return result;
     }
