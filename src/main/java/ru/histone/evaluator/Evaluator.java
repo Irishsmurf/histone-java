@@ -97,6 +97,8 @@ public class Evaluator {
         nodeFunctionsManager.registerBuiltInFunction(NumberHistoneNode.class, new Floor(bootstrap.getNodeFactory()));
         nodeFunctionsManager.registerBuiltInFunction(NumberHistoneNode.class, new Round(bootstrap.getNodeFactory()));
         nodeFunctionsManager.registerBuiltInFunction(NumberHistoneNode.class, new ToChar(bootstrap.getNodeFactory()));
+        nodeFunctionsManager.registerBuiltInFunction(NumberHistoneNode.class, new ToFixed(bootstrap.getNodeFactory()));
+        nodeFunctionsManager.registerBuiltInFunction(NumberHistoneNode.class, new Log(bootstrap.getNodeFactory()));
 
         nodeFunctionsManager.registerBuiltInFunction(StringHistoneNode.class, new CharCodeAt(bootstrap.getNodeFactory()));
         nodeFunctionsManager.registerBuiltInFunction(StringHistoneNode.class, new ru.histone.evaluator.functions.node.string.Slice(bootstrap.getNodeFactory()));
