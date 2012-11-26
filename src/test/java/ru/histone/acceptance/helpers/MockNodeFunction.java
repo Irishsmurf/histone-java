@@ -15,8 +15,15 @@
  */
 package ru.histone.acceptance.helpers;
 
+import java.io.StringReader;
 import java.math.BigDecimal;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.jsonFormatVisitors.JsonObjectFormatVisitor;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import ru.histone.Histone;
+import ru.histone.HistoneException;
 import ru.histone.evaluator.functions.node.NodeFunction;
 import ru.histone.evaluator.functions.node.NodeFunctionExecutionException;
 import ru.histone.evaluator.nodes.*;
@@ -31,12 +38,16 @@ public class MockNodeFunction extends NodeFunction {
     private String name;
     private String data;
     private String resultType;
+    private boolean throwException;
+    private Histone histone;
 
-    public MockNodeFunction(NodeFactory nodeFactory, String name, String resultType, String data) {
+
+    public MockNodeFunction(NodeFactory nodeFactory, String name, String resultType, String data, boolean throwException) {
         super(nodeFactory);
         this.name = name;
-        this.resultType = resultType;
+        this.resultType = (resultType != null) ? resultType : "string";
         this.data = data;
+        this.throwException = throwException;
     }
 
     @Override
@@ -46,32 +57,34 @@ public class MockNodeFunction extends NodeFunction {
 
     @Override
     public Node execute(Node target, Node... args) throws NodeFunctionExecutionException {
-        if (data.contains(":exception:")) {
+        if (throwException) {
             throw new RuntimeException("Function exception");
         }
 
+
+
+//        {{var X = "test"}}
+//        {{X.someFunc(123,'sdfdf',t)}}
+
+
+
         Node node = null;
         if ("string".equals(resultType.toLowerCase())) {
-            if (data.contains(":target:")) {
-                data = data.replace(":target:", "(" + target.toString() + ")");
-            }
-            if (data.contains(":args:")) {
-                StringBuilder sb = new StringBuilder();
-                sb.append('[');
-                boolean addSeparator = false;
-                for (Object arg : args) {
-                    if (addSeparator) {
-                        sb.append('-');
-                    }
-                    sb.append(arg.toString());
-                    addSeparator = true;
-                }
-                sb.append(']');
 
-                data = data.replace(":args:", sb.toString());
+            ObjectNode context = getNodeFactory().jsonObject();
+            ObjectNode targetObj = null;
+            ArrayNode argsArray = null;
+            context.put("target", targetObj);
+            context.put("args", argsArray);
+
+            String result = null;
+            try {
+                result = histone.evaluate(new StringReader(data), context);
+            } catch (HistoneException e) {
+
             }
 
-            node = getNodeFactory().string(data);
+            node = getNodeFactory().string(result);
         } else if ("number".equals(resultType.toLowerCase())) {
             node = getNodeFactory().number(new BigDecimal(data));
         } else if ("boolean".equals(resultType.toLowerCase())) {
