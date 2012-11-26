@@ -19,16 +19,16 @@ import java.io.StringReader;
 import java.math.BigDecimal;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.jsonFormatVisitors.JsonObjectFormatVisitor;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import ru.histone.Histone;
+import ru.histone.HistoneBuilder;
 import ru.histone.HistoneException;
 import ru.histone.evaluator.functions.node.NodeFunction;
 import ru.histone.evaluator.functions.node.NodeFunctionExecutionException;
 import ru.histone.evaluator.nodes.*;
-import ru.histone.evaluator.nodes.BooleanHistoneNode;
-import ru.histone.evaluator.nodes.StringHistoneNode;
 
 /**
  *
@@ -39,6 +39,7 @@ public class MockNodeFunction extends NodeFunction {
     private String data;
     private String resultType;
     private boolean throwException;
+
     private Histone histone;
 
 
@@ -48,6 +49,14 @@ public class MockNodeFunction extends NodeFunction {
         this.resultType = (resultType != null) ? resultType : "string";
         this.data = data;
         this.throwException = throwException;
+
+        HistoneBuilder histoneBuilder = new HistoneBuilder();
+        histoneBuilder.setJackson(new ObjectMapper());
+        try {
+            histone = histoneBuilder.build();
+        } catch (HistoneException e) {
+            throw new RuntimeException("Error initializing inner Histone",e);
+        }
     }
 
     @Override
@@ -61,19 +70,14 @@ public class MockNodeFunction extends NodeFunction {
             throw new RuntimeException("Function exception");
         }
 
-
-
-//        {{var X = "test"}}
-//        {{X.someFunc(123,'sdfdf',t)}}
-
-
-
         Node node = null;
         if ("string".equals(resultType.toLowerCase())) {
-
             ObjectNode context = getNodeFactory().jsonObject();
-            ObjectNode targetObj = null;
-            ArrayNode argsArray = null;
+            JsonNode targetObj = target.getAsJsonNode();
+            ArrayNode argsArray = getNodeFactory().jsonArray();
+            for(Node arg : args){
+                argsArray.add(arg.getAsJsonNode());
+            }
             context.put("target", targetObj);
             context.put("args", argsArray);
 
