@@ -451,7 +451,7 @@ public class HistoneAcceptanceTest extends Runner {
         URL baseURI = this.getClass().getClassLoader().getResource("acceptance-test-cases.json");
 
         if (baseURI == null) {
-            throw new HistoneException("Error searching for \"/evaluator/cases.json\" in classpath. Can't determine baseURI value.");
+            throw new HistoneException("Error searching for \"acceptance-test-cases.json\" in classpath. Can't determine baseURI value.");
         }
 
         String result = baseURI.toString().substring(0,baseURI.toString().indexOf("acceptance-test-cases.json"));
