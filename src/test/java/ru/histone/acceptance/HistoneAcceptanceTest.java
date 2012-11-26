@@ -177,15 +177,14 @@ public class HistoneAcceptanceTest extends Runner {
 		if (caseNode.get("function") != null) { 
 			final JsonNode node = caseNode.get("function"); 			
             final String name = node.get("name").asText();
-            final String result = node.get("result").asText();
+            final String returnType = node.get("resultType") == null ? "string": node.get("resultType").asText();
+            final String data = node.get("result") == null ? "string": node.get("result").asText();
             final String nodeType = node.get("node") == null ? null:  node.get("node").asText();
-//            String data = null);
-//            if (nodeType == null) {
-//                testCase.addMockGlobalFunction(new MockGlobalFunctionHolder(name, returnType, data));
-//            } else {
-//                testCase.addMockNodeFunction(new MockNodeFunctionHolder(name, nodeType, returnType, data));
-//            }
-			throw new RuntimeException("Not supported tagName: function");
+            if (nodeType == null) {
+                testCase.addMockGlobalFunction(new MockGlobalFunctionHolder(name, returnType, data));
+            } else {
+                testCase.addMockNodeFunction(new MockNodeFunctionHolder(name, nodeType, returnType, data));
+            }
 		}
 		if (caseNode.get("global") != null) {
 			throw new RuntimeException("Not supported tagName: global");
