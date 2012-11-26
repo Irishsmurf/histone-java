@@ -74,7 +74,7 @@ public class HistoneAcceptanceTest extends Runner {
     public HistoneAcceptanceTest(Class<?> testClass) {
         testSuiteDescription = Description.createSuiteDescription("Histone Acceptance Test Cases");
         jackson = new ObjectMapper();
-        nodeFactory = new NodeFactory(null);
+        nodeFactory = new NodeFactory(jackson);
     }
 
     @Override
@@ -471,7 +471,7 @@ public class HistoneAcceptanceTest extends Runner {
         Map<Class<? extends Node>, Set<NodeFunction<? extends Node>>> nodeFunctions = new HashMap<Class<? extends Node>, Set<NodeFunction<? extends Node>>>();
 
         for (final MockNodeFunctionHolder function : mockFunctions) {
-            NodeFunction nodeFunction = new MockNodeFunction(nodeFactory, function.getName(), function.getReturnType(), function.getData());
+            NodeFunction nodeFunction = new MockNodeFunction(nodeFactory, function.getName(), function.getReturnType(), function.getData(), false);
             Class<? extends Node> nodeClass = null;
             if ("string".equalsIgnoreCase(function.getNodeType())) {
                 nodeClass = StringHistoneNode.class;
