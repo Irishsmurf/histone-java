@@ -461,7 +461,7 @@ public class HistoneAcceptanceTest extends Runner {
     private Set<GlobalFunction> toGlobalFunctions(Set<MockGlobalFunctionHolder> mockFunctions) {
         Set<GlobalFunction> globalFunctions = new HashSet<GlobalFunction>();
         for (final MockGlobalFunctionHolder function : mockFunctions) {
-            GlobalFunction globalFunction = new MockGlobalFunction(nodeFactory,function.getName(), function.getReturnType(), function.getData());
+            GlobalFunction globalFunction = new MockGlobalFunction(nodeFactory,function.getName(), function.getReturnType(), function.getData(), false);
             globalFunctions.add(globalFunction);
         }
         return globalFunctions;

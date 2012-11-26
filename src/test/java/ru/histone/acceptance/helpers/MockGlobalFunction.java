@@ -15,8 +15,17 @@
  */
 package ru.histone.acceptance.helpers;
 
+import java.io.StringReader;
 import java.math.BigDecimal;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import ru.histone.Histone;
+import ru.histone.HistoneBuilder;
+import ru.histone.HistoneException;
 import ru.histone.evaluator.functions.global.GlobalFunction;
 import ru.histone.evaluator.functions.global.GlobalFunctionExecutionException;
 import ru.histone.evaluator.nodes.*;
@@ -29,12 +38,22 @@ public class MockGlobalFunction extends GlobalFunction {
     private String name;
     private String data;
     private String resultType;
+    private boolean throwException;
 
-    public MockGlobalFunction(NodeFactory nodeFactory, String name, String resultType, String data) {
+    private Histone histone;
+
+    public MockGlobalFunction(NodeFactory nodeFactory, String name, String resultType, String data, boolean throwException) {
         super(nodeFactory);
         this.name = name;
         this.resultType = resultType;
         this.data = data;
+        HistoneBuilder histoneBuilder = new HistoneBuilder();
+        histoneBuilder.setJackson(new ObjectMapper());
+        try {
+            histone = histoneBuilder.build();
+        } catch (HistoneException e) {
+            throw new RuntimeException("Error initializing inner Histone",e);
+        }
     }
 
     @Override
@@ -44,29 +63,27 @@ public class MockGlobalFunction extends GlobalFunction {
 
     @Override
     public Node execute(Node... args) throws GlobalFunctionExecutionException {
-        if (data.contains(":exception:")) {
+        if (throwException) {
             throw new RuntimeException("Function exception");
         }
 
         Node node = null;
         if ("string".equals(resultType.toLowerCase())) {
-            if (data.contains(":args:")) {
-                StringBuilder sb = new StringBuilder();
-                sb.append('[');
-                boolean addSeparator = false;
-                for (Object arg : args) {
-                    if (addSeparator) {
-                        sb.append('-');
-                    }
-                    sb.append(arg.toString());
-                    addSeparator = true;
-                }
-                sb.append(']');
+            ObjectNode context = getNodeFactory().jsonObject();
+            ArrayNode argsArray = getNodeFactory().jsonArray();
+            for(Node arg : args){
+                argsArray.add(arg.getAsJsonNode());
+            }
+            context.put("args", argsArray);
 
-                data = data.replace(":args:", sb.toString());
+            String result = null;
+            try {
+                result = histone.evaluate(new StringReader(data), context);
+            } catch (HistoneException e) {
+
             }
 
-            node = getNodeFactory().string(data);
+            node = getNodeFactory().string(result);
         } else if ("number".equals(resultType.toLowerCase())) {
             node = getNodeFactory().number(new BigDecimal(data));
         } else if ("boolean".equals(resultType.toLowerCase())) {
