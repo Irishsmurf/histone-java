@@ -40,6 +40,9 @@ public class Log extends NodeFunction<NumberHistoneNode> {
 
     @Override
 	public Node execute(NumberHistoneNode target, Node... args) {
+    	if (args.length != 0) {
+            return getNodeFactory().UNDEFINED;
+    	}
 		BigDecimal value = target.getValue();
 		value = new BigDecimal(Math.log(value.doubleValue())); 
 		return getNodeFactory().number(value);
