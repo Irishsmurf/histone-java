@@ -175,11 +175,13 @@ public class HistoneAcceptanceTest extends Runner {
 			throw new RuntimeException("Not supported tagName: data");
 		}
 		if (caseNode.get("function") != null) { 
-			final JsonNode node = caseNode.get("function"); 			
-            final String name = node.get("name").asText();
-            final String returnType = node.get("resultType") == null ? "string": node.get("resultType").asText();
-            final String data = node.get("result") == null ? "string": node.get("result").asText();
-            final String nodeType = node.get("node") == null ? null:  node.get("node").asText();
+			final JsonNode node = caseNode.get("function");
+			final JsonNode resultNode = node.get("result");
+			final String name = node.get("name").asText();
+			final String returnType = node.get("resultType") != null ? node.get("resultType").asText() : resultNode == null ? "string"
+					: getTypeOfNode(resultNode);
+			final String data = resultNode == null ? "string" : resultNode.asText();
+			final String nodeType = node.get("node") == null ? null : node.get("node").asText();
             if (nodeType == null) {
                 testCase.addMockGlobalFunction(new MockGlobalFunctionHolder(name, returnType, data));
             } else {
@@ -201,6 +203,24 @@ public class HistoneAcceptanceTest extends Runner {
         final String expected = node.get("expected").asText();
         final String found = node.get("found").asText();
         return new EvaluatorException(line, expected, found);
+    }
+
+	private String getTypeOfNode(JsonNode node) {
+		if (node == null) {
+			return null;
+		} else if (node.isTextual()) {
+			return "string";
+		} else if (node.isBigDecimal()) {
+			return "number";
+		} else if (node.isBigInteger()) {
+			return "number";
+		} else if (node.isDouble()) {
+			return "number";
+		} else if (node.isBoolean()) {
+			return "boolean";
+		} else {
+			throw new RuntimeException(String.format("Uknown node type: '%s'", node.toString()));
+		}
     }
 
     private void readCase(RunNotifier notifier, XMLStreamReader xmlStreamReader, TestSuiteHolder suite) throws XMLStreamException {
