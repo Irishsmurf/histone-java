@@ -96,6 +96,7 @@ public class Evaluator {
         nodeFunctionsManager.registerBuiltInFunction(NumberHistoneNode.class, new Ceil(bootstrap.getNodeFactory()));
         nodeFunctionsManager.registerBuiltInFunction(NumberHistoneNode.class, new Floor(bootstrap.getNodeFactory()));
         nodeFunctionsManager.registerBuiltInFunction(NumberHistoneNode.class, new Round(bootstrap.getNodeFactory()));
+        nodeFunctionsManager.registerBuiltInFunction(NumberHistoneNode.class, new Pow(bootstrap.getNodeFactory()));
         nodeFunctionsManager.registerBuiltInFunction(NumberHistoneNode.class, new ToChar(bootstrap.getNodeFactory()));
         nodeFunctionsManager.registerBuiltInFunction(NumberHistoneNode.class, new ToFixed(bootstrap.getNodeFactory()));
         nodeFunctionsManager.registerBuiltInFunction(NumberHistoneNode.class, new Log(bootstrap.getNodeFactory()));
@@ -139,6 +140,7 @@ public class Evaluator {
         globalFunctionsManager.registerBuiltInFunction(new Range(bootstrap.getNodeFactory()));
         globalFunctionsManager.registerBuiltInFunction(new DayOfWeek(bootstrap.getNodeFactory()));
         globalFunctionsManager.registerBuiltInFunction(new DaysInMonth(bootstrap.getNodeFactory()));
+        globalFunctionsManager.registerBuiltInFunction(new Rand(bootstrap.getNodeFactory()));
         return globalFunctionsManager;
     }
 
