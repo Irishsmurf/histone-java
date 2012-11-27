@@ -142,6 +142,7 @@ public class Evaluator {
         globalFunctionsManager.registerBuiltInFunction(new DayOfWeek(bootstrap.getNodeFactory()));
         globalFunctionsManager.registerBuiltInFunction(new DaysInMonth(bootstrap.getNodeFactory()));
         globalFunctionsManager.registerBuiltInFunction(new Rand(bootstrap.getNodeFactory()));
+        globalFunctionsManager.registerBuiltInFunction(new ResolveURI(bootstrap.getNodeFactory()));
         return globalFunctionsManager;
     }
 
