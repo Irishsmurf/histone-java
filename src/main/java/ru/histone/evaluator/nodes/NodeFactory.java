@@ -1,9 +1,13 @@
 package ru.histone.evaluator.nodes;
 
+import com.fasterxml.jackson.core.io.CharTypes;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.DecimalNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.TextNode;
+
 import ru.histone.utils.IOUtils;
 import ru.histone.utils.StringUtils;
 import sun.security.util.BigInt;
@@ -16,6 +20,8 @@ import java.math.BigInteger;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
+import java.util.Map.Entry;
 
 public class NodeFactory {
     private ObjectMapper jackson;
@@ -157,9 +163,36 @@ public class NodeFactory {
         return jackson.getNodeFactory().arrayNode();
     }
 
-    public String toJsonString(JsonNode jsonNode) {
-        return jsonNode.toString();
-    }
+	public String toJsonString(JsonNode jsonNode) {
+		if (jsonNode.isBigDecimal()) {
+			BigDecimal number = ((DecimalNode) jsonNode).decimalValue();
+			return number.toPlainString();
+		} else if (jsonNode.isObject()) {
+			ObjectNode objNode = (ObjectNode) jsonNode;
+			StringBuilder sb = new StringBuilder();
+			sb.append("{");
+			if (objNode.size() != 0) {
+				Iterator<Map.Entry<String, JsonNode>> it = ((ObjectNode) jsonNode).fields();
+				int count = 0;
+				for (; it.hasNext();) {
+					if (count > 0) {
+						sb.append(",");
+					}
+					++count;
+
+					Map.Entry<String, JsonNode> en = it.next();
+					sb.append('"');
+					CharTypes.appendQuoted(sb, en.getKey());
+					sb.append('"');
+					sb.append(':');
+					sb.append(toJsonString(en.getValue()));
+				}
+			}
+			sb.append("}");
+			return sb.toString();
+		}
+		return jsonNode.toString();
+	}
 
     public StringHistoneNode string(JsonNode value) {
         return new StringHistoneNode(this, value.asText());
