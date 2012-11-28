@@ -82,7 +82,6 @@ public class Evaluator {
      */
     private static NodeFunctionsManager registerMandatoryNodeFunctions(EvaluatorBootstrap bootstrap) {
         NodeFunctionsManager nodeFunctionsManager = bootstrap.getNodeFunctionsManager();
-        nodeFunctionsManager.registerBuiltInFunction(ObjectHistoneNode.class, new HasIndex(bootstrap.getNodeFactory()));
         nodeFunctionsManager.registerBuiltInFunction(ObjectHistoneNode.class, new Join(bootstrap.getNodeFactory()));
         nodeFunctionsManager.registerBuiltInFunction(ObjectHistoneNode.class, new Slice(bootstrap.getNodeFactory()));
 
