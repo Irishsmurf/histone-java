@@ -241,6 +241,10 @@ public class NodeFactory {
         return jackson.getNodeFactory().numberNode(value);
     }
 
+    public JsonNode jsonNumber(BigInteger val) {
+        return jackson.getNodeFactory().numberNode(val);
+    }
+
     public JsonNode jsonNode(Reader reader) throws IOException {
         return jackson.readTree(reader);
     }
@@ -269,7 +273,7 @@ public class NodeFactory {
      * @param items items to put into node
      * @return AST node
      */
-    public ArrayNode jsonArray(int type, Object... items) {
+    public ArrayNode jsonArray(int type, JsonNode... items) {
         ArrayNode result = jackson.createArrayNode();
         result.add(jackson.getNodeFactory().numberNode(type));
 
@@ -284,7 +288,7 @@ public class NodeFactory {
      * @param items items to pout into array
      * @return JSON array
      */
-    public ArrayNode jsonArray(Object... items) {
+    public ArrayNode jsonArray(JsonNode... items) {
         ArrayNode result = jackson.createArrayNode();
 
         fillArrayWithArgs(result, items);

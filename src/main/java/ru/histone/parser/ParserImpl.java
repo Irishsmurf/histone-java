@@ -179,7 +179,7 @@ public class ParserImpl {
             throw expectedFound("}}", tokenizer.next());
         }
         String path = unescapeString(StringUtils.stripSuroundings(pathToken.getContent(), "'\""));
-        return nodeFactory.jsonArray(AstNodeType.IMPORT, path);
+        return nodeFactory.jsonArray(AstNodeType.IMPORT, nodeFactory.jsonString(path));
     }
 
     private JsonNode parseCall() throws ParserException {
@@ -677,15 +677,15 @@ public class ParserImpl {
         } else if (tokenizer.isNext(TokenType.EXPR_INTEGER)) {
             Token token = tokenizer.next();
             BigInteger val = new BigInteger(token.getContent());
-            tree = nodeFactory.jsonArray(AstNodeType.INT, val);
+            tree = nodeFactory.jsonArray(AstNodeType.INT, nodeFactory.jsonNumber(val));
         } else if (tokenizer.isNext(TokenType.EXPR_DOUBLE)) {
             Token token = tokenizer.next();
             BigDecimal val = new BigDecimal(token.getContent());
-            tree = nodeFactory.jsonArray(AstNodeType.DOUBLE, val);
+            tree = nodeFactory.jsonArray(AstNodeType.DOUBLE, nodeFactory.jsonNumber(val));
         } else if (tokenizer.isNext(TokenType.EXPR_STRING)) {
             Token token = tokenizer.next();
             String val = unescapeString(StringUtils.stripSuroundings(token.getContent(), "'\""));
-            tree = nodeFactory.jsonArray(AstNodeType.STRING, val);
+            tree = nodeFactory.jsonArray(AstNodeType.STRING, nodeFactory.jsonString(val));
         } else if (tokenizer.next(TokenType.EXPR_LBRACKET) != null) {
             tree = parseMap(tokenizer);
         } else if (tokenizer.isNext(TokenType.EXPR_IDENT) || tokenizer.isNext(TokenType.EXPR_THIS) || tokenizer.isNext(TokenType.EXPR_SELF) || tokenizer.isNext(TokenType.EXPR_GLOBAL)) {
