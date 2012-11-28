@@ -18,10 +18,7 @@ package ru.histone.tokenizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static java.util.Collections.unmodifiableMap;
 
@@ -48,21 +45,23 @@ public final class TokenizerFactory {
         final char[] t2 = new char[]{')', '|'};
 
         for (TokenDef token : tokens) {
-            TokenContext context = token.getContext();
+            Collection<TokenContext> contexts = token.getContexts();
 
-            List<TokenDef> tokenDefs = tokensLocal.get(context);
-            if (tokenDefs == null) {
-                tokenDefs = new ArrayList<TokenDef>();
-                tokensLocal.put(context, tokenDefs);
-            }
-            tokenDefs.add(token);
+            for (TokenContext context : contexts) {
+                List<TokenDef> tokenDefs = tokensLocal.get(context);
+                if (tokenDefs == null) {
+                    tokenDefs = new ArrayList<TokenDef>();
+                    tokensLocal.put(context, tokenDefs);
+                }
+                tokenDefs.add(token);
 
-            StringBuilder regexpBuilder = regexpsLocal.get(context);
-            if (regexpBuilder == null) {
-                regexpBuilder = new StringBuilder();
-                regexpsLocal.put(context, regexpBuilder);
+                StringBuilder regexpBuilder = regexpsLocal.get(context);
+                if (regexpBuilder == null) {
+                    regexpBuilder = new StringBuilder();
+                    regexpsLocal.put(context, regexpBuilder);
+                }
+                regexpBuilder.append(t1).append(token.getRegexp()).append(t2);
             }
-            regexpBuilder.append(t1).append(token.getRegexp()).append(t2);
         }
 
         this.tokens = unmodifiableMap(tokensLocal);

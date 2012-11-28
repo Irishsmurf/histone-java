@@ -15,6 +15,9 @@
  */
 package ru.histone.tokenizer;
 
+import java.util.Collection;
+import java.util.HashSet;
+
 /**
  * Token definition holder
  */
@@ -32,7 +35,7 @@ public class TokenDef {
     /**
      * Context where token appears
      */
-    private TokenContext context;
+    private Collection<TokenContext> contexts = new HashSet<TokenContext>();
 
     /**
      * Token kind
@@ -42,7 +45,7 @@ public class TokenDef {
     /**
      * Context to switch to if this token appears in input sequence
      */
-    private TokenContext transition;
+    private TokenTransitionCallback transitionCallback;
 
     public TokenDef(TokenType type, TokenKind kind, TokenContext context, String regexp) {
         this(type, kind, context, null, regexp);
@@ -51,9 +54,20 @@ public class TokenDef {
     public TokenDef(TokenType type, TokenKind kind, TokenContext context, TokenContext transition, String regexp) {
         this.type = type;
         this.kind = kind;
-        this.context = context;
+        this.contexts.add(context);
         this.regexp = regexp;
-        this.transition = transition;
+        this.transitionCallback = new DefaultTokenTransitionCallback(transition);
+    }
+
+    public TokenDef(TokenType type, TokenKind kind, Collection<TokenContext> contexts, TokenTransitionCallback transitionCallback, String regexp) {
+        if(transitionCallback == null){
+            throw new RuntimeException("Error, transitionCallback can't be null");
+        }
+        this.type = type;
+        this.kind = kind;
+        this.contexts.addAll(contexts);
+        this.regexp = regexp;
+        this.transitionCallback = transitionCallback;
     }
 
     public TokenType getType() {
@@ -64,16 +78,16 @@ public class TokenDef {
         return regexp;
     }
 
-    public TokenContext getContext() {
-        return context;
+    public Collection<TokenContext> getContexts() {
+        return contexts;
     }
 
     public TokenKind getKind() {
         return kind;
     }
 
-    public TokenContext getTransition() {
-        return transition;
+    public TokenTransitionCallback getTransitionCallback() {
+        return transitionCallback;
     }
 
     @Override
@@ -83,10 +97,10 @@ public class TokenDef {
 
         TokenDef tokenDef = (TokenDef) o;
 
-        if (context != tokenDef.context) return false;
+        if (contexts != tokenDef.contexts) return false;
         if (kind != tokenDef.kind) return false;
         if (!regexp.equals(tokenDef.regexp)) return false;
-        if (transition != tokenDef.transition) return false;
+        if (transitionCallback != tokenDef.transitionCallback) return false;
         if (type != tokenDef.type) return false;
 
         return true;
@@ -96,9 +110,9 @@ public class TokenDef {
     public int hashCode() {
         int result = type.hashCode();
         result = 31 * result + regexp.hashCode();
-        result = 31 * result + context.hashCode();
+        result = 31 * result + contexts.hashCode();
         result = 31 * result + kind.hashCode();
-        result = 31 * result + (transition != null ? transition.hashCode() : 0);
+        result = 31 * result + (transitionCallback != null ? transitionCallback.hashCode() : 0);
         return result;
     }
 
@@ -108,8 +122,8 @@ public class TokenDef {
 
         sb.append("TokenDef(");
         sb.append("type=" + type + ", ");
-        sb.append("context=" + context + ", ");
-        sb.append("transition=" + transition);
+        sb.append("contexts.size=" + contexts.size() + ", ");
+        sb.append("transitionCallback=" + transitionCallback);
         sb.append(")");
 
         return sb.toString();

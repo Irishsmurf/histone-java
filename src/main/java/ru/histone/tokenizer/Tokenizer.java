@@ -45,6 +45,7 @@ public class Tokenizer {
     private final Map<TokenContext, List<TokenDef>> tokens;
     private final Map<TokenContext, StringBuilder> regexpList;
     private Map<TokenContext, Matcher> matchers = new HashMap<TokenContext, Matcher>();
+    private TokenTransitionCallback.NestedLevelHolder nestLevel = new TokenTransitionCallback.NestedLevelHolder();
 
     /**
      * Constructs new tokenizer instance using specified tokens definitions and their regexps<br/>
@@ -159,8 +160,9 @@ public class Tokenizer {
             log.trace("getNextToken(): tokenBuffer not empty, returning it's content");
             result = tokenBuffer;
 
-            if (tokenDefBuffer.getTransition() != null) {
-                switchContext(tokenDefBuffer.getTransition());
+            TokenContext transition = tokenDefBuffer.getTransitionCallback().getTransition(nestLevel);
+            if (transition != null) {
+                switchContext(transition);
             }
 
             tokenBuffer = null;
@@ -195,8 +197,9 @@ public class Tokenizer {
                                 result = getNextToken();
                             }
 
-                            if (def.getTransition() != null) {
-                                switchContext(def.getTransition());
+                            TokenContext transition = def.getTransitionCallback().getTransition(nestLevel);
+                            if (transition != null) {
+                                switchContext(transition);
                             }
                         }
                         inputOffset = m.end();
@@ -210,6 +213,8 @@ public class Tokenizer {
                 inputOffset = input.length();
             }
         }
+
+        log.debug("getNextToken(): result={}, currentToken={}, currentContext={}",new Object[]{result,this.currentToken,this.currentContext});
 
         log.trace("getNextToken()<<: result={}", new Object[]{result});
         return result;
