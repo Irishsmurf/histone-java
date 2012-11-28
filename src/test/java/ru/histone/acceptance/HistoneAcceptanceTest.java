@@ -135,7 +135,7 @@ public class HistoneAcceptanceTest extends Runner {
 			testCase.setInput(caseNode.get("input").asText());
 		}
 		if (caseNode.get("context") != null) {
-            testCase.setContext(caseNode.get("context").asText());
+            testCase.setContext(nodeFactory.toJsonString(caseNode.get("context")));
 		}
 		if (caseNode.get("expectedAST") != null) {
 			testCase.setExpectedAST((ArrayNode) caseNode.get("expectedAST"));
