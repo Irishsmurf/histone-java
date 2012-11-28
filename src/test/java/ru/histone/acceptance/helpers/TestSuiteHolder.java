@@ -36,9 +36,9 @@ public class TestSuiteHolder {
 
     @Override
     public String toString() {
-        StringBuilder result = new StringBuilder("TestSuite {" + fileName);
+        StringBuilder result = new StringBuilder("{" + fileName);
         if (StringUtils.isNotEmpty(suiteName)) {
-            result.append('_').append(suiteName);
+            result.append(": ").append(suiteName);
         }
         result.append("}");
         return result.toString();

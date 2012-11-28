@@ -35,13 +35,30 @@ public class Rand extends GlobalFunction {
     }
 
     @Override
-    public Node execute(Node... args) throws GlobalFunctionExecutionException {
-		NumberHistoneNode start = args[0].getAsNumber();
-		NumberHistoneNode end = args[1].getAsNumber();
-		BigDecimal minimum = start.getValue();
-		BigDecimal maximum = end.getValue();
+	public Node execute(Node... args) throws GlobalFunctionExecutionException {
+		BigDecimal value = getNumber(args, 0);
+		final BigDecimal minimum = value == null ? BigDecimal.valueOf(Integer.MIN_VALUE) : value;
+		value = getNumber(args, 1);
+		final BigDecimal maximum = value == null ? BigDecimal.valueOf(Integer.MAX_VALUE) : value;
+
 		double multiply = Math.random();
-		BigDecimal result = minimum.add(maximum.multiply(BigDecimal.valueOf(multiply))); 
+		BigDecimal result = minimum.add(maximum.multiply(BigDecimal.valueOf(multiply)));
 		return getNodeFactory().number(result);
-    }
+	}
+
+	private BigDecimal getNumber(Node[] args, int i) {
+		if (args.length <= i)
+			return null;
+		BigDecimal value = null;
+		if (args[i].isNumber()) {
+			value = args[i].getAsNumber().getValue();
+		} else if (args[i].isString()) {
+			try {
+				value = new BigDecimal(args[0].getAsString().getValue());
+			} catch (Exception e) {
+				// if wrong format return null
+			}
+		}
+		return value;
+	}
 }

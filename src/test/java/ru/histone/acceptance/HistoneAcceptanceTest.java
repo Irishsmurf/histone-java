@@ -15,11 +15,18 @@
  */
 package ru.histone.acceptance;
 
-import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.StringReader;
+import java.net.URL;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+
+import javax.xml.stream.XMLInputFactory;
 
 import org.junit.ComparisonFailure;
 import org.junit.runner.Description;
@@ -30,34 +37,32 @@ import org.junit.runner.notification.RunNotifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
+
 import ru.histone.GlobalProperty;
 import ru.histone.Histone;
 import ru.histone.HistoneBuilder;
 import ru.histone.HistoneException;
-import ru.histone.HistoneTokensHolder;
-import ru.histone.acceptance.helpers.*;
+import ru.histone.acceptance.helpers.MockGlobalFunction;
+import ru.histone.acceptance.helpers.MockGlobalFunctionHolder;
+import ru.histone.acceptance.helpers.MockNodeFunction;
+import ru.histone.acceptance.helpers.MockNodeFunctionHolder;
+import ru.histone.acceptance.helpers.TestCaseHolder;
+import ru.histone.acceptance.helpers.TestSuiteHolder;
 import ru.histone.evaluator.EvaluatorException;
 import ru.histone.evaluator.functions.global.GlobalFunction;
 import ru.histone.evaluator.functions.node.NodeFunction;
-import ru.histone.evaluator.nodes.*;
+import ru.histone.evaluator.nodes.BooleanHistoneNode;
+import ru.histone.evaluator.nodes.Node;
+import ru.histone.evaluator.nodes.NodeFactory;
+import ru.histone.evaluator.nodes.NumberHistoneNode;
+import ru.histone.evaluator.nodes.StringHistoneNode;
 import ru.histone.parser.Parser;
 import ru.histone.parser.ParserException;
-import ru.histone.tokenizer.TokenizerFactory;
 import ru.histone.utils.CollectionUtils;
 
-import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLStreamConstants;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamReader;
-import javax.xml.stream.util.StreamReaderDelegate;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.StringReader;
-import java.net.URI;
-import java.net.URL;
-import java.util.*;
-import java.util.Map.Entry;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 
 @RunWith(HistoneAcceptanceTest.class)
 public class HistoneAcceptanceTest extends Runner {
@@ -66,6 +71,7 @@ public class HistoneAcceptanceTest extends Runner {
 
     private Description testSuiteDescription;
     private static final XMLInputFactory inputFactory = XMLInputFactory.newInstance();
+    long testIdx = 0;
 
     private ObjectMapper jackson;
     private Parser parser;
@@ -99,18 +105,16 @@ public class HistoneAcceptanceTest extends Runner {
     }
 
     private void runTestCasesFromJsonFile(RunNotifier notifier, String fileName) {
-        //TODO change all this stuff to using ObjectMapper to read json files
-    	
         try {
            Reader reader = new InputStreamReader(getClass().getResourceAsStream("/"+fileName));
             try {
             	//get constructions from filename
-            	final String constructions = fileName.substring(fileName.lastIndexOf("/") + 1,fileName.lastIndexOf(".json"));
+            	final String filename = fileName.substring(fileName.lastIndexOf("/") + 1);
                 JsonNode list = jackson.readTree(reader);
                 final JsonNode mainElement = list.get(0);
-                final String name = mainElement.get("name").asText();
+                final String suiteName = mainElement.get("name").asText();
                 final ArrayNode cases = (ArrayNode) mainElement.get("cases");
-				final TestSuiteHolder suite = new TestSuiteHolder(name, constructions);
+				final TestSuiteHolder suite = new TestSuiteHolder(filename, suiteName);
 				Iterator<JsonNode> iter = cases.iterator();
 				while (iter.hasNext()) {
                 	JsonNode element = iter.next();
@@ -119,38 +123,6 @@ public class HistoneAcceptanceTest extends Runner {
             } catch (IOException e) {
                 throw new RuntimeException("Error reading json", e);
             }
-//            XMLStreamReader xmlStreamReader = new StreamReaderDelegate(inputFactory.createXMLStreamReader(getClass().getResourceAsStream("/evaluator/" + fileName))) {
-//                public int next() throws XMLStreamException {
-//                    while (true) {
-//                        int event = super.next();
-//                        switch (event) {
-//                            case XMLStreamConstants.COMMENT:
-//                            case XMLStreamConstants.PROCESSING_INSTRUCTION:
-//                                continue;
-//                            default:
-//                                return event;
-//                        }
-//                    }
-//                }
-//            };
-//
-//            TestSuiteHolder suite = null;
-//            while (xmlStreamReader.hasNext()) {
-//                int event = xmlStreamReader.next();
-//                log.debug("run(): event={}", new Object[]{event});
-//
-//                if (event == XMLStreamConstants.START_ELEMENT) {
-//                    if ("suite".equals(xmlStreamReader.getLocalName())) {
-//                        suite = new TestSuiteHolder(fileName, xmlStreamReader.getAttributeValue(null, "name"));
-//                    } else if ("case".equals(xmlStreamReader.getLocalName())) {
-//                        readCase(notifier, xmlStreamReader, suite);
-//                    }
-//                } else if (event == XMLStreamConstants.END_ELEMENT) {
-//                    if ("suite".equals(xmlStreamReader.getLocalName())) {
-//                        suite = null;
-//                    }
-//                }
-//            }
         } catch (Exception e) {
             notifier.fireTestFailure(new Failure(Description.createTestDescription(this.getClass(), fileName), e));
         }
@@ -163,7 +135,7 @@ public class HistoneAcceptanceTest extends Runner {
 			testCase.setInput(caseNode.get("input").asText());
 		}
 		if (caseNode.get("context") != null) {
-            testCase.setContext(caseNode.get("context").asText());
+            testCase.setContext(nodeFactory.toJsonString(caseNode.get("context")));
 		}
 		if (caseNode.get("expectedAST") != null) {
 			testCase.setExpectedAST((ArrayNode) caseNode.get("expectedAST"));
@@ -175,11 +147,13 @@ public class HistoneAcceptanceTest extends Runner {
 			throw new RuntimeException("Not supported tagName: data");
 		}
 		if (caseNode.get("function") != null) { 
-			final JsonNode node = caseNode.get("function"); 			
-            final String name = node.get("name").asText();
-            final String returnType = node.get("resultType") == null ? "string": node.get("resultType").asText();
-            final String data = node.get("result") == null ? "string": node.get("result").asText();
-            final String nodeType = node.get("node") == null ? null:  node.get("node").asText();
+			final JsonNode node = caseNode.get("function");
+			final JsonNode resultNode = node.get("result");
+			final String name = node.get("name").asText();
+			final String returnType = node.get("resultType") != null ? node.get("resultType").asText() : resultNode == null ? "string"
+					: getTypeOfNode(resultNode);
+			final String data = resultNode == null ? "string" : resultNode.asText();
+			final String nodeType = node.get("node") == null ? null : node.get("node").asText();
             if (nodeType == null) {
                 testCase.addMockGlobalFunction(new MockGlobalFunctionHolder(name, returnType, data));
             } else {
@@ -203,117 +177,29 @@ public class HistoneAcceptanceTest extends Runner {
         return new EvaluatorException(line, expected, found);
     }
 
-    private void readCase(RunNotifier notifier, XMLStreamReader xmlStreamReader, TestSuiteHolder suite) throws XMLStreamException {
-        log.debug("readCase(): >>>", new Object[]{});
-        TestCaseHolder testCase = new TestCaseHolder(suite);
-
-        while (xmlStreamReader.hasNext()) {
-            int event = xmlStreamReader.next();
-            log.debug("readCase(): event={}", new Object[]{event});
-
-            if (event == XMLStreamConstants.START_ELEMENT) {
-                String tagName = xmlStreamReader.getLocalName();
-                if ("input".equals(tagName)) {
-                    testCase.setInput(readTagValue(xmlStreamReader));
-                }
-                if ("context".equals(tagName)) {
-                    testCase.setContext(readTagValue(xmlStreamReader));
-                }
-                if ("expected".equals(tagName)) {
-                    testCase.setExpected(readTagValue(xmlStreamReader));
-                }
-                if ("data".equals(tagName)) {
-                    String location = xmlStreamReader.getAttributeValue(null, "url");
-                    String data = readTagValue(xmlStreamReader);
-                    testCase.addMockFile(new MockFileDataHolder(location, data));
-                }
-                if ("function".equals(tagName)) {
-                    String name = xmlStreamReader.getAttributeValue(null, "name");
-                    String returnType = xmlStreamReader.getAttributeValue(null, "return");
-                    String nodeType = xmlStreamReader.getAttributeValue(null, "node");
-                    String data = readTagValue(xmlStreamReader);
-                    if (nodeType == null) {
-                        testCase.addMockGlobalFunction(new MockGlobalFunctionHolder(name, returnType, data));
-                    } else {
-                        testCase.addMockNodeFunction(new MockNodeFunctionHolder(name, nodeType, returnType, data));
-                    }
-                }
-                if ("global".equals(tagName)) {
-                    String name = xmlStreamReader.getAttributeValue(null, "name");
-                    String value = xmlStreamReader.getAttributeValue(null, "value");
-                    testCase.addGlobalProp(name, value);
-                }
-                if ("exception".equals(tagName)) {
-                    testCase.setException(readException(xmlStreamReader));
-                }
-
-            } else if (event == XMLStreamConstants.END_ELEMENT) {
-                String tagName = xmlStreamReader.getLocalName();
-                if ("case".equals(tagName)) {
-                    break;
-                }
-            }
-
-        }
-        runTestCase(notifier, testCase);
-        log.debug("readCase(): >>>", new Object[]{});
+	private String getTypeOfNode(JsonNode node) {
+		if (node == null) {
+			return null;
+		} else if (node.isTextual()) {
+			return "string";
+		} else if (node.isBigDecimal()) {
+			return "number";
+		} else if (node.isBigInteger()) {
+			return "number";
+		} else if (node.isDouble()) {
+			return "number";
+		} else if (node.isBoolean()) {
+			return "boolean";
+		} else {
+			throw new RuntimeException(String.format("Uknown node type: '%s'", node.toString()));
+		}
     }
-
-    private EvaluatorException readException(XMLStreamReader xmlStreamReader) throws XMLStreamException {
-        String expected = null, found = null;
-        int line = 0;
-
-        while (xmlStreamReader.hasNext()) {
-            int event = xmlStreamReader.next();
-
-            if (event == XMLStreamConstants.START_ELEMENT) {
-                if ("line".equals(xmlStreamReader.getLocalName())) {
-                    String lineStrVal = readTagValue(xmlStreamReader);
-                    try {
-                        line = Integer.parseInt(lineStrVal);
-                    } catch (Exception e) {
-                        log.warn("{} is illegal value of \"line\" tag", lineStrVal);
-                    }
-                }
-                if ("expected".equals(xmlStreamReader.getLocalName())) {
-                    expected = readTagValue(xmlStreamReader);
-                }
-                if ("found".equals(xmlStreamReader.getLocalName())) {
-                    found = readTagValue(xmlStreamReader);
-                }
-
-            } else if (event == XMLStreamConstants.END_ELEMENT) {
-                break;
-
-            }
-
-        }
-        return new EvaluatorException(line, expected, found);
-    }
-
-    private String readTagValue(XMLStreamReader xmlStreamReader) throws XMLStreamException {
-        StringBuilder sb = new StringBuilder();
-
-        while (xmlStreamReader.hasNext()) {
-            int event = xmlStreamReader.next();
-
-            if (event == XMLStreamConstants.END_ELEMENT) {
-                break;
-            } else if (event == XMLStreamConstants.CHARACTERS) {
-                sb.append(xmlStreamReader.getText());
-            }
-        }
-
-        return sb.toString();
-    }
-
-    long testIdx = 0;
 
     private void runTestCase(RunNotifier notifier, TestCaseHolder testCase) {
         testIdx++;
         log.debug("case({}): input={}, context={}, expected={}, exception={}", new Object[]{testIdx, testCase.getInput(), testCase.getContext(), testCase.getExpected(), testCase.getException()});
 
-        Description description = Description.createTestDescription(this.getClass(), testIdx + "_" + testCase.toString());
+        Description description = Description.createTestDescription(this.getClass(), testIdx + " " + testCase.toString());
         testSuiteDescription.addChild(description);
         notifier.fireTestStarted(description);
 
