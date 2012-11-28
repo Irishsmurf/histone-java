@@ -25,7 +25,8 @@ import ru.histone.evaluator.nodes.NumberHistoneNode;
 import ru.histone.evaluator.nodes.NumberHistoneNode;
 
 /**
- *  Format a number up to required decimal places.
+ *  Returns the natural logarithm (base <i>e</i>) of a <code>double</code> value.
+ *  If args[0] is not null return logarithm for base
  */
 public class Log extends NodeFunction<NumberHistoneNode> {
 
@@ -40,11 +41,27 @@ public class Log extends NodeFunction<NumberHistoneNode> {
 
     @Override
 	public Node execute(NumberHistoneNode target, Node... args) {
-    	if (args.length != 0) {
-            return getNodeFactory().UNDEFINED;
-    	}
+		if (args.length > 1) {
+			return getNodeFactory().UNDEFINED;
+		}
+		BigDecimal base = null;
+		if (args.length == 0) {
+		} else if (args[0].isNumber()) {
+			base = args[0].getAsNumber().getValue();
+		} else if (args[0].isString()) {
+			try {
+				base = new BigDecimal(args[0].getAsString().getValue());
+			} catch (Exception e) {
+				// if wrong format try to get natural logarithm
+			}
+		}
+
 		BigDecimal value = target.getValue();
-		value = new BigDecimal(Math.log(value.doubleValue())); 
+		if (base == null || base.longValue() <= 0) {
+			value = new BigDecimal(Math.log(value.doubleValue()));
+		} else {
+			value = new BigDecimal(Math.log(value.doubleValue()) / Math.log(base.doubleValue()));
+		}
 		return getNodeFactory().number(value);
 	}
 }
