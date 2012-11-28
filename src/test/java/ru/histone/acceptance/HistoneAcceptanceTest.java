@@ -108,18 +108,20 @@ public class HistoneAcceptanceTest extends Runner {
         try {
            Reader reader = new InputStreamReader(getClass().getResourceAsStream("/"+fileName));
             try {
-            	//get constructions from filename
-            	final String filename = fileName;
-                JsonNode list = jackson.readTree(reader);
-                final JsonNode mainElement = list.get(0);
-                final String suiteName = mainElement.get("name").asText();
-                final ArrayNode cases = (ArrayNode) mainElement.get("cases");
-				final TestSuiteHolder suite = new TestSuiteHolder(filename, suiteName);
-				Iterator<JsonNode> iter = cases.iterator();
-				while (iter.hasNext()) {
-                	JsonNode element = iter.next();
-                    readCase(notifier, element, suite);
-                }
+				// get constructions from filename
+				final String filename = fileName;
+				JsonNode list = jackson.readTree(reader);
+				for (Iterator<JsonNode> it = list.elements(); it.hasNext();) {
+					final JsonNode mainElement = it.next();
+					final String suiteName = mainElement.get("name").asText();
+					final ArrayNode cases = (ArrayNode) mainElement.get("cases");
+					final TestSuiteHolder suite = new TestSuiteHolder(filename, suiteName);
+					Iterator<JsonNode> iter = cases.iterator();
+					while (iter.hasNext()) {
+						JsonNode element = iter.next();
+						readCase(notifier, element, suite);
+					}
+				}
             } catch (IOException e) {
                 throw new RuntimeException("Error reading json", e);
             }
