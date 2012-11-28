@@ -15,24 +15,24 @@
  */
 package ru.histone.optimizer;
 
-import com.google.gson.JsonArray;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import ru.histone.evaluator.MacroFunc;
 
 import java.util.*;
 
 public class InlineOptimizerContext {
-    private Deque<Map<String, JsonArray>> stacksVar;
+    private Deque<Map<String, ArrayNode>> stacksVar;
     private Deque<Map<String, MacroFunc>> stacksMacro;
 
     public InlineOptimizerContext() {
         this.stacksMacro = new ArrayDeque<Map<String, MacroFunc>>();
-        this.stacksVar = new ArrayDeque<Map<String, JsonArray>>();
+        this.stacksVar = new ArrayDeque<Map<String, ArrayNode>>();
         saveState();
     }
 
     public void saveState() {
         stacksMacro.push(new HashMap<String, MacroFunc>());
-        stacksVar.push(new HashMap<String, JsonArray>());
+        stacksVar.push(new HashMap<String, ArrayNode>());
     }
 
     public void restoreState() {
@@ -61,8 +61,8 @@ public class InlineOptimizerContext {
         stacksMacro.getFirst().put(name, macro);
     }
 
-    public JsonArray getVar(String name) {
-        for (Map<String, JsonArray> stack : stacksVar) {
+    public ArrayNode getVar(String name) {
+        for (Map<String, ArrayNode> stack : stacksVar) {
             if (stack.containsKey(name)) {
                 return stack.get(name);
             }
@@ -75,7 +75,7 @@ public class InlineOptimizerContext {
         return getVar(name) != null;
     }
 
-    public void putVar(String name, JsonArray varAst) {
+    public void putVar(String name, ArrayNode varAst) {
         stacksVar.getFirst().put(name, varAst);
     }
 }

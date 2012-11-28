@@ -15,42 +15,40 @@
  */
 package ru.histone.evaluator.functions.node.object;
 
+import java.util.Map.Entry;
+import java.util.Set;
+
 import ru.histone.evaluator.functions.node.NodeFunction;
 import ru.histone.evaluator.nodes.Node;
 import ru.histone.evaluator.nodes.NodeFactory;
 import ru.histone.evaluator.nodes.ObjectHistoneNode;
+import ru.histone.evaluator.nodes.ObjectHistoneNode;
 import ru.histone.evaluator.nodes.StringHistoneNode;
 
 /**
- * Joins array elements to single string using specified separator<br/>
- * If separator isn't specified, then space symbol will be used instead
+ * Transforms key to parameter map to query string. <br/>
  */
-public class Join extends NodeFunction<ObjectHistoneNode> {
+public class ToQueryString extends NodeFunction<ObjectHistoneNode> {
 
-    public Join(NodeFactory nodeFactory) {
+    public ToQueryString(NodeFactory nodeFactory) {
         super(nodeFactory);
     }
 
     @Override
     public String getName() {
-        return "join";
+        return "toQueryString";
     }
 
     @Override
-    public Node execute(ObjectHistoneNode target, Node... args) {
-        String separator = "";
-        if (args.length > 0) {
-            separator = args[0].getAsString().getValue();
-        }
-        boolean addSeparator = false;
-        StringBuilder buffer = new StringBuilder();
-        for (Node element : target.getElements().values()) {
-            if (addSeparator) {
-                buffer.append(separator);
-            }
-            buffer.append(element.getAsString().getValue());
-            addSeparator = true;
-        }
-        return getNodeFactory().string(buffer.toString());
-    }
+	public Node execute(ObjectHistoneNode target, Node... args) {
+		Set<Entry<Object, Node>> entries = target.getElements().entrySet();
+		StringBuilder b = new StringBuilder();
+		for (Entry<Object, Node> entry : entries) {
+			final String key = entry.getKey().toString();
+			final String value = entry.getValue().getAsString().getValue();
+			b.append("&").append(key).append("=").append(value);
+		}
+		String result = entries.size() == 0 ? "" : b.substring(1);
+		return getNodeFactory().string(result);
+	}
 }

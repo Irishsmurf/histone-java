@@ -17,13 +17,18 @@ package ru.histone.evaluator.functions.node.string;
 
 import ru.histone.evaluator.functions.node.NodeFunction;
 import ru.histone.evaluator.nodes.Node;
-import ru.histone.evaluator.nodes.StringNode;
+import ru.histone.evaluator.nodes.NodeFactory;
+import ru.histone.evaluator.nodes.StringHistoneNode;
 
 /**
  * Return substring of target string<br/>
  * Substring borders are specified by start and stop indexes. They could have negative values, and it will mean number of elements from opposite side.
  */
-public class Slice implements NodeFunction<StringNode> {
+public class Slice extends NodeFunction<StringHistoneNode> {
+
+    public Slice(NodeFactory nodeFactory) {
+        super(nodeFactory);
+    }
 
     @Override
     public String getName() {
@@ -31,7 +36,7 @@ public class Slice implements NodeFunction<StringNode> {
     }
 
     @Override
-    public Node execute(StringNode target, Node... args) {
+    public Node execute(StringHistoneNode target, Node... args) {
         if (args.length > 0 && args[0].isInteger()) {
             int startIdx = args[0].getAsNumber().getValue().intValue();
             String value = target.getValue();
@@ -59,7 +64,7 @@ public class Slice implements NodeFunction<StringNode> {
             }
 
             if (startIdx > stopIdx) {
-                return StringNode.create();
+                return getNodeFactory().string();
             } else {
 
                 if (startIdx < 0) {
@@ -70,10 +75,10 @@ public class Slice implements NodeFunction<StringNode> {
                     stopIdx = 0;
                 }
 
-                return StringNode.create(value.substring(startIdx, stopIdx));
+                return getNodeFactory().string(value.substring(startIdx, stopIdx));
             }
         }
 
-        return Node.UNDEFINED;
+        return getNodeFactory().UNDEFINED;
     }
 }

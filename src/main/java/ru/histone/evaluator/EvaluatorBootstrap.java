@@ -15,10 +15,10 @@
  */
 package ru.histone.evaluator;
 
-import com.google.gson.Gson;
 import ru.histone.evaluator.functions.global.GlobalFunctionsManager;
 import ru.histone.evaluator.functions.node.NodeFunctionsManager;
 import ru.histone.evaluator.nodes.GlobalObjectNode;
+import ru.histone.evaluator.nodes.NodeFactory;
 import ru.histone.parser.Parser;
 import ru.histone.resourceloaders.ResourceLoader;
 
@@ -27,7 +27,7 @@ import ru.histone.resourceloaders.ResourceLoader;
  */
 public class EvaluatorBootstrap {
     private Parser parser;
-    private Gson gson;
+    private NodeFactory nodeFactory;
     private ResourceLoader resourceLoader;
     private GlobalFunctionsManager globalFunctionsManager;
     private NodeFunctionsManager nodeFunctionsManager;
@@ -41,12 +41,12 @@ public class EvaluatorBootstrap {
         this.parser = parser;
     }
 
-    public Gson getGson() {
-        return gson;
+    public NodeFactory getNodeFactory() {
+        return nodeFactory;
     }
 
-    public void setGson(Gson gson) {
-        this.gson = gson;
+    public void setNodeFactory(NodeFactory nodeFactory) {
+        this.nodeFactory = nodeFactory;
     }
 
     public ResourceLoader getResourceLoader() {

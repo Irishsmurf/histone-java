@@ -15,6 +15,7 @@
  */
 package ru.histone.evaluator.functions.node.number;
 
+import java.math.BigDecimal;
 import java.math.RoundingMode;
 
 import ru.histone.evaluator.functions.node.NodeFunction;
@@ -24,21 +25,43 @@ import ru.histone.evaluator.nodes.NumberHistoneNode;
 import ru.histone.evaluator.nodes.NumberHistoneNode;
 
 /**
- * Return floor from target value
+ *  Returns the natural logarithm (base <i>e</i>) of a <code>double</code> value.
+ *  If args[0] is not null return logarithm for base
  */
-public class Floor extends NodeFunction<NumberHistoneNode>{
+public class Log extends NodeFunction<NumberHistoneNode> {
 
-    public Floor(NodeFactory nodeFactory) {
+    public Log(NodeFactory nodeFactory) {
         super(nodeFactory);
     }
 
     @Override
     public String getName() {
-        return "floor";
+        return "log";
     }
 
     @Override
-    public Node execute(NumberHistoneNode target, Node... args) {
-        return getNodeFactory().number(target.getValue().setScale(0, RoundingMode.FLOOR));
-    }
+	public Node execute(NumberHistoneNode target, Node... args) {
+		if (args.length > 1) {
+			return getNodeFactory().UNDEFINED;
+		}
+		BigDecimal base = null;
+		if (args.length == 0) {
+		} else if (args[0].isNumber()) {
+			base = args[0].getAsNumber().getValue();
+		} else if (args[0].isString()) {
+			try {
+				base = new BigDecimal(args[0].getAsString().getValue());
+			} catch (Exception e) {
+				// if wrong format try to get natural logarithm
+			}
+		}
+
+		BigDecimal value = target.getValue();
+		if (base == null || base.longValue() <= 0) {
+			value = new BigDecimal(Math.log(value.doubleValue()));
+		} else {
+			value = new BigDecimal(Math.log(value.doubleValue()) / Math.log(base.doubleValue()));
+		}
+		return getNodeFactory().number(value);
+	}
 }

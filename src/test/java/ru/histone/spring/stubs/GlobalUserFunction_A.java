@@ -18,12 +18,17 @@ package ru.histone.spring.stubs;
 import ru.histone.evaluator.functions.global.GlobalFunction;
 import ru.histone.evaluator.functions.global.GlobalFunctionExecutionException;
 import ru.histone.evaluator.nodes.Node;
-import ru.histone.evaluator.nodes.StringNode;
+import ru.histone.evaluator.nodes.NodeFactory;
+import ru.histone.evaluator.nodes.StringHistoneNode;
 
 /**
  * @author P.Salnikov <p.salnikov@gmail.com>
  */
-public class GlobalUserFunction_A implements GlobalFunction{
+public class GlobalUserFunction_A extends GlobalFunction{
+    protected GlobalUserFunction_A(NodeFactory nodeFactory) {
+        super(nodeFactory);
+    }
+
     @Override
     public String getName() {
         return "globalA";
@@ -31,6 +36,6 @@ public class GlobalUserFunction_A implements GlobalFunction{
 
     @Override
     public Node execute(Node... args) throws GlobalFunctionExecutionException {
-        return StringNode.create("global_a_result");
+        return getNodeFactory().string("global_a_result");
     }
 }

@@ -15,27 +15,40 @@
  */
 package ru.histone.evaluator.functions.global;
 
-import java.util.UUID;
+import java.net.URI;
+import java.net.URISyntaxException;
 
+import ru.histone.Histone;
 import ru.histone.evaluator.nodes.Node;
 import ru.histone.evaluator.nodes.NodeFactory;
+import ru.histone.evaluator.nodes.NumberHistoneNode;
+import ru.histone.evaluator.nodes.ObjectHistoneNode;
 import ru.histone.evaluator.nodes.StringHistoneNode;
 
 /**
- * Generates unique string<br/>
+ * Returns the URI to be resolved against given URI <br/>
  */
-public class UniqueId extends GlobalFunction {
-    public UniqueId(NodeFactory nodeFactory) {
+public class ResolveURI extends GlobalFunction {
+    public ResolveURI(NodeFactory nodeFactory) {
         super(nodeFactory);
     }
 
     @Override
     public String getName() {
-        return "uniqueId";
+        return "resolveURI";
     }
 
     @Override
-    public Node execute(Node... args) {
-        return getNodeFactory().string(UUID.randomUUID().toString());
+    public Node execute(Node... args) throws GlobalFunctionExecutionException {
+		String resolved = args[0].getAsString().getValue();
+		String against = args[1].getAsString().getValue();
+        String result = null;
+    	try {
+			URI uri = new URI(against);
+			result = uri.resolve(resolved).toString();
+		} catch (URISyntaxException e) {
+			throw new GlobalFunctionExecutionException("resolveURI function execution error", e);
+		}
+		return getNodeFactory().string(result);
     }
 }

@@ -15,78 +15,73 @@
  */
 package ru.histone.evaluator.nodes;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Reader;
-import java.math.BigDecimal;
+import com.fasterxml.jackson.databind.JsonNode;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonPrimitive;
-import ru.histone.utils.IOUtils;
-import ru.histone.utils.StringUtils;
+import java.math.BigDecimal;
 
 /**
  * Class representing String type in Histone
  */
-public class StringNode extends Node {
+public class StringHistoneNode extends Node {
 
     private String value;
 
-    private StringNode(String value) {
+    protected StringHistoneNode(NodeFactory nodeFactory, String value) {
+        super(nodeFactory);
         this.value = value;
     }
 
-    /**
-     * Create string type object with empty string value
-     *
-     * @return string type object
-     */
-    public static StringNode create() {
-        return create(StringUtils.EMPTY);
-    }
-
-    /**
-     * Create string type object with specified value
-     *
-     * @param source value
-     * @return string type object
-     */
-    public static StringNode create(String source) {
-        if (source == null) {
-            return create();
-        }
-        return new StringNode(source);
-    }
-
-    /**
-     * Create string type object with value readed from specified Reader
-     *
-     * @param source object to read string value from
-     * @return string type object
-     * @throws IOException thrown is any error occurs
-     */
-    public static StringNode create(Reader source) throws IOException {
-        try {
-            return new StringNode(IOUtils.toString(source));
-        } finally {
-            IOUtils.closeQuietly(source);
-        }
-    }
-
-    /**
-     * Create string type object with value readed from specified Stream
-     *
-     * @param source object to read string value from
-     * @return string type object
-     * @throws IOException thrown is any error occurs
-     */
-    public static StringNode create(InputStream source) throws IOException {
-        try {
-            return new StringNode(IOUtils.toString(source));
-        } finally {
-            IOUtils.closeQuietly(source);
-        }
-    }
+//    /**
+//     * Create string type object with empty string value
+//     *
+//     * @return string type object
+//     */
+//    public static StringHistoneNode create() {
+//        return create(StringUtils.EMPTY);
+//    }
+//
+//    /**
+//     * Create string type object with specified value
+//     *
+//     * @param source value
+//     * @return string type object
+//     */
+//    public static StringHistoneNode create(String source) {
+//        if (source == null) {
+//            return create();
+//        }
+//        return new StringHistoneNode(source);
+//    }
+//
+//    /**
+//     * Create string type object with value readed from specified Reader
+//     *
+//     * @param source object to read string value from
+//     * @return string type object
+//     * @throws IOException thrown is any error occurs
+//     */
+//    public static StringHistoneNode create(Reader source) throws IOException {
+//        try {
+//            return new StringHistoneNode(IOUtils.toString(source));
+//        } finally {
+//            IOUtils.closeQuietly(source);
+//        }
+//    }
+//
+//    /**
+//     * Create string type object with value readed from specified Stream
+//     *
+//     * @param source object to read string value from
+//     * @return string type object
+//     * @throws IOException thrown is any error occurs
+//     */
+//    public static StringHistoneNode create(InputStream source) throws IOException {
+//        try {
+//            return new StringHistoneNode(IOUtils.toString(source));
+//        } finally {
+//            IOUtils.closeQuietly(source);
+//        }
+//    }
 
     /**
      * Return string type object value
@@ -121,7 +116,7 @@ public class StringNode extends Node {
 
     @Override
     public Node getProp(String name) {
-        Node result = Node.UNDEFINED;
+        Node result = getNodeFactory().UNDEFINED;
 
         int propIdx = -1;
         try {
@@ -134,9 +129,9 @@ public class StringNode extends Node {
         }
 
         if ((propIdx >= 0) && (propIdx < value.length())) {
-            result = StringNode.create(String.valueOf(value.charAt(propIdx)));
+            result = getNodeFactory().string(String.valueOf(value.charAt(propIdx)));
 //        } else if ("length".equals(name)) {
-//            return NumberNode.create(value.length());
+//            return NumberHistonegetNodeFactory().create(value.length());
         } else {
             result = super.getProp(name);
         }
@@ -146,18 +141,18 @@ public class StringNode extends Node {
 
     @Override
     public Node oper_add(Node right) {
-        return StringNode.create(value + right.getAsString().value);
+        return getNodeFactory().string(value + right.getAsString().value);
     }
 
     private Node commonMulDivSubMod(Node right) {
         if (right.isUndefined()) {
-            return Node.UNDEFINED;
+            return getNodeFactory().UNDEFINED;
         } else if (right.isNull()) {
-            return Node.UNDEFINED;
+            return getNodeFactory().UNDEFINED;
         } else if (right.isBoolean()) {
-            return Node.UNDEFINED;
+            return getNodeFactory().UNDEFINED;
         } else if (right.isObject()) {
-            return Node.UNDEFINED;
+            return getNodeFactory().UNDEFINED;
         } else {
             throw new RuntimeException("Unknown right node type: " + right.getClass());
         }
@@ -167,16 +162,16 @@ public class StringNode extends Node {
     public Node oper_mul(Node right) {
         if (right.isNumber()) {
             if (this.getAsNumber().isUndefined()) {
-                return Node.UNDEFINED;
+                return getNodeFactory().UNDEFINED;
             } else {
                 return this.getAsNumber().oper_mul(right);
             }
         } else if (right.isString()) {
             if (this.getAsNumber().isUndefined()) {
-                return Node.UNDEFINED;
+                return getNodeFactory().UNDEFINED;
             } else {
                 if (right.getAsNumber().isUndefined()) {
-                    return Node.UNDEFINED;
+                    return getNodeFactory().UNDEFINED;
                 } else {
                     return this.getAsNumber().oper_mul(right.getAsNumber());
                 }
@@ -190,13 +185,13 @@ public class StringNode extends Node {
     public Node oper_div(Node right) {
         if (right.isNumber()) {
             if (this.getAsNumber().isUndefined()) {
-                return Node.UNDEFINED;
+                return getNodeFactory().UNDEFINED;
             }
             return this.getAsNumber().oper_div(right);
         }
         if (right.isString()) {
             if (this.getAsNumber().isUndefined() || right.getAsNumber().isUndefined()) {
-                return Node.UNDEFINED;
+                return getNodeFactory().UNDEFINED;
             }
             return this.getAsNumber().oper_div(right.getAsNumber());
         }
@@ -207,16 +202,16 @@ public class StringNode extends Node {
     public Node oper_mod(Node right) {
         if (right.isNumber()) {
             if (this.getAsNumber().isUndefined()) {
-                return Node.UNDEFINED;
+                return getNodeFactory().UNDEFINED;
             } else {
                 return this.getAsNumber().oper_mod(right);
             }
         } else if (right.isString()) {
             if (this.getAsNumber().isUndefined()) {
-                return Node.UNDEFINED;
+                return getNodeFactory().UNDEFINED;
             } else {
                 if (right.getAsNumber().isUndefined()) {
-                    return Node.UNDEFINED;
+                    return getNodeFactory().UNDEFINED;
                 } else {
                     return this.getAsNumber().oper_mod(right.getAsNumber());
                 }
@@ -229,7 +224,7 @@ public class StringNode extends Node {
     @Override
     public Node oper_negate() {
         if (this.getAsNumber().isUndefined()) {
-            return Node.UNDEFINED;
+            return getNodeFactory().UNDEFINED;
         } else {
             return this.getAsNumber().oper_negate();
         }
@@ -239,16 +234,16 @@ public class StringNode extends Node {
     public Node oper_sub(Node right) {
         if (right.isNumber()) {
             if (this.getAsNumber().isUndefined()) {
-                return Node.UNDEFINED;
+                return getNodeFactory().UNDEFINED;
             } else {
                 return this.getAsNumber().oper_sub(right);
             }
         } else if (right.isString()) {
             if (this.getAsNumber().isUndefined()) {
-                return Node.UNDEFINED;
+                return getNodeFactory().UNDEFINED;
             } else {
                 if (right.getAsNumber().isUndefined()) {
-                    return Node.UNDEFINED;
+                    return getNodeFactory().UNDEFINED;
                 } else {
                     return this.getAsNumber().oper_sub(right.getAsNumber());
                 }
@@ -260,35 +255,35 @@ public class StringNode extends Node {
 
     @Override
     public Node oper_not() {
-        return (getAsBoolean().getValue()) ? Node.FALSE : Node.TRUE;
+        return (getAsBoolean().getValue()) ? getNodeFactory().FALSE : getNodeFactory().TRUE;
     }
 
     @Override
     public Node oper_equal(Node right) {
         if (right.isString()) {
-            return value.equals(right.getAsString().getValue()) ? Node.TRUE : Node.FALSE;
+            return value.equals(right.getAsString().getValue()) ? getNodeFactory().TRUE : getNodeFactory().FALSE;
         } else if (right.isNumber()) {
-            NumberNode leftNumber = this.getAsNumber();
+            NumberHistoneNode leftNumber = this.getAsNumber();
             if (leftNumber.isNumber()) {
-                return (leftNumber.getValue().equals(right.getAsNumber().getValue())) ? Node.TRUE : Node.FALSE;
+                return (leftNumber.getValue().equals(right.getAsNumber().getValue())) ? getNodeFactory().TRUE : getNodeFactory().FALSE;
             } else {
-                return Node.FALSE;
+                return getNodeFactory().FALSE;
             }
         } else {
-            return (this.getAsBoolean().equals(right.getAsBoolean())) ? Node.TRUE : Node.FALSE;
+            return (this.getAsBoolean().equals(right.getAsBoolean())) ? getNodeFactory().TRUE : getNodeFactory().FALSE;
         }
     }
 
     @Override
     public Node oper_greaterThan(Node right) {
         if (right.isString()) {
-            return (value.length() > right.getAsString().getValue().length()) ? Node.TRUE : Node.FALSE;
+            return (value.length() > right.getAsString().getValue().length()) ? getNodeFactory().TRUE : getNodeFactory().FALSE;
         } else if (right.isNumber()) {
-            NumberNode leftNum = this.getAsNumber();
+            NumberHistoneNode leftNum = this.getAsNumber();
             if (leftNum.isNumber()) {
                 return leftNum.oper_greaterThan(right);
             } else {
-                return (value.length() > right.getAsString().getValue().length()) ? Node.TRUE : Node.FALSE;
+                return (value.length() > right.getAsString().getValue().length()) ? getNodeFactory().TRUE : getNodeFactory().FALSE;
             }
         } else {
             return this.getAsBoolean().oper_greaterThan(right.getAsBoolean());
@@ -298,13 +293,13 @@ public class StringNode extends Node {
     @Override
     public Node oper_greaterOrEqual(Node right) {
         if (right.isString()) {
-            return (value.length() >= right.getAsString().getValue().length()) ? Node.TRUE : Node.FALSE;
+            return (value.length() >= right.getAsString().getValue().length()) ? getNodeFactory().TRUE : getNodeFactory().FALSE;
         } else if (right.isNumber()) {
-            NumberNode leftNum = this.getAsNumber();
+            NumberHistoneNode leftNum = this.getAsNumber();
             if (leftNum.isNumber()) {
                 return leftNum.oper_greaterOrEqual(right);
             } else {
-                return (value.length() >= right.getAsString().getValue().length()) ? Node.TRUE : Node.FALSE;
+                return (value.length() >= right.getAsString().getValue().length()) ? getNodeFactory().TRUE : getNodeFactory().FALSE;
             }
         } else {
             return this.getAsBoolean().oper_greaterOrEqual(right.getAsBoolean());
@@ -314,13 +309,13 @@ public class StringNode extends Node {
     @Override
     public Node oper_lessThan(Node right) {
         if (right.isString()) {
-            return (value.length() < right.getAsString().getValue().length()) ? Node.TRUE : Node.FALSE;
+            return (value.length() < right.getAsString().getValue().length()) ? getNodeFactory().TRUE : getNodeFactory().FALSE;
         } else if (right.isNumber()) {
-            NumberNode leftNum = this.getAsNumber();
+            NumberHistoneNode leftNum = this.getAsNumber();
             if (leftNum.isNumber()) {
                 return leftNum.oper_lessThan(right);
             } else {
-                return (value.length() < right.getAsString().getValue().length()) ? Node.TRUE : Node.FALSE;
+                return (value.length() < right.getAsString().getValue().length()) ? getNodeFactory().TRUE : getNodeFactory().FALSE;
             }
         } else {
             return this.getAsBoolean().oper_lessThan(right.getAsBoolean());
@@ -330,13 +325,13 @@ public class StringNode extends Node {
     @Override
     public Node oper_lessOrEqual(Node right) {
         if (right.isString()) {
-            return (value.length() <= right.getAsString().getValue().length()) ? Node.TRUE : Node.FALSE;
+            return (value.length() <= right.getAsString().getValue().length()) ? getNodeFactory().TRUE : getNodeFactory().FALSE;
         } else if (right.isNumber()) {
-            NumberNode leftNum = this.getAsNumber();
+            NumberHistoneNode leftNum = this.getAsNumber();
             if (leftNum.isNumber()) {
                 return leftNum.oper_lessOrEqual(right);
             } else {
-                return (value.length() <= right.getAsString().getValue().length()) ? Node.TRUE : Node.FALSE;
+                return (value.length() <= right.getAsString().getValue().length()) ? getNodeFactory().TRUE : getNodeFactory().FALSE;
             }
         } else {
             return this.getAsBoolean().oper_lessOrEqual(right.getAsBoolean());
@@ -344,35 +339,35 @@ public class StringNode extends Node {
     }
 
     @Override
-    public BooleanNode getAsBoolean() {
-        return (getAsString().getValue().length() > 0) ? Node.TRUE : Node.FALSE;
+    public BooleanHistoneNode getAsBoolean() {
+        return (getAsString().getValue().length() > 0) ? getNodeFactory().TRUE : getNodeFactory().FALSE;
     }
 
     @Override
-    public NumberNode getAsNumber() {
-        NumberNode result;
+    public NumberHistoneNode getAsNumber() {
+        NumberHistoneNode result;
         try {
             BigDecimal v = new BigDecimal(getAsString().getValue());
-            result = NumberNode.create(v);
+            result = getNodeFactory().number(v);
         } catch (NumberFormatException nfe) {
-            result = Node.UNDEFINED_NUMBER;
+            result = getNodeFactory().UNDEFINED_NUMBER;
         }
         return result;
     }
 
     @Override
-    public StringNode getAsString() {
-        return StringNode.create(value);
+    public StringHistoneNode getAsString() {
+        return getNodeFactory().string(value);
     }
 
     @Override
-    public ObjectNode getAsObject() {
+    public ObjectHistoneNode getAsObject() {
         throw new RuntimeException("Can't cast " + getClass() + " to object");
     }
 
     @Override
-    public JsonElement getAsJsonElement() {
-        return new JsonPrimitive(value);
+    public JsonNode getAsJsonNode() {
+        return getNodeFactory().jsonString(value);
     }
 
     @Override

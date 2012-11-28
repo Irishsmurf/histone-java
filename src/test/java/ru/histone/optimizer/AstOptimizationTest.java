@@ -15,7 +15,8 @@
  */
 package ru.histone.optimizer;
 
-import com.google.gson.*;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -30,7 +31,7 @@ import static org.junit.Assert.assertEquals;
 @Ignore
 public class AstOptimizationTest {
     private Histone histone;
-    private Gson gson;
+//    private Gson gson;
 
     @Before
     public void before() throws HistoneException {
@@ -195,35 +196,35 @@ public class AstOptimizationTest {
         System.out.println("Input");
         System.out.println(input);
 
-        JsonArray normalAst = histone.parseTemplateToAST(new StringReader(input));
+        ArrayNode normalAst = histone.parseTemplateToAST(new StringReader(input));
         System.out.println("\n\nNormal AST");
-        System.out.println(gson.toJson(normalAst));
+//        System.out.println(gson.toJson(normalAst));
 
         String normalResult = histone.evaluateAST(normalAst);
         System.out.println("\nNormal Result");
         System.out.println(normalResult);
 
-//        JsonArray importsAst = histone.resolveImports(normalAst);
+//        ArrayNode importsAst = histone.resolveImports(normalAst);
 //        System.out.println("\n\nImports AST");
 //        System.out.println(gson.toJson(importsAst));
 //
-//        JsonArray markedAst = histone.markAst(importsAst);
+//        ArrayNode markedAst = histone.markAst(importsAst);
 //        System.out.println("\n\nMarked AST");
 //        System.out.println(gson.toJson(markedAst));
 //
-//        JsonArray inlinedAst = histone.inlineAst(markedAst);
+//        ArrayNode inlinedAst = histone.inlineAst(markedAst);
 //        System.out.println("\nInlined AST");
 //        System.out.println(gson.toJson(inlinedAst));
 //
-//        JsonArray markedAst2 = histone.markAst(inlinedAst);
+//        ArrayNode markedAst2 = histone.markAst(inlinedAst);
 //        System.out.println("\n\nMarked AST2");
 //        System.out.println(gson.toJson(markedAst2));
 //
-//        JsonArray inlinedAst2 = histone.inlineAst(markedAst2);
+//        ArrayNode inlinedAst2 = histone.inlineAst(markedAst2);
 //        System.out.println("\nInlined AST2");
 //        System.out.println(gson.toJson(inlinedAst2));
 //
-//        JsonArray optimizedAst = histone.optimizeAst(inlinedAst2);
+//        ArrayNode optimizedAst = histone.optimizeAst(inlinedAst2);
 //        System.out.println("\n\nOptimized AST");
 //        System.out.println(gson.toJson(makeASTShort(optimizedAst)));
 ////        System.out.println(gson.toJson(optimizedAst));
@@ -235,16 +236,17 @@ public class AstOptimizationTest {
 //        assertEquals(normalResult, optimizedResult);
     }
 
-    private JsonArray makeASTShort(JsonArray ast) {
-        JsonArray result = new JsonArray();
-        for (JsonElement elem : ast) {
-            if (elem.isJsonPrimitive()) {
-                result.add(new JsonPrimitive(shortenString(elem.getAsJsonPrimitive().getAsString())));
-            } else {
-                result.add(elem);
-            }
-        }
-        return result;
+    private ArrayNode makeASTShort(ArrayNode ast) {
+//        ArrayNode result = new ArrayNode();
+//        for (JsonNode elem : ast) {
+//            if (elem.isJsonPrimitive()) {
+//                result.add(new JsonPrimitive(shortenString(elem.getAsJsonPrimitive().getAsString())));
+//            } else {
+//                result.add(elem);
+//            }
+//        }
+//        return result;
+        return null;
     }
 
     private String shortenString(String string) {

@@ -17,13 +17,19 @@ package ru.histone.evaluator.functions.node.object;
 
 import ru.histone.evaluator.functions.node.NodeFunction;
 import ru.histone.evaluator.nodes.Node;
-import ru.histone.evaluator.nodes.ObjectNode;
+import ru.histone.evaluator.nodes.NodeFactory;
+import ru.histone.evaluator.nodes.ObjectHistoneNode;
+import ru.histone.evaluator.nodes.ObjectHistoneNode;
 
 /**
  * Checks if array has element with specified index<br/>
  * This is the same as 'array.size()&lt;idx'
  */
-public class HasIndex implements NodeFunction<ObjectNode> {
+public class HasIndex extends NodeFunction<ObjectHistoneNode> {
+
+    public HasIndex(NodeFactory nodeFactory) {
+        super(nodeFactory);
+    }
 
     @Override
     public String getName() {
@@ -31,12 +37,12 @@ public class HasIndex implements NodeFunction<ObjectNode> {
     }
 
     @Override
-    public Node execute(ObjectNode target, Node... args) {
+    public Node execute(ObjectHistoneNode target, Node... args) {
         if (args.length > 0 && args[0].isInteger()) {
             int idx = args[0].getAsNumber().getValue().intValue();
-            return (idx >= 0 && idx < target.getElements().size()) ? Node.TRUE : Node.FALSE;
+            return (idx >= 0 && idx < target.getElements().size()) ? getNodeFactory().TRUE : getNodeFactory().FALSE;
         }
 
-        return Node.UNDEFINED;
+        return getNodeFactory().UNDEFINED;
     }
 }

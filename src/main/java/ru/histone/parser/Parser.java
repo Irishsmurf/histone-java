@@ -15,9 +15,10 @@
  */
 package ru.histone.parser;
 
-import com.google.gson.JsonArray;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import ru.histone.evaluator.nodes.NodeFactory;
 import ru.histone.tokenizer.Tokenizer;
 import ru.histone.tokenizer.TokenizerFactory;
 
@@ -27,14 +28,16 @@ import ru.histone.tokenizer.TokenizerFactory;
 public class Parser {
     private final static Logger log = LoggerFactory.getLogger(Parser.class);
     private TokenizerFactory tokenizerFactory;
+    private NodeFactory nodeFactory;
 
     /**
      * Constructs parser with {@link TokenizerFactory} dependency
      *
      * @param tokenizerFactory tokenizer factory
      */
-    public Parser(TokenizerFactory tokenizerFactory) {
+    public Parser(TokenizerFactory tokenizerFactory, NodeFactory nodeFactory) {
         this.tokenizerFactory = tokenizerFactory;
+        this.nodeFactory = nodeFactory;
     }
 
     /**
@@ -44,12 +47,12 @@ public class Parser {
      * @return JSON representation of AST
      * @throws ParserException in case of parse error
      */
-    public JsonArray parse(CharSequence input) throws ParserException {
+    public ArrayNode parse(CharSequence input) throws ParserException {
         log.debug("parse(): input={}", new Object[]{input});
 
         Tokenizer tokenizer = tokenizerFactory.match(input);
-        ParserImpl parser = new ParserImpl(tokenizer);
-        JsonArray astTree = parser.parseTemplate();
+        ParserImpl parser = new ParserImpl(tokenizer,nodeFactory);
+        ArrayNode astTree = parser.parseTemplate();
         log.debug("parse(): astTree={}", astTree);
 
         return astTree;

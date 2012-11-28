@@ -15,13 +15,18 @@
  */
 package ru.histone.evaluator.functions.node;
 
-import ru.histone.evaluator.nodes.BooleanNode;
+import ru.histone.evaluator.nodes.BooleanHistoneNode;
 import ru.histone.evaluator.nodes.Node;
+import ru.histone.evaluator.nodes.NodeFactory;
 
 /**
  * Return if current target is of boolean type
  */
-public class IsBoolean implements NodeFunction<Node> {
+public class IsBoolean extends NodeFunction<Node> {
+    public IsBoolean(NodeFactory nodeFactory) {
+        super(nodeFactory);
+    }
+
     @Override
     public String getName() {
         return "isBoolean";
@@ -29,6 +34,6 @@ public class IsBoolean implements NodeFunction<Node> {
 
     @Override
     public Node execute(Node target, Node... args) {
-        return (target instanceof BooleanNode) ? Node.TRUE : Node.FALSE;
+        return (target instanceof BooleanHistoneNode) ? getNodeFactory().TRUE : getNodeFactory().FALSE;
     }
 }

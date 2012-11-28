@@ -13,29 +13,37 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package ru.histone.evaluator.functions.global;
+package ru.histone.evaluator.functions.node.number;
 
-import java.util.UUID;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 
+import ru.histone.evaluator.functions.node.NodeFunction;
 import ru.histone.evaluator.nodes.Node;
 import ru.histone.evaluator.nodes.NodeFactory;
-import ru.histone.evaluator.nodes.StringHistoneNode;
+import ru.histone.evaluator.nodes.NumberHistoneNode;
+import ru.histone.evaluator.nodes.NumberHistoneNode;
 
 /**
- * Generates unique string<br/>
+ *  Returns the value of the first argument raised to the power of the  second argument
  */
-public class UniqueId extends GlobalFunction {
-    public UniqueId(NodeFactory nodeFactory) {
+public class Pow extends NodeFunction<NumberHistoneNode> {
+
+    public Pow(NodeFactory nodeFactory) {
         super(nodeFactory);
     }
 
     @Override
     public String getName() {
-        return "uniqueId";
+        return "pow";
     }
 
-    @Override
-    public Node execute(Node... args) {
-        return getNodeFactory().string(UUID.randomUUID().toString());
-    }
+	@Override
+	public Node execute(NumberHistoneNode target, Node... args) {
+		BigDecimal value = target.getValue();
+		NumberHistoneNode start = args[0].getAsNumber();
+		BigDecimal power = start.getValue();
+		double result = Math.pow(value.doubleValue(), power.doubleValue());
+		return getNodeFactory().number(result);
+	}
 }

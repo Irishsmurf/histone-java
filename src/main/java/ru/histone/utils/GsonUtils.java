@@ -15,46 +15,42 @@
  */
 package ru.histone.utils;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-
-import java.util.Iterator;
-
 /**
  * Googls JSON library additional utils
  */
+@Deprecated
 public class GsonUtils {
 
     /**
-     * Removes last element from JsonArray and returns it
+     * Removes last element from ArrayNode and returns it
      *
      * @param arr gson array to use
      * @return last element from array or null if array is empty
      */
-    public static JsonElement removeLast(JsonArray arr) {
-        Iterator<JsonElement> iter = arr.iterator();
-        JsonElement result = null;
-        while (iter.hasNext()) {
-            result = iter.next();
-        }
-        iter.remove();
-        return result;
-    }
+//    public static JsonNode removeLast(ArrayNode arr) {
+//        Iterator<JsonNode> iter = arr.iterator();
+//        JsonNode result = null;
+//        while (iter.hasNext()) {
+//            result = iter.next();
+//        }
+//        iter.remove();
+//        return result;
+//    }
 
     /**
-     * Removes first element from JsonArray and returns it
+     * Removes first element from ArrayNode and returns it
      *
      * @param arr gson array to use
      * @return first element from array or null if array is empty
      */
-    public static JsonElement removeFirst(JsonArray arr) {
-        Iterator<JsonElement> iter = arr.iterator();
-        JsonElement result = null;
-        iter.remove();
-        while (iter.hasNext()) {
-            result = iter.next();
-        }
-        return result;
-    }
+//    public static JsonNode removeFirst(ArrayNode arr) {
+//        Iterator<JsonNode> iter = arr.iterator();
+//        JsonNode result = null;
+//        iter.remove();
+//        while (iter.hasNext()) {
+//            result = iter.next();
+//        }
+//        return result;
+//    }
 
 }

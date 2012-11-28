@@ -13,29 +13,39 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package ru.histone.evaluator.functions.global;
+package ru.histone.evaluator.functions.node.number;
 
-import java.util.UUID;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 
+import ru.histone.evaluator.functions.node.NodeFunction;
 import ru.histone.evaluator.nodes.Node;
 import ru.histone.evaluator.nodes.NodeFactory;
-import ru.histone.evaluator.nodes.StringHistoneNode;
+import ru.histone.evaluator.nodes.NumberHistoneNode;
+import ru.histone.evaluator.nodes.NumberHistoneNode;
 
 /**
- * Generates unique string<br/>
+ *  Format a number up to required decimal places.
  */
-public class UniqueId extends GlobalFunction {
-    public UniqueId(NodeFactory nodeFactory) {
+public class ToFixed extends NodeFunction<NumberHistoneNode> {
+
+    public ToFixed(NodeFactory nodeFactory) {
         super(nodeFactory);
     }
 
     @Override
     public String getName() {
-        return "uniqueId";
+        return "toFixed";
     }
 
     @Override
-    public Node execute(Node... args) {
-        return getNodeFactory().string(UUID.randomUUID().toString());
-    }
+	public Node execute(NumberHistoneNode target, Node... args) {
+		BigDecimal value = target.getValue();
+		if (args.length != 0) {
+			NumberHistoneNode start = args[0].getAsNumber();
+			int scale = start.getValue().intValue();
+			value = value.setScale(scale, RoundingMode.HALF_UP);
+		}
+		return getNodeFactory().number(value);
+	}
 }

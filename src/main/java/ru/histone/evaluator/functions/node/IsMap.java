@@ -16,12 +16,17 @@
 package ru.histone.evaluator.functions.node;
 
 import ru.histone.evaluator.nodes.Node;
-import ru.histone.evaluator.nodes.ObjectNode;
+import ru.histone.evaluator.nodes.NodeFactory;
+import ru.histone.evaluator.nodes.ObjectHistoneNode;
 
 /**
  * Return if current target is of map type
  */
-public class IsMap implements NodeFunction<Node> {
+public class IsMap extends NodeFunction<Node> {
+    public IsMap(NodeFactory nodeFactory) {
+        super(nodeFactory);
+    }
+
     @Override
     public String getName() {
         return "isMap";
@@ -29,6 +34,6 @@ public class IsMap implements NodeFunction<Node> {
 
     @Override
     public Node execute(Node target, Node... args) {
-        return (target instanceof ObjectNode) ? Node.TRUE : Node.FALSE;
+        return (target instanceof ObjectHistoneNode) ? getNodeFactory().TRUE : getNodeFactory().FALSE;
     }
 }

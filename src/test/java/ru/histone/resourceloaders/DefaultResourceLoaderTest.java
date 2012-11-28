@@ -42,7 +42,8 @@ public class DefaultResourceLoaderTest {
         resourceLoader = new DefaultResourceLoader();
 
         URL url = getClass().getClassLoader().getResource("resourceloader/test.txt");
-        baseHref = "file://" + new File(url.toURI()).getParent() + "/";
+        baseHref = "file:/" + new File(url.toURI()).getParent() + "/";
+        //baseHref = baseHref.replace("\\","/");
     }
 
     @Test

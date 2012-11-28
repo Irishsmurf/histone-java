@@ -20,6 +20,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import com.fasterxml.jackson.databind.node.ArrayNode;
+
 import ru.histone.GlobalProperty;
 import ru.histone.evaluator.EvaluatorException;
 import ru.histone.utils.CollectionUtils;
@@ -30,6 +32,7 @@ public class TestCaseHolder {
     private TestSuiteHolder suite;
     private String input;
     private String expected;
+    private ArrayNode expectedAST;
     private String context;
     private Set<MockFileDataHolder> mockFiles;
     private Set<MockGlobalFunctionHolder> mockGlobalFunctions;
@@ -61,7 +64,15 @@ public class TestCaseHolder {
         this.expected = expected;
     }
 
-    public String getContext() {
+    public ArrayNode getExpectedAST() {
+		return expectedAST;
+	}
+
+	public void setExpectedAST(ArrayNode expectedAST) {
+		this.expectedAST = expectedAST;
+	}
+
+	public String getContext() {
         return context;
     }
 

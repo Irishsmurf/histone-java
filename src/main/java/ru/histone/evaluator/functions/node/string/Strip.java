@@ -17,12 +17,17 @@ package ru.histone.evaluator.functions.node.string;
 
 import ru.histone.evaluator.functions.node.NodeFunction;
 import ru.histone.evaluator.nodes.Node;
-import ru.histone.evaluator.nodes.StringNode;
+import ru.histone.evaluator.nodes.NodeFactory;
+import ru.histone.evaluator.nodes.StringHistoneNode;
 
 /**
  * Removes all specified symbols from target string<br/>
  */
-public class Strip implements NodeFunction<StringNode> {
+public class Strip extends NodeFunction<StringHistoneNode> {
+
+    public Strip(NodeFactory nodeFactory) {
+        super(nodeFactory);
+    }
 
     @Override
     public String getName() {
@@ -30,7 +35,7 @@ public class Strip implements NodeFunction<StringNode> {
     }
 
     @Override
-    public Node execute(StringNode target, Node... args) {
+    public Node execute(StringHistoneNode target, Node... args) {
         String value = target.getValue();
         if (args.length > 0) {
             StringBuilder separator = new StringBuilder();
@@ -39,9 +44,9 @@ public class Strip implements NodeFunction<StringNode> {
                     separator.append(argNode.getAsString().getValue());
                 }
             }
-            return StringNode.create(strip(value, separator.toString()));
+            return getNodeFactory().string(strip(value, separator.toString()));
         } else {
-            return StringNode.create(strip(value, " \r\n\t"));
+            return getNodeFactory().string(strip(value, " \r\n\t"));
         }
 
     }

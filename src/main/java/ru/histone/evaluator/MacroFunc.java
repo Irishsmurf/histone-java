@@ -15,30 +15,30 @@
  */
 package ru.histone.evaluator;
 
-import com.google.gson.JsonArray;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 
 /**
  * Special object for storing macro definitions
  */
 public class MacroFunc {
 
-    private JsonArray args;
-    private JsonArray statements;
+    private ArrayNode args;
+    private ArrayNode statements;
     private String baseURI;
 
-    public void setArgs(JsonArray args) {
+    public void setArgs(ArrayNode args) {
         this.args = args;
     }
 
-    public void setStatements(JsonArray statements) {
+    public void setStatements(ArrayNode statements) {
         this.statements = statements;
     }
 
-    public JsonArray getArgs() {
+    public ArrayNode getArgs() {
         return args;
     }
 
-    public JsonArray getStatements() {
+    public ArrayNode getStatements() {
         return statements;
     }
 

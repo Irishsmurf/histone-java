@@ -15,24 +15,10 @@
  */
 package ru.histone.optimizer;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import ru.histone.Histone;
-import ru.histone.HistoneException;
-import ru.histone.parser.AstNodeFactory;
-import ru.histone.parser.AstNodeType;
 import ru.histone.parser.Parser;
-import ru.histone.parser.ParserException;
-import ru.histone.resourceloaders.Resource;
-import ru.histone.resourceloaders.ResourceLoadException;
 import ru.histone.resourceloaders.ResourceLoader;
-import ru.histone.utils.IOUtils;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
 
 public class AstImportResolver {
     private static final Logger log = LoggerFactory.getLogger(AstImportResolver.class);
@@ -45,18 +31,18 @@ public class AstImportResolver {
         this.resourceLoader = resourceLoader;
     }
 
-    public JsonArray resolve(JsonArray ast) throws HistoneException {
+/*    public ArrayNode resolve(ArrayNode ast) throws HistoneException {
         ImportResolverContext context = new ImportResolverContext();
         return resolveInternal(ast, context);
     }
 
-    private JsonArray resolveInternal(JsonArray ast, ImportResolverContext context) throws HistoneException {
-        JsonArray result = new JsonArray();
+    private ArrayNode resolveInternal(ArrayNode ast, ImportResolverContext context) throws HistoneException {
+        ArrayNode result = new ArrayNode();
 
-        for (JsonElement element : ast) {
-            JsonElement node = scanInstructions(element, context);
-            if (node.isJsonArray() && node.getAsJsonArray().get(0).isJsonArray()) {
-                result.addAll(node.getAsJsonArray());
+        for (JsonNode element : ast) {
+            JsonNode node = scanInstructions(element, context);
+            if (node.isArrayNode() && node.getAsArrayNode().get(0).isArrayNode()) {
+                result.addAll(node.getAsArrayNode());
             } else {
                 result.add(node);
             }
@@ -65,17 +51,17 @@ public class AstImportResolver {
         return result;
     }
 
-    private JsonElement scanInstructions(JsonElement element, ImportResolverContext context) throws HistoneException {
+    private JsonNode scanInstructions(JsonNode element, ImportResolverContext context) throws HistoneException {
         if (isString(element)) {
             return element;
         }
 
-        if (!element.isJsonArray()) {
+        if (!element.isArrayNode()) {
             Histone.runtime_log_warn("Invalid JSON element! Neither 'string', nor 'array'. Element: '{}'", element.toString());
             return element;
         }
 
-        JsonArray astArray = element.getAsJsonArray();
+        ArrayNode astArray = element.getAsArrayNode();
 
         int nodeType = getNodeType(astArray);
         switch (nodeType) {
@@ -89,7 +75,7 @@ public class AstImportResolver {
     }
 
 
-    private JsonArray resolveImport(JsonElement pathElement, ImportResolverContext context) throws HistoneException {
+    private ArrayNode resolveImport(JsonNode pathElement, ImportResolverContext context) throws HistoneException {
         if (!isString(pathElement)) {
             Histone.runtime_log_warn("Invalid path to imported template: '{}'", pathElement.toString());
             return AstNodeFactory.createNode(AstNodeType.STRING, "");
@@ -132,24 +118,24 @@ public class AstImportResolver {
                 // Add this resource full path to context
                 context.addImportedResource(resourceFullPath.toString());
 
-                JsonArray parseResult = parser.parse(templateContent).getAsJsonArray();
+                ArrayNode parseResult = parser.parse(templateContent).getAsArrayNode();
                 URI resourceURI = null; //TODO: refactor //resource.getURI();
                 if (resourceURI != null && resourceURI.isAbsolute() && !resourceURI.isOpaque()) {
                     context.setBaseURI(resourceURI.resolve("").toString());
                 }
 
 
-                JsonArray result = new JsonArray();
-                for (JsonElement elem : parseResult) {
-                    if (elem.isJsonArray()) {
-                        int nodeType = getNodeType(elem.getAsJsonArray());
+                ArrayNode result = new ArrayNode();
+                for (JsonNode elem : parseResult) {
+                    if (elem.isArrayNode()) {
+                        int nodeType = getNodeType(elem.getAsArrayNode());
                         switch (nodeType) {
                             case AstNodeType.MACRO:
                                 result.add(elem);
                                 break;
                             case AstNodeType.IMPORT:
-                                JsonArray resolvedAst = resolveImport(elem.getAsJsonArray().get(1), context);
-                                if (resolvedAst.get(0).isJsonArray()) {
+                                ArrayNode resolvedAst = resolveImport(elem.getAsArrayNode().get(1), context);
+                                if (resolvedAst.get(0).isArrayNode()) {
                                     result.addAll(resolvedAst);
                                 } else {
                                     result.add(resolvedAst);
@@ -181,11 +167,11 @@ public class AstImportResolver {
         }
     }
 
-    private boolean isString(JsonElement element) {
+    private boolean isString(JsonNode element) {
         return element.isJsonPrimitive() && element.getAsJsonPrimitive().isString();
     }
 
-    private int getNodeType(JsonArray astArray) {
+    private int getNodeType(ArrayNode astArray) {
         return astArray.get(0).getAsJsonPrimitive().getAsInt();
     }
 
@@ -196,5 +182,5 @@ public class AstImportResolver {
         }
         return value;
     }
-
+      */
 }

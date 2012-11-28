@@ -15,31 +15,17 @@
  */
 package ru.histone.evaluator.nodes;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonPrimitive;
+import com.fasterxml.jackson.databind.JsonNode;
 import ru.histone.Histone;
 
 /**
  * Class representing Boolean type in Histone
  */
-public class BooleanNode extends Node {
-
-//	public static final BooleanNode TRUE_INSTANCE = new BooleanNode(true);
-//	public static final BooleanNode FALSE_INSTANCE = new BooleanNode(false);
-
+public class BooleanHistoneNode extends Node {
     private Boolean value;
 
-    /**
-     * Creates boolean object with spcified value
-     *
-     * @param value boolean object value
-     * @return boolean type object
-     */
-    public static BooleanNode create(boolean value) {
-        return new BooleanNode(value);
-    }
-
-    protected BooleanNode(boolean value) {
+    protected BooleanHistoneNode(NodeFactory nodeFactory, boolean value) {
+        super(nodeFactory);
         this.value = value;
     }
 
@@ -56,7 +42,7 @@ public class BooleanNode extends Node {
     public Node oper_add(Node right) {
         if (right.isNumber()) {
             Histone.runtime_log_warn("Boolean: operation '+' is undefined for '{}' and '{}'", this, right);
-            return Node.UNDEFINED;
+            return getNodeFactory().UNDEFINED;
         } else {
             return this.getAsString().oper_add(right.getAsString());
         }
@@ -64,7 +50,7 @@ public class BooleanNode extends Node {
 
     private Node commonMulDivSubMod(Node right) {
         Histone.runtime_log_warn("Boolean: operations '*/-%' is undefined for '{}' and '{}'", this, right);
-        return Node.UNDEFINED;
+        return getNodeFactory().UNDEFINED;
     }
 
     @Override
@@ -85,7 +71,7 @@ public class BooleanNode extends Node {
     @Override
     public Node oper_negate() {
         Histone.runtime_log_warn("Boolean: operations '- (negate)' is undefined for '{}'", this);
-        return Node.UNDEFINED;
+        return getNodeFactory().UNDEFINED;
     }
 
     @Override
@@ -95,57 +81,57 @@ public class BooleanNode extends Node {
 
     @Override
     public Node oper_not() {
-        return value ? Node.FALSE : Node.TRUE;
+        return value ? getNodeFactory().FALSE : getNodeFactory().TRUE;
     }
 
     @Override
     public Node oper_equal(Node right) {
-        return (value.equals(right.getAsBoolean().getValue())) ? Node.TRUE : Node.FALSE;
+        return (value.equals(right.getAsBoolean().getValue())) ? getNodeFactory().TRUE : getNodeFactory().FALSE;
     }
 
     @Override
     public Node oper_greaterThan(Node right) {
-        return (value == right.getAsBoolean().getValue()) ? Node.FALSE : (value ? Node.TRUE : Node.FALSE);
+        return (value == right.getAsBoolean().getValue()) ? getNodeFactory().FALSE : (value ? getNodeFactory().TRUE : getNodeFactory().FALSE);
     }
 
     @Override
     public Node oper_greaterOrEqual(Node right) {
-        return (value == right.getAsBoolean().getValue()) ? Node.TRUE : (value ? Node.TRUE : Node.FALSE);
+        return (value == right.getAsBoolean().getValue()) ? getNodeFactory().TRUE : (value ? getNodeFactory().TRUE : getNodeFactory().FALSE);
     }
 
     @Override
     public Node oper_lessThan(Node right) {
-        return (value == right.getAsBoolean().getValue()) ? Node.FALSE : (value ? Node.FALSE : Node.TRUE);
+        return (value == right.getAsBoolean().getValue()) ? getNodeFactory().FALSE : (value ? getNodeFactory().FALSE : getNodeFactory().TRUE);
     }
 
     @Override
     public Node oper_lessOrEqual(Node right) {
-        return (value == right.getAsBoolean().getValue()) ? Node.TRUE : (value ? Node.FALSE : Node.TRUE);
+        return (value == right.getAsBoolean().getValue()) ? getNodeFactory().TRUE : (value ? getNodeFactory().FALSE : getNodeFactory().TRUE);
     }
 
     @Override
-    public BooleanNode getAsBoolean() {
+    public BooleanHistoneNode getAsBoolean() {
         return this;
     }
 
     @Override
-    public NumberNode getAsNumber() {
-        return NumberNode.create(getAsBoolean().getValue() ? 1 : 0);
+    public NumberHistoneNode getAsNumber() {
+        return getNodeFactory().number(getAsBoolean().getValue() ? 1 : 0);
     }
 
     @Override
-    public StringNode getAsString() {
-        return StringNode.create(getAsBoolean().getValue() ? "true" : "false");
+    public StringHistoneNode getAsString() {
+        return getNodeFactory().string(getAsBoolean().getValue() ? "true" : "false");
     }
 
     @Override
-    public ObjectNode getAsObject() {
+    public ObjectHistoneNode getAsObject() {
         throw new RuntimeException("Can't cast " + getClass() + " to object");
     }
 
     @Override
-    public JsonElement getAsJsonElement() {
-        return new JsonPrimitive(value);
+    public JsonNode getAsJsonNode() {
+        return getNodeFactory().jsonBoolean(value);
     }
 
     @Override

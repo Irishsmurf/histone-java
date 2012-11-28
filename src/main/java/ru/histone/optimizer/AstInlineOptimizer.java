@@ -15,36 +15,28 @@
  */
 package ru.histone.optimizer;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonPrimitive;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import ru.histone.HistoneException;
-import ru.histone.evaluator.EvaluatorException;
-import ru.histone.evaluator.MacroFunc;
-import ru.histone.parser.AstNodeFactory;
-import ru.histone.parser.AstNodeType;
-
-import java.util.Iterator;
 
 public class AstInlineOptimizer {
 
-    public JsonArray inline(JsonArray ast) throws HistoneException {
+/*    public ArrayNode inline(ArrayNode ast) throws HistoneException {
         InlineOptimizerContext context = new InlineOptimizerContext();
         return inline(ast, context);
     }
 
-    public JsonArray inline(JsonArray ast, InlineOptimizerContext context) throws HistoneException {
-        JsonArray result = new JsonArray();
+    public ArrayNode inline(ArrayNode ast, InlineOptimizerContext context) throws HistoneException {
+        ArrayNode result = new ArrayNode();
 
-        for (JsonElement node : ast) {
+        for (JsonNode node : ast) {
             int nodeType = 0;
             if (!isString(node)) {
-                nodeType = getNodeType(node.getAsJsonArray());
-                node = inlineNode(node.getAsJsonArray(), context);
+                nodeType = getNodeType(node.getAsArrayNode());
+                node = inlineNode(node.getAsArrayNode(), context);
             }
 
             if (nodeType == AstNodeType.CALL) {
-                for (JsonElement elem : node.getAsJsonArray()) {
+                for (JsonNode elem : node.getAsArrayNode()) {
                     result.add(elem);
                 }
             } else {
@@ -55,7 +47,7 @@ public class AstInlineOptimizer {
         return result;
     }
 
-    private JsonArray inlineNode(JsonArray node, InlineOptimizerContext context) throws HistoneException {
+    private ArrayNode inlineNode(ArrayNode node, InlineOptimizerContext context) throws HistoneException {
         int nodeType = getNodeType(node);
         switch (Math.abs(nodeType)) {
             case AstNodeType.TRUE:
@@ -68,12 +60,12 @@ public class AstInlineOptimizer {
 
 //            case AstNodeType.MAP:
             //TODO: check array->map
-//                return inlineMap(nodeType, node.get(1).getAsJsonArray(), context);
+//                return inlineMap(nodeType, node.get(1).getAsArrayNode(), context);
 //            case AstNodeType.ARRAY:
-//                return inlineArray(nodeType, node.get(1).getAsJsonArray(), context);
+//                return inlineArray(nodeType, node.get(1).getAsArrayNode(), context);
 //
 //            case AstNodeType.OBJECT:
-//                return inlineObject(nodeType, node.get(1).getAsJsonArray(), context);
+//                return inlineObject(nodeType, node.get(1).getAsArrayNode(), context);
 
             case AstNodeType.ADD:
             case AstNodeType.SUB:
@@ -88,27 +80,27 @@ public class AstInlineOptimizer {
             case AstNodeType.LESS_THAN:
             case AstNodeType.GREATER_OR_EQUAL:
             case AstNodeType.GREATER_THAN:
-                return inlineBinaryOperation(nodeType, node.get(1).getAsJsonArray(), node.get(2).getAsJsonArray(), context);
+                return inlineBinaryOperation(nodeType, node.get(1).getAsArrayNode(), node.get(2).getAsArrayNode(), context);
 
             case AstNodeType.NEGATE:
             case AstNodeType.NOT:
-                return inlineUnaryOperation(nodeType, node.get(1).getAsJsonArray(), context);
+                return inlineUnaryOperation(nodeType, node.get(1).getAsArrayNode(), context);
 
 
             case AstNodeType.IF:
-                return inlineIf(nodeType, node.get(1).getAsJsonArray(), context);
+                return inlineIf(nodeType, node.get(1).getAsArrayNode(), context);
 
             case AstNodeType.FOR:
-                return inlineFor(nodeType, node.get(1).getAsJsonArray(), node.get(2).getAsJsonArray(), node.get(3).getAsJsonArray(), context);
+                return inlineFor(nodeType, node.get(1).getAsArrayNode(), node.get(2).getAsArrayNode(), node.get(3).getAsArrayNode(), context);
 
             case AstNodeType.CALL:
                 return inlineCall(nodeType, node.get(1), node.get(2), node.get(3), context);
 
             case AstNodeType.MACRO:
-                return inlineMacro(nodeType, node.get(1).getAsJsonPrimitive(), node.get(2).getAsJsonArray(), node.get(3).getAsJsonArray(), context);
+                return inlineMacro(nodeType, node.get(1).getAsJsonPrimitive(), node.get(2).getAsArrayNode(), node.get(3).getAsArrayNode(), context);
 
             case AstNodeType.SELECTOR:
-                return inlineSelector(nodeType, node.get(1).getAsJsonArray(), context);
+                return inlineSelector(nodeType, node.get(1).getAsArrayNode(), context);
 
 //            case AstNodeType.IMPORT:
 //            case -AstNodeType.IMPORT:
@@ -119,38 +111,38 @@ public class AstInlineOptimizer {
         }
     }
 
-    private JsonArray inlineBinaryOperation(int nodeType, JsonArray leftAst, JsonArray rightAst, InlineOptimizerContext context) throws HistoneException {
-        leftAst = inlineNode(leftAst, context).getAsJsonArray();
-        rightAst = inlineNode(rightAst, context).getAsJsonArray();
+    private ArrayNode inlineBinaryOperation(int nodeType, ArrayNode leftAst, ArrayNode rightAst, InlineOptimizerContext context) throws HistoneException {
+        leftAst = inlineNode(leftAst, context).getAsArrayNode();
+        rightAst = inlineNode(rightAst, context).getAsArrayNode();
         return AstNodeFactory.createNode(nodeType, leftAst, rightAst);
     }
 
-    private JsonArray inlineUnaryOperation(int nodeType, JsonArray ast, InlineOptimizerContext context) throws HistoneException {
-        ast = inlineNode(ast, context).getAsJsonArray();
+    private ArrayNode inlineUnaryOperation(int nodeType, ArrayNode ast, InlineOptimizerContext context) throws HistoneException {
+        ast = inlineNode(ast, context).getAsArrayNode();
         return AstNodeFactory.createNode(nodeType, ast);
     }
 
-    private JsonArray inlineArray(int nodeType, JsonArray elements, InlineOptimizerContext context) throws HistoneException {
-        JsonArray result = new JsonArray();
+    private ArrayNode inlineArray(int nodeType, ArrayNode elements, InlineOptimizerContext context) throws HistoneException {
+        ArrayNode result = new ArrayNode();
 
-        for (JsonElement elem : elements) {
-            elem = inlineNode(elem.getAsJsonArray(), context);
+        for (JsonNode elem : elements) {
+            elem = inlineNode(elem.getAsArrayNode(), context);
             result.add(elem);
         }
 
         return AstNodeFactory.createNode(nodeType, result);
     }
 
-    private JsonArray inlineObject(int nodeType, JsonArray elements, InlineOptimizerContext context) throws HistoneException {
-        JsonArray result = new JsonArray();
+    private ArrayNode inlineObject(int nodeType, ArrayNode elements, InlineOptimizerContext context) throws HistoneException {
+        ArrayNode result = new ArrayNode();
 
-        for (JsonElement elem : elements) {
-            JsonArray objElem = new JsonArray();
+        for (JsonNode elem : elements) {
+            ArrayNode objElem = new ArrayNode();
 
-            JsonElement key = elem.getAsJsonArray().get(0);
-            JsonArray val = elem.getAsJsonArray().get(1).getAsJsonArray();
+            JsonNode key = elem.getAsArrayNode().get(0);
+            ArrayNode val = elem.getAsArrayNode().get(1).getAsArrayNode();
 
-            val = inlineNode(val.getAsJsonArray(), context);
+            val = inlineNode(val.getAsArrayNode(), context);
 
             objElem.add(key);
             objElem.add(val);
@@ -160,8 +152,8 @@ public class AstInlineOptimizer {
         return AstNodeFactory.createNode(nodeType, result);
     }
 
-    private JsonArray inlineSelector(int nodeType, JsonArray selector, InlineOptimizerContext context) {
-        JsonElement varElem = selector.get(0);
+    private ArrayNode inlineSelector(int nodeType, ArrayNode selector, InlineOptimizerContext context) {
+        JsonNode varElem = selector.get(0);
 
         if (varElem.isJsonPrimitive()) {
             String varName = varElem.getAsJsonPrimitive().getAsString();
@@ -169,10 +161,10 @@ public class AstInlineOptimizer {
                 if (selector.size() == 1) {
                     return context.getVar(varName);
                 } else {
-                    JsonArray resultSelectorElements = new JsonArray();
+                    ArrayNode resultSelectorElements = new ArrayNode();
 //                    result.add(new JsonPrimitive(AstNodeType.SELECTOR));
                     resultSelectorElements.add(context.getVar(varName));
-                    Iterator<JsonElement> iter = selector.iterator();
+                    Iterator<JsonNode> iter = selector.iterator();
                     iter.next();//iter.size>1, so we can safely skip first selector element
                     while (iter.hasNext()) {
                         resultSelectorElements.add(iter.next());
@@ -187,22 +179,22 @@ public class AstInlineOptimizer {
         }
     }
 
-//    private JsonArray inlineImport(JsonElement uri, InlineOptimizerContext context) {
+//    private ArrayNode inlineImport(JsonNode uri, InlineOptimizerContext context) {
 //        return null;  //To change body of created methods use File | Settings | File Templates.
 //    }
 
-    private JsonArray inlineIf(int nodeType, JsonArray conditions, InlineOptimizerContext context) throws HistoneException {
-        JsonArray conditionsOut = new JsonArray();
+    private ArrayNode inlineIf(int nodeType, ArrayNode conditions, InlineOptimizerContext context) throws HistoneException {
+        ArrayNode conditionsOut = new ArrayNode();
 
         context.saveState();
-        for (JsonElement condition : conditions) {
-            JsonElement expressionAst = condition.getAsJsonArray().get(0);
-            JsonArray statementsAst = condition.getAsJsonArray().get(1).getAsJsonArray();
+        for (JsonNode condition : conditions) {
+            JsonNode expressionAst = condition.getAsArrayNode().get(0);
+            ArrayNode statementsAst = condition.getAsArrayNode().get(1).getAsArrayNode();
 
-            expressionAst = inlineNode(expressionAst.getAsJsonArray(), context);
+            expressionAst = inlineNode(expressionAst.getAsArrayNode(), context);
             statementsAst = inline(statementsAst, context);
 
-            JsonArray conditionOut = new JsonArray();
+            ArrayNode conditionOut = new ArrayNode();
             conditionOut.add(expressionAst);
             conditionOut.add(statementsAst);
             conditionsOut.add(conditionOut);
@@ -212,15 +204,15 @@ public class AstInlineOptimizer {
         return AstNodeFactory.createNode(nodeType, conditionsOut);
     }
 
-    private JsonArray inlineFor(int nodeType, JsonArray iterator, JsonArray collection, JsonArray statements, InlineOptimizerContext context) throws HistoneException {
-        JsonArray statementsForAst = statements.getAsJsonArray().get(0).getAsJsonArray();
-        JsonArray statementsElseAst = statements.getAsJsonArray().size() > 1 ? statements.getAsJsonArray().get(1).getAsJsonArray() : null;
+    private ArrayNode inlineFor(int nodeType, ArrayNode iterator, ArrayNode collection, ArrayNode statements, InlineOptimizerContext context) throws HistoneException {
+        ArrayNode statementsForAst = statements.getAsArrayNode().get(0).getAsArrayNode();
+        ArrayNode statementsElseAst = statements.getAsArrayNode().size() > 1 ? statements.getAsArrayNode().get(1).getAsArrayNode() : null;
 
-        JsonElement collectionAst = inlineNode(collection, context);
+        JsonNode collectionAst = inlineNode(collection, context);
         statementsForAst = inline(statementsForAst, context);
         statementsElseAst = (statementsElseAst != null) ? inline(statementsElseAst, context) : null;
 
-        JsonArray statementsArr = new JsonArray();
+        ArrayNode statementsArr = new ArrayNode();
 
         statementsArr.add(statementsForAst);
         if (statementsElseAst != null) {
@@ -231,7 +223,7 @@ public class AstInlineOptimizer {
 
     }
 
-    private JsonArray inlineCall(int nodeType, JsonElement target, JsonElement nameElement, JsonElement args, InlineOptimizerContext context) throws HistoneException {
+    private ArrayNode inlineCall(int nodeType, JsonNode target, JsonNode nameElement, JsonNode args, InlineOptimizerContext context) throws HistoneException {
         if (!target.isJsonNull() || !isString(nameElement) || nodeType < 0) {
             return AstNodeFactory.createNode(nodeType, target, nameElement, args);
         }
@@ -243,22 +235,22 @@ public class AstInlineOptimizer {
         }
 
         MacroFunc macro = context.getMacro(macroName);
-        JsonArray macroArgsAst = macro.getArgs();
-        JsonArray macroBodyAst = macro.getStatements();
+        ArrayNode macroArgsAst = macro.getArgs();
+        ArrayNode macroBodyAst = macro.getStatements();
 
         context.saveState();
 
         // prepare inline vars for defined macro argument
         for (int i = 0; i < macroArgsAst.size(); i++) {
-            context.putVar(macroArgsAst.get(i).getAsString(), args.getAsJsonArray().get(i).getAsJsonArray());
+            context.putVar(macroArgsAst.get(i).getAsString(), args.getAsArrayNode().get(i).getAsArrayNode());
         }
 
         // prepare inline vars for 'self' reserved word
-        JsonArray argumentsAst = new JsonArray();
+        ArrayNode argumentsAst = new ArrayNode();
         argumentsAst.add(new JsonPrimitive("arguments"));
         //TODO:
 //        argumentsAst.add(AstNodeFactory.createNode(AstNodeType.ARRAY, args));
-//        JsonArray self = AstNodeFactory.createNode(AstNodeType.OBJECT, AstNodeFactory.createArray(argumentsAst));
+//        ArrayNode self = AstNodeFactory.createNode(AstNodeType.OBJECT, AstNodeFactory.createArray(argumentsAst));
 //        context.putVar("self", self);
 
         // do inline optimization using prepared context
@@ -269,7 +261,7 @@ public class AstInlineOptimizer {
         return macroBodyAst;
     }
 
-    private JsonArray inlineMacro(int nodeType, JsonPrimitive ident, JsonArray args, JsonArray statements, InlineOptimizerContext context) throws EvaluatorException {
+    private ArrayNode inlineMacro(int nodeType, JsonPrimitive ident, ArrayNode args, ArrayNode statements, InlineOptimizerContext context) throws EvaluatorException {
         String name = ident.getAsString();
 
         MacroFunc func = new MacroFunc();
@@ -285,7 +277,7 @@ public class AstInlineOptimizer {
         }
     }
 
-//    private JsonArray inlineImport(int nodeType, JsonPrimitive ident, InlineOptimizerContext context) throws EvaluatorException {
+//    private ArrayNode inlineImport(int nodeType, JsonPrimitive ident, InlineOptimizerContext context) throws EvaluatorException {
 //        String uri = ident.getAsString();
 //
 //        resourceLoaderManager.
@@ -293,18 +285,18 @@ public class AstInlineOptimizer {
 //        return AstNodeFactory.createNode(nodeType, ident);
 //    }
 
-    private boolean isString(JsonElement element) {
+    private boolean isString(JsonNode element) {
         return element.isJsonPrimitive() && element.getAsJsonPrimitive().isString();
     }
 
-    private int getNodeType(JsonArray astArray) {
+    private int getNodeType(ArrayNode astArray) {
         return astArray.get(0).getAsJsonPrimitive().getAsInt();
     }
 
-    private JsonArray makeElementUnsafe(JsonArray element) {
+    private ArrayNode makeElementUnsafe(ArrayNode element) {
         boolean typeUpdated = false;
-        JsonArray result = new JsonArray();
-        for (JsonElement item : element) {
+        ArrayNode result = new ArrayNode();
+        for (JsonNode item : element) {
             if (typeUpdated) {
                 result.add(item);
             } else {
@@ -314,5 +306,5 @@ public class AstInlineOptimizer {
         }
         return result;
     }
-
+                  */
 }

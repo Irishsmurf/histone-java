@@ -16,18 +16,34 @@
 package ru.histone.evaluator.functions.global;
 
 import ru.histone.evaluator.nodes.Node;
+import ru.histone.evaluator.nodes.NodeFactory;
 
 /**
  * Use this interface when you need to implement your own global function
  */
-public interface GlobalFunction {
+public abstract class GlobalFunction {
+
+    private NodeFactory nodeFactory;
+
+    protected GlobalFunction(NodeFactory nodeFactory) {
+        this.nodeFactory = nodeFactory;
+    }
+
+    /**
+     * Returns NodeFacotry instance
+     *
+     * @return NodeFactory instance
+     */
+    public NodeFactory getNodeFactory() {
+        return nodeFactory;
+    }
 
     /**
      * Return function name
      *
      * @return function name
      */
-    public String getName();
+    public abstract String getName();
 
     /**
      * This method will be run when Histone evaluate function<br/>
@@ -37,5 +53,5 @@ public interface GlobalFunction {
      * @throws GlobalFunctionExecutionException
      *          if your function stops with error and you need to put details into log, then you should use this exception
      */
-    public Node execute(Node... args) throws GlobalFunctionExecutionException;
+    public abstract Node execute(Node... args) throws GlobalFunctionExecutionException;
 }

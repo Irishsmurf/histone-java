@@ -15,109 +15,110 @@
  */
 package ru.histone.evaluator.nodes;
 
-import com.google.gson.JsonElement;
+
+import com.fasterxml.jackson.databind.JsonNode;
 
 /**
  * Class representing undefined type in Histone
  */
 public class UndefinedNode extends Node {
 
-	public static final UndefinedNode INSTANCE = new UndefinedNode();
+    protected UndefinedNode(NodeFactory nodeFactory) {
+        super(nodeFactory);
+    }
 
-	protected UndefinedNode(){
-	}
-	
-	@Override
-	public Node oper_add(Node right) {
-		if (right.isNumber() || right.isUndefined()) {
-			return Node.UNDEFINED;
-		} else {
-			return this.getAsString().oper_add(right.getAsString());
-		}
-	}
+    @Override
+    public Node oper_add(Node right) {
+        if (right.isNumber() || right.isUndefined()) {
+            return getNodeFactory().UNDEFINED;
+        } else {
+            return this.getAsString().oper_add(right.getAsString());
+        }
+    }
 
-	@Override
-	public Node oper_mul(Node right) {
-		return Node.UNDEFINED;
-	}
+    @Override
+    public Node oper_mul(Node right) {
+        return getNodeFactory().UNDEFINED;
+    }
 
-	@Override
-	public Node oper_div(Node right) {
-		return Node.UNDEFINED;
-	}
+    @Override
+    public Node oper_div(Node right) {
+        return getNodeFactory().UNDEFINED;
+    }
 
-	@Override
-	public Node oper_mod(Node right) {
-		return Node.UNDEFINED;
-	}
+    @Override
+    public Node oper_mod(Node right) {
+        return getNodeFactory().UNDEFINED;
+    }
 
-	@Override
-	public Node oper_negate() {
-		return Node.UNDEFINED;
-	}
+    @Override
+    public Node oper_negate() {
+        return getNodeFactory().UNDEFINED;
+    }
 
-	@Override
-	public Node oper_sub(Node right) {
-		return Node.UNDEFINED;
-	}
+    @Override
+    public Node oper_sub(Node right) {
+        return getNodeFactory().UNDEFINED;
+    }
 
-	@Override
-	public Node oper_not() {
-		return Node.TRUE;
-	}
+    @Override
+    public Node oper_not() {
+        return getNodeFactory().TRUE;
+    }
 
-	@Override
-	public Node oper_equal(Node right) {
-		return (this.getAsBoolean() == right.getAsBoolean()) ? Node.TRUE : Node.FALSE;
-	}
+    @Override
+    public Node oper_equal(Node right) {
+        return (this.getAsBoolean() == right.getAsBoolean()) ? getNodeFactory().TRUE : getNodeFactory().FALSE;
+    }
 
-	@Override
-	public Node oper_greaterThan(Node right) {
-		return this.getAsBoolean().oper_greaterThan(right.getAsBoolean());
-	}
+    @Override
+    public Node oper_greaterThan(Node right) {
+        return this.getAsBoolean().oper_greaterThan(right.getAsBoolean());
+    }
 
-	@Override
-	public Node oper_greaterOrEqual(Node right) {
-		return this.getAsBoolean().oper_greaterOrEqual(right.getAsBoolean());
-	}
+    @Override
+    public Node oper_greaterOrEqual(Node right) {
+        return this.getAsBoolean().oper_greaterOrEqual(right.getAsBoolean());
+    }
 
-	@Override
-	public Node oper_lessThan(Node right) {
-		return this.getAsBoolean().oper_lessThan(right.getAsBoolean());
-	}
+    @Override
+    public Node oper_lessThan(Node right) {
+        return this.getAsBoolean().oper_lessThan(right.getAsBoolean());
+    }
 
-	@Override
-	public Node oper_lessOrEqual(Node right) {
-		return this.getAsBoolean().oper_lessOrEqual(right.getAsBoolean());
-	}
+    @Override
+    public Node oper_lessOrEqual(Node right) {
+        return this.getAsBoolean().oper_lessOrEqual(right.getAsBoolean());
+    }
 
-	@Override
-	public BooleanNode getAsBoolean() {
-		return Node.FALSE;
-	}
+    @Override
+    public BooleanHistoneNode getAsBoolean() {
+        return getNodeFactory().FALSE;
+    }
 
-	@Override
-	public NumberNode getAsNumber() {
-		return Node.UNDEFINED_NUMBER;
-	}
+    @Override
+    public NumberHistoneNode getAsNumber() {
+        return getNodeFactory().UNDEFINED_NUMBER;
+    }
 
-	@Override
-	public StringNode getAsString() {
-		return StringNode.create("");
-	}
+    @Override
+    public StringHistoneNode getAsString() {
+        return getNodeFactory().string("");
+    }
 
-	@Override
-	public ObjectNode getAsObject() {
-		throw new RuntimeException("Can't cast " + getClass() + " to object");
-	}
+    @Override
+    public ObjectHistoneNode getAsObject() {
+        throw new RuntimeException("Can't cast " + getClass() + " to object");
+    }
 
-	@Override
-	public JsonElement getAsJsonElement() {
-		return Node.NULL.getAsJsonElement();
-	}
-	@Override
-	public String toString() {
-		return "undefined()";
-	}
+    @Override
+    public JsonNode getAsJsonNode() {
+        return getNodeFactory().NULL.getAsJsonNode();
+    }
+
+    @Override
+    public String toString() {
+        return "undefined()";
+    }
 
 }

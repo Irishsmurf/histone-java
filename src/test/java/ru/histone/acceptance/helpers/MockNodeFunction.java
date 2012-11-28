@@ -15,28 +15,48 @@
  */
 package ru.histone.acceptance.helpers;
 
+import java.io.StringReader;
 import java.math.BigDecimal;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import ru.histone.Histone;
+import ru.histone.HistoneBuilder;
+import ru.histone.HistoneException;
 import ru.histone.evaluator.functions.node.NodeFunction;
 import ru.histone.evaluator.functions.node.NodeFunctionExecutionException;
-import ru.histone.evaluator.nodes.BooleanNode;
-import ru.histone.evaluator.nodes.Node;
-import ru.histone.evaluator.nodes.NumberNode;
-import ru.histone.evaluator.nodes.StringNode;
+import ru.histone.evaluator.nodes.*;
 
 /**
  *
  *
  */
-public class MockNodeFunction implements NodeFunction {
+public class MockNodeFunction extends NodeFunction {
     private String name;
     private String data;
     private String resultType;
+    private boolean throwException;
 
-    public MockNodeFunction(String name, String resultType, String data) {
+    private Histone histone;
+
+
+    public MockNodeFunction(NodeFactory nodeFactory, String name, String resultType, String data, boolean throwException) {
+        super(nodeFactory);
         this.name = name;
-        this.resultType = resultType;
+        this.resultType = (resultType != null) ? resultType : "string";
         this.data = data;
+        this.throwException = throwException;
+
+        HistoneBuilder histoneBuilder = new HistoneBuilder();
+        histoneBuilder.setJackson(new ObjectMapper());
+        try {
+            histone = histoneBuilder.build();
+        } catch (HistoneException e) {
+            throw new RuntimeException("Error initializing inner Histone",e);
+        }
     }
 
     @Override
@@ -46,36 +66,33 @@ public class MockNodeFunction implements NodeFunction {
 
     @Override
     public Node execute(Node target, Node... args) throws NodeFunctionExecutionException {
-        if (data.contains(":exception:")) {
+        if (throwException) {
             throw new RuntimeException("Function exception");
         }
 
         Node node = null;
         if ("string".equals(resultType.toLowerCase())) {
-            if (data.contains(":target:")) {
-                data = data.replace(":target:", "(" + target.toString() + ")");
+            ObjectNode context = getNodeFactory().jsonObject();
+            JsonNode targetObj = target.getAsJsonNode();
+            ArrayNode argsArray = getNodeFactory().jsonArray();
+            for(Node arg : args){
+                argsArray.add(arg.getAsJsonNode());
             }
-            if (data.contains(":args:")) {
-                StringBuilder sb = new StringBuilder();
-                sb.append('[');
-                boolean addSeparator = false;
-                for (Object arg : args) {
-                    if (addSeparator) {
-                        sb.append('-');
-                    }
-                    sb.append(arg.toString());
-                    addSeparator = true;
-                }
-                sb.append(']');
+            context.put("target", targetObj);
+            context.put("args", argsArray);
 
-                data = data.replace(":args:", sb.toString());
+            String result = null;
+            try {
+                result = histone.evaluate(new StringReader(data), context);
+            } catch (HistoneException e) {
+
             }
 
-            node = StringNode.create(data);
+            node = getNodeFactory().string(result);
         } else if ("number".equals(resultType.toLowerCase())) {
-            node = NumberNode.create(new BigDecimal(data));
+            node = getNodeFactory().number(new BigDecimal(data));
         } else if ("boolean".equals(resultType.toLowerCase())) {
-            node = "true".equalsIgnoreCase(data) ? BooleanNode.TRUE : BooleanNode.FALSE;
+            node = "true".equalsIgnoreCase(data) ? getNodeFactory().TRUE : getNodeFactory().FALSE;
         } else {
             throw new RuntimeException();
         }
