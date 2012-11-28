@@ -109,7 +109,7 @@ public class HistoneAcceptanceTest extends Runner {
            Reader reader = new InputStreamReader(getClass().getResourceAsStream("/"+fileName));
             try {
             	//get constructions from filename
-            	final String filename = fileName.substring(fileName.lastIndexOf("/") + 1);
+            	final String filename = fileName;
                 JsonNode list = jackson.readTree(reader);
                 final JsonNode mainElement = list.get(0);
                 final String suiteName = mainElement.get("name").asText();
