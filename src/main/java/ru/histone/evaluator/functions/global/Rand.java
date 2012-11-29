@@ -40,9 +40,10 @@ public class Rand extends GlobalFunction {
 		final BigDecimal minimum = value == null ? BigDecimal.valueOf(Integer.MIN_VALUE) : value;
 		value = getNumber(args, 1);
 		final BigDecimal maximum = value == null ? BigDecimal.valueOf(Integer.MAX_VALUE) : value;
-
+        final BigDecimal additional = maximum.subtract(minimum);
+        		
 		double multiply = Math.random();
-		BigDecimal result = minimum.add(maximum.multiply(BigDecimal.valueOf(multiply)));
+		BigDecimal result = minimum.add(additional.multiply(BigDecimal.valueOf(multiply)));
 		return getNodeFactory().number(result);
 	}
 
