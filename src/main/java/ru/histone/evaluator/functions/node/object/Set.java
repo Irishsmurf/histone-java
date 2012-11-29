@@ -18,6 +18,7 @@ package ru.histone.evaluator.functions.node.object;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 import ru.histone.evaluator.functions.node.NodeFunction;
@@ -28,48 +29,32 @@ import ru.histone.evaluator.nodes.ObjectHistoneNode;
 /**
  * Resize given array
  */
-public class Resize extends NodeFunction<ObjectHistoneNode> {
+public class Set extends NodeFunction<ObjectHistoneNode> {
 
-    public Resize(NodeFactory nodeFactory) {
+    public Set(NodeFactory nodeFactory) {
         super(nodeFactory);
     }
 
     @Override
     public String getName() {
-        return "resize";
+        return "set";
     }
 
     @Override
 	public Node execute(ObjectHistoneNode target, Node... args) {
-		if (args.length > 1)
+		if (args.length != 2)
 			return getNodeFactory().UNDEFINED;
-		if (args.length == 0)
-			return getNodeFactory().object(target.getElements().values());
-		BigDecimal newSize = null;
-		if (args[0].isNumber()) {
-			newSize = args[0].getAsNumber().getValue();
-		} else if (args[0].isString()) {
-			try {
-				newSize = new BigDecimal(args[0].getAsString().getValue());
-			} catch (Exception e) {
-				// if wrong format then no resize
-			}
-		}
-		if (newSize == null || newSize.intValue() < 0) {
-			return getNodeFactory().object(target.getElements().values());
-		}
-
-		Iterator<Node> it = target.getElements().values().iterator();
-		List<Node> nodes = new ArrayList<Node>();
-		for (int i = 0; i < newSize.intValue(); i++) {
-			Node node;
-			if (it.hasNext()) {
-				node = it.next();
-			} else {
-				node = getNodeFactory().number(0);
-			}
-			nodes.add(node);
-		}
-		return getNodeFactory().object(nodes);
+		ObjectHistoneNode result = getNodeFactory().object();
+		//we can add only string or number
+		String key = null;
+		if (args[0].isNumber()) 
+			key = args[0].getAsNumber().getValue().toPlainString();
+		else if (args[0].isString()) 
+			key = args[0].getAsString().getValue();
+		if (key != null && !args[1].isUndefined())
+			result.add(key, args[1]);
+		return result;
 	}
+    
+    
 }
