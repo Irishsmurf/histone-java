@@ -15,34 +15,46 @@
  */
 package ru.histone.evaluator.functions.node.object;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+
 import ru.histone.evaluator.functions.node.NodeFunction;
 import ru.histone.evaluator.nodes.Node;
 import ru.histone.evaluator.nodes.NodeFactory;
 import ru.histone.evaluator.nodes.ObjectHistoneNode;
-import ru.histone.evaluator.nodes.ObjectHistoneNode;
 
 /**
- * Checks if array has element with specified index<br/>
- * This is the same as 'array.size()&lt;idx'
+ * Resize given array
  */
-public class HasIndex extends NodeFunction<ObjectHistoneNode> {
+public class Set extends NodeFunction<ObjectHistoneNode> {
 
-    public HasIndex(NodeFactory nodeFactory) {
+    public Set(NodeFactory nodeFactory) {
         super(nodeFactory);
     }
 
     @Override
     public String getName() {
-        return "hasIndex";
+        return "set";
     }
 
     @Override
-    public Node execute(ObjectHistoneNode target, Node... args) {
-        if (args.length > 0 && args[0].isInteger()) {
-            int idx = args[0].getAsNumber().getValue().intValue();
-            return (idx >= 0 && idx < target.getElements().size()) ? getNodeFactory().TRUE : getNodeFactory().FALSE;
-        }
-
-        return getNodeFactory().UNDEFINED;
-    }
+	public Node execute(ObjectHistoneNode target, Node... args) {
+		if (args.length != 2)
+			return getNodeFactory().UNDEFINED;
+		ObjectHistoneNode result = getNodeFactory().object();
+		//we can add only string or number
+		String key = null;
+		if (args[0].isNumber()) 
+			key = args[0].getAsNumber().getValue().toPlainString();
+		else if (args[0].isString()) 
+			key = args[0].getAsString().getValue();
+		if (key != null && !args[1].isUndefined())
+			result.add(key, args[1]);
+		return result;
+	}
+    
+    
 }
