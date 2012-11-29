@@ -15,10 +15,13 @@
  */
 package ru.histone.evaluator.functions.global;
 
+import java.util.Map;
+
 import ru.histone.evaluator.nodes.Node;
 import ru.histone.evaluator.nodes.NodeFactory;
 import ru.histone.evaluator.nodes.NumberHistoneNode;
 import ru.histone.evaluator.nodes.NumberHistoneNode;
+import ru.histone.evaluator.nodes.ObjectHistoneNode;
 import ru.histone.utils.ArrayUtils;
 
 /**
@@ -42,12 +45,26 @@ public class Max extends GlobalFunction {
         }
         NumberHistoneNode result = null;
         for (Node arg : args) {
-            if (!arg.isNumber()) {
-                continue;
-            }
-            NumberHistoneNode argNum = (NumberHistoneNode) arg;
-            result = (result == null || result.compareTo(argNum) < 0) ? argNum : result;
+			if (arg.isNumber()) {
+				NumberHistoneNode argNum = (NumberHistoneNode) arg;
+				result = (result == null || result.compareTo(argNum) < 0) ? argNum : result;
+			} else if (arg.isObject()) {
+				result = findMax(result, (ObjectHistoneNode) arg);
+			}
         }
         return result == null ? getNodeFactory().UNDEFINED : result;
     }
+    
+	private NumberHistoneNode findMax(NumberHistoneNode previous, ObjectHistoneNode values) {
+		NumberHistoneNode result = previous;
+		Map<Object, Node> map = values.getElements();
+		for (Node valueNode : map.values()) {
+			if (valueNode.isNumber()) {
+				NumberHistoneNode numberNode = (NumberHistoneNode) valueNode;
+				result = (result == null || result.compareTo(numberNode) < 0) ? numberNode : result;
+			}
+		}
+		return result == null ? previous : result;
+	}
+
 }
