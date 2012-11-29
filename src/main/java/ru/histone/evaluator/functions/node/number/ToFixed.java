@@ -44,7 +44,8 @@ public class ToFixed extends NodeFunction<NumberHistoneNode> {
 		if (args.length != 0) {
 			NumberHistoneNode start = args[0].getAsNumber();
 			int scale = start.getValue().intValue();
-			value = value.setScale(scale, RoundingMode.HALF_UP);
+			if (scale >= 0)
+				value = value.setScale(scale, RoundingMode.HALF_UP);
 		}
 		return getNodeFactory().number(value);
 	}
