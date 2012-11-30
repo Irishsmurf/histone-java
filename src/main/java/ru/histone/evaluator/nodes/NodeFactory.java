@@ -190,12 +190,16 @@ public class NodeFactory {
 				Iterator<Map.Entry<String, JsonNode>> it = ((ObjectNode) jsonNode).fields();
 				int count = 0;
 				for (; it.hasNext();) {
+					Map.Entry<String, JsonNode> en = it.next();
+					//don't show entry with only undefined node
+					if (en.getValue().isObject() && ((ObjectNode) en.getValue()).size() == 0) {
+						continue;
+					}
 					if (count > 0) {
 						sb.append(",");
 					}
 					++count;
 
-					Map.Entry<String, JsonNode> en = it.next();
 					sb.append('"');
 					CharTypes.appendQuoted(sb, en.getKey());
 					sb.append('"');
