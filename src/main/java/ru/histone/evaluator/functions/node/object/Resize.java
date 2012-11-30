@@ -41,10 +41,11 @@ public class Resize extends NodeFunction<ObjectHistoneNode> {
 
     @Override
 	public Node execute(ObjectHistoneNode target, Node... args) {
-		if (args.length > 1)
-			return getNodeFactory().UNDEFINED;
 		if (args.length == 0)
 			return getNodeFactory().object(target.getElements().values());
+		if (args.length != 1 && args.length != 2)
+			return getNodeFactory().UNDEFINED;
+		//init variables
 		BigDecimal newSize = null;
 		if (args[0].isNumber()) {
 			newSize = args[0].getAsNumber().getValue();
@@ -55,6 +56,8 @@ public class Resize extends NodeFunction<ObjectHistoneNode> {
 				// if wrong format then no resize
 			}
 		}
+		final Node insertedNode = args.length == 2 ? args[1] : getNodeFactory().NULL;
+		//
 		if (newSize == null || newSize.intValue() < 0) {
 			return getNodeFactory().object(target.getElements().values());
 		}
@@ -66,7 +69,7 @@ public class Resize extends NodeFunction<ObjectHistoneNode> {
 			if (it.hasNext()) {
 				node = it.next();
 			} else {
-				node = getNodeFactory().number(0);
+				node = insertedNode;
 			}
 			nodes.add(node);
 		}
