@@ -209,6 +209,13 @@ public class Evaluator {
     private String processInternal(ArrayNode ast, EvaluatorContext context) throws EvaluatorException {
         log.debug("processInternal(): template={}, context={}", ast, context);
 
+        if ("HISTONE".equals(ast.path(0).path(0).asText())) {
+            //TODO will be fixed in HSTJ-7
+            //throw new EvaluatorException("AST Tree doesn't have signature element.");
+            ast = (ArrayNode) ast.get(1);
+        }
+
+
         StringBuilder out = new StringBuilder();
         for (JsonNode element : ast) {
             log.debug("process(): fragment={}", element);
