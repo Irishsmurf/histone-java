@@ -160,12 +160,12 @@ public class TokenizerBlocksTest {
 		assertEquals(10, token.getPos());
 		assertEquals(" without opening token}}", token.getContent());
 
-//		MDC.put(MDC_TEST_NAME, "}}");
-//		assertTrue(tokenizer.isNext(TokenType.TPL_BLOCK_WO_OPENNING));
-//		token = tokenizer.next(TokenType.TPL_BLOCK_WO_OPENNING);
-//		assertNotNull(token);
-//		assertEquals(32, token.getPos());
-//		assertEquals("}}", token.getContent());
+        MDC.put(MDC_TEST_NAME, "}}");
+        assertTrue(tokenizer.isNext(TokenType.T_BLOCK_END));
+        token = tokenizer.next(TokenType.T_BLOCK_END);
+        assertNotNull(token);
+        assertEquals(32, token.getPos());
+        assertEquals("}}", token.getContent());
 
 		MDC.put(MDC_TEST_NAME, "EOF");
 		assertTrue(tokenizer.isNext(TokenType.T_EOF));
