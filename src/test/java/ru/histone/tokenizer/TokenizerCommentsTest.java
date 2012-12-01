@@ -233,7 +233,7 @@ public class TokenizerCommentsTest {
 		assertEquals(14, token.getPos());
 		assertEquals(" without opening token*", token.getContent());
 
-		MDC.put(MDC_TEST_NAME, "*}}");
+		MDC.put(MDC_TEST_NAME, "}}");
 		assertTrue(tokenizer.isNext(TokenType.T_BLOCK_END));
 		token = tokenizer.next(TokenType.T_BLOCK_END);
 		assertNotNull(token);

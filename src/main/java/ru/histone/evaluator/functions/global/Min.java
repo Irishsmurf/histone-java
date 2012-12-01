@@ -64,6 +64,8 @@ public class Min extends GlobalFunction {
 			if (valueNode.isNumber()) {
 				NumberHistoneNode numberNode = (NumberHistoneNode) valueNode;
 				result = (result == null || result.compareTo(numberNode) > 0) ? numberNode : result;
+			} else if (valueNode.isObject()) {
+				result = findMin(result, (ObjectHistoneNode) valueNode);
 			}
 		}
 		return result == null ? previous : result;
