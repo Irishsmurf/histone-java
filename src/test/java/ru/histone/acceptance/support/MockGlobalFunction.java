@@ -47,6 +47,7 @@ public class MockGlobalFunction extends GlobalFunction {
         this.name = name;
         this.resultType = resultType;
         this.data = data;
+        this.throwException=throwException;
         HistoneBuilder histoneBuilder = new HistoneBuilder();
         histoneBuilder.setJackson(new ObjectMapper());
         try {

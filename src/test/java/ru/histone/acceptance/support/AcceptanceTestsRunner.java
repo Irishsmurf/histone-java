@@ -56,39 +56,62 @@ public class AcceptanceTestsRunner extends Runner {
     @Override
     public void run(RunNotifier notifier) {
 //        MDC.put(MDC_TEST_NAME, "before");
+//        notifier.fireTestStarted(instance.getDescription());
         Reader reader = new InputStreamReader(getClass().getResourceAsStream(instance.getFileName()));
+        Description testCaseDescription = null;
         try {
             JsonNode testSuites = jackson.readTree(reader);
-            Iterator<JsonNode> iter = testSuites.iterator();
-            while (iter.hasNext()) {
-                final JsonNode mainElement = iter.next();
+            for (JsonNode mainElement : testSuites) {
                 final String suiteName = mainElement.get("name").asText();
                 final boolean ignoreSuite = checkIgnoreField(mainElement.path("ignore"));
-                final ArrayNode cases = (ArrayNode) mainElement.get("cases");
+                final ArrayNode cases = (ArrayNode) mainElement.path("cases");
                 final TestSuiteHolder suite = new TestSuiteHolder(instance.getFileName(), suiteName);
-                Iterator<JsonNode> casesIter = cases.iterator();
-                while (casesIter.hasNext()) {
-                    JsonNode element = casesIter.next();
-                    TestCaseHolder testCase = readTestCase(element, suite);
-                    if (ignoreSuite) {
-                        testCase.setIgnore(true);
+
+                for (JsonNode element : cases) {
+                    testIdx++;
+                    testCaseDescription = Description.createTestDescription(instance.getClass(), testIdx + " " + generateTestCaseName(instance.getFileName(), mainElement, element));
+                    description.addChild(testCaseDescription);
+                    notifier.fireTestStarted(testCaseDescription);
+
+                    try {
+                        TestCaseHolder testCase = readTestCase(element, suite);
+                        if (ignoreSuite) {
+                            testCase.setIgnore(true);
+                        }
+                        runTestCase(notifier, testCaseDescription, suite, testCase);
+                    } catch (Exception e) {
+                        notifier.fireTestFailure(new Failure(testCaseDescription, e));
                     }
-                    runTestCase(notifier, suite, testCase);
                 }
             }
-        } catch (Exception e) {
-            notifier.fireTestFailure(new Failure(Description.createTestDescription(this.getClass(), instance.getFileName()), e));
-//            throw new RuntimeException(String.format("Error reading json file '%s'", getFileName()), e);
+        } catch (Exception e2) {
+            throw new RuntimeException(String.format("Error reading/parsing json file '%s'", instance.getFileName()), e2);
         }
     }
 
-    private void runTestCase(RunNotifier notifier, TestSuiteHolder testSuite, TestCaseHolder testCase) throws HistoneException, URISyntaxException {
-        testIdx++;
-        log.debug("case({}): input={}, context={}, expected={}, exception={}", new Object[]{testIdx, testCase.getInput(), testCase.getContext(), testCase.getExpected(), testCase.getException()});
+    private String generateTestCaseName(String fileName, JsonNode suiteJson, JsonNode caseJson) {
+        StringBuilder sb = new StringBuilder();
 
-        Description testCaseDescription = Description.createTestDescription(instance.getClass(), testIdx + " " + testCase.toString());
-        description.addChild(testCaseDescription);
-        notifier.fireTestStarted(testCaseDescription);
+        sb.append(testIdx);
+        sb.append('{').append(fileName).append(':').append(suiteJson.path("name").asText()).append('}');
+        sb.append("input: ").append(caseJson.path("input").asText()).append(';');
+        if (caseJson.has("expectedResult")) {
+            sb.append(" expected:").append(caseJson.path("expectedResult").asText()).append(';');
+        } else if (caseJson.has("expectedException")) {
+            sb.append(" expectedException: ");
+            sb.append("line=").append(caseJson.path("line").asText());
+            sb.append(", expected=").append(caseJson.path("expected").asText());
+            sb.append(", found=").append(caseJson.path("found").asText());
+            sb.append(";");
+        } else {
+            sb.append(" expectedAST: ").append(caseJson.path("expectedAST").toString()).append(';');
+        }
+
+        return sb.toString();
+    }
+
+    private void runTestCase(RunNotifier notifier, Description testCaseDescription, TestSuiteHolder testSuite, TestCaseHolder testCase) throws HistoneException, URISyntaxException {
+        log.debug("case({}): input={}, context={}, expected={}, exception={}", new Object[]{testIdx, testCase.getInput(), testCase.getContext(), testCase.getExpected(), testCase.getException()});
 
         if (testCase.isIgnore()) {
             notifier.fireTestIgnored(testCaseDescription);
@@ -249,19 +272,28 @@ public class AcceptanceTestsRunner extends Runner {
         if (caseNode.get("data") != null) {
             throw new RuntimeException("Not supported tagName: data");
         }
-        if (caseNode.get("function") != null) {
-            final JsonNode node = caseNode.get("function");
-            final JsonNode resultNode = node.get("result");
-            final String name = node.get("name").asText();
-            final String returnType = node.get("resultType") != null ? node.get("resultType").asText() : resultNode == null ? "string"
-                    : getTypeOfNode(resultNode);
-            final String data = resultNode == null ? "string" : resultNode.asText();
-            final String nodeType = node.get("node") == null ? null : node.get("node").asText();
-            if (nodeType == null) {
-                testCase.addMockGlobalFunction(new MockGlobalFunctionHolder(name, returnType, data));
+        if (caseNode.has("function")) {
+            ArrayNode functionsArray = jackson.createArrayNode();
+            if (caseNode.path("function").isArray()) {
+                functionsArray.addAll((ArrayNode) caseNode.path("function"));
             } else {
-                testCase.addMockNodeFunction(new MockNodeFunctionHolder(name, nodeType, returnType, data));
+                functionsArray.add(caseNode.path("function"));
             }
+
+            for (JsonNode node : functionsArray) {
+                final JsonNode resultNode = node.path("result");
+                final String name = node.path("name").asText();
+                final boolean exception = node.path("exception").asBoolean(false);
+                final String returnType = node.get("resultType") != null ? node.path("resultType").asText() : getTypeOfNode(resultNode);
+                final String data = resultNode == null ? "string" : resultNode.asText();
+                final String nodeType = node.get("node") == null ? null : node.get("node").asText();
+                if (nodeType == null) {
+                    testCase.addMockGlobalFunction(new MockGlobalFunctionHolder(name, returnType, data, exception));
+                } else {
+                    testCase.addMockNodeFunction(new MockNodeFunctionHolder(name, nodeType, returnType, data, exception));
+                }
+            }
+
         }
         if (caseNode.get("global") != null) {
             throw new RuntimeException("Not supported tagName: global");
@@ -295,17 +327,23 @@ public class AcceptanceTestsRunner extends Runner {
 
     private String getTypeOfNode(JsonNode node) {
         if (node == null) {
-            return null;
+            return "string";
+        } else if (node.isMissingNode()) {
+            return "string";
         } else if (node.isTextual()) {
             return "string";
         } else if (node.isBigDecimal()) {
             return "number";
         } else if (node.isBigInteger()) {
             return "number";
+        } else if (node.isInt()) {
+            return "number";
         } else if (node.isDouble()) {
             return "number";
         } else if (node.isBoolean()) {
             return "boolean";
+        } else if (node.isObject() || node.isArray()) {
+            return "object";
         } else {
             throw new RuntimeException(String.format("Uknown node type: '%s'", node.toString()));
         }
@@ -314,7 +352,7 @@ public class AcceptanceTestsRunner extends Runner {
     private Set<GlobalFunction> toGlobalFunctions(Set<MockGlobalFunctionHolder> mockFunctions) {
         Set<GlobalFunction> globalFunctions = new HashSet<GlobalFunction>();
         for (final MockGlobalFunctionHolder function : mockFunctions) {
-            GlobalFunction globalFunction = new MockGlobalFunction(nodeFactory, function.getName(), function.getReturnType(), function.getData(), false);
+            GlobalFunction globalFunction = new MockGlobalFunction(nodeFactory, function.getName(), function.getReturnType(), function.getData(), function.isException());
             globalFunctions.add(globalFunction);
         }
         return globalFunctions;
@@ -324,7 +362,7 @@ public class AcceptanceTestsRunner extends Runner {
         Map<Class<? extends Node>, Set<NodeFunction<? extends Node>>> nodeFunctions = new HashMap<Class<? extends Node>, Set<NodeFunction<? extends Node>>>();
 
         for (final MockNodeFunctionHolder function : mockFunctions) {
-            NodeFunction nodeFunction = new MockNodeFunction(nodeFactory, function.getName(), function.getReturnType(), function.getData(), false);
+            NodeFunction nodeFunction = new MockNodeFunction(nodeFactory, function.getName(), function.getReturnType(), function.getData(), function.isException());
             Class<? extends Node> nodeClass = null;
             if ("string".equalsIgnoreCase(function.getNodeType())) {
                 nodeClass = StringHistoneNode.class;

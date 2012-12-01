@@ -19,15 +19,21 @@ public class MockGlobalFunctionHolder {
     private String name;
     private String returnType;
     private String data;
+    private boolean exception;
 
-    public MockGlobalFunctionHolder(String name, String returnType, String data) {
+    public MockGlobalFunctionHolder(String name, String returnType, String data, boolean exception) {
         this.name = name;
         this.returnType = returnType;
         this.data = data;
+        this.exception = exception;
     }
 
     public String getName() {
         return name;
+    }
+
+    public boolean isException() {
+        return exception;
     }
 
     public void setName(String name) {
