@@ -18,6 +18,7 @@ package ru.histone.parser;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.Ignore;
 import ru.histone.Histone;
 import ru.histone.HistoneBuilder;
 import ru.histone.HistoneException;
@@ -27,6 +28,7 @@ import java.io.StringReader;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+@Ignore
 public class ASTSignatureTest {
 
     private Histone histone;
