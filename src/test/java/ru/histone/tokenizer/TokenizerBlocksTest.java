@@ -158,7 +158,7 @@ public class TokenizerBlocksTest {
 		token = tokenizer.next(TokenType.T_FRAGMENT);
 		assertNotNull(token);
 		assertEquals(10, token.getPos());
-		assertEquals(" without opening token}}", token.getContent());
+		assertEquals(" without opening token", token.getContent());
 
         MDC.put(MDC_TEST_NAME, "}}");
         assertTrue(tokenizer.isNext(TokenType.T_BLOCK_END));

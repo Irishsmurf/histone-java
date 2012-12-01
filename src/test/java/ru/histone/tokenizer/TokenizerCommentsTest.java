@@ -231,14 +231,14 @@ public class TokenizerCommentsTest {
 		token = tokenizer.next(TokenType.T_FRAGMENT);
 		assertNotNull(token);
 		assertEquals(14, token.getPos());
-		assertEquals(" without opening token*}}", token.getContent());
+		assertEquals(" without opening token*", token.getContent());
 
-//		MDC.put(MDC_TEST_NAME, "*}}");
-//		assertTrue(tokenizer.isNext(TokenType.TPL_COMMENT_WO_OPENNING));
-//		token = tokenizer.next(TokenType.TPL_COMMENT_WO_OPENNING);
-//		assertNotNull(token);
-//		assertEquals(36, token.getPos());
-//		assertEquals("*}}", token.getContent());
+		MDC.put(MDC_TEST_NAME, "}}");
+		assertTrue(tokenizer.isNext(TokenType.T_BLOCK_END));
+		token = tokenizer.next(TokenType.T_BLOCK_END);
+		assertNotNull(token);
+		assertEquals(37, token.getPos());
+		assertEquals("}}", token.getContent());
 
 		MDC.put(MDC_TEST_NAME, "EOF");
 		assertTrue(tokenizer.isNext(TokenType.T_EOF));
