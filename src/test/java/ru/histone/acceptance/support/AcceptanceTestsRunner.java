@@ -131,7 +131,11 @@ public class AcceptanceTestsRunner extends Runner {
             try {
                 // TEST FOR EXPECTED-AST
                 Reader input = new StringReader(testCase.getInput());
-                ArrayNode outputAST = histone.parseTemplateToAST(input);
+                // EXPERIMENTAL We want to remove zero element, because it contains information about HISTONE version
+                // http://devlabs.megafon.ru/issues/browse/HSTJ-7
+                ArrayNode rootAST = histone.parseTemplateToAST(input);
+                ArrayNode outputAST = (ArrayNode) rootAST.get(1);
+
                 boolean result = expectedAST.toString().equals(outputAST.toString());
                 if (result) {
                     notifier.fireTestFinished(testCaseDescription);

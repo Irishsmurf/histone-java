@@ -17,6 +17,7 @@ package ru.histone.parser;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.histone.evaluator.nodes.NodeFactory;
@@ -64,7 +65,18 @@ public class ParserImpl {
     private ArrayNode parse(TokenType... breakOn) throws ParserException {
         log.trace("parse(TokenType): breakOn={}", new Object[]{breakOn});
         int lastFragment = -1;
+        ArrayNode result = nodeFactory.jsonArray();
+
         ArrayNode tree = nodeFactory.jsonArray();
+
+        //  EXPERIMENTAL
+        //  http://devlabs.megafon.ru/issues/browse/HSTJ-7
+        ArrayNode versionInfo = nodeFactory.jsonArray();
+        ObjectNode versionObject = nodeFactory.jsonObject();
+        versionInfo.add("HISTONE");
+        versionObject.put("version", "1.0.6");
+        versionInfo.add(versionObject);
+        result.add(versionInfo);
 
         while (tokenizer.next(TokenType.T_EOF) == null) {
             // skip comments
@@ -139,7 +151,8 @@ public class ParserImpl {
 
         log.trace("parse(TokenType): result={}", new Object[]{tree});
 
-        return tree;
+        result.add(tree);
+        return result;
     }
 
     private JsonNode parseBlock() throws ParserException {
