@@ -114,6 +114,25 @@ public class ObjectHistoneNode extends Node {
         }
     }
 
+    public void set(String key, Node value) {
+        if (!value.isUndefined()) {
+            elements.put(key, value);
+        } else {
+            elements.remove(key);
+        }
+    }
+
+    public void set(Integer key, Node value) {
+        if (elements.size() - 1 > key) {
+            if (!value.isUndefined()) {
+                elements.put(key, value);
+            } else {
+                //TODO rebuild index
+                elements.remove(key);
+            }
+        }
+    }
+
     public void add(Node value) {
         this.add(0, value);
     }
@@ -269,7 +288,7 @@ public class ObjectHistoneNode extends Node {
     @Override
     public JsonNode getAsJsonNode() {
         //check if we have at least one element with string key
-        if (maxIdx != elements.size()) {
+        if (elements.size() != 0 && maxIdx != elements.size()) {
             ObjectNode json = getNodeFactory().jsonObject();
 
             for (Entry<Object, Node> entry : elements.entrySet()) {
