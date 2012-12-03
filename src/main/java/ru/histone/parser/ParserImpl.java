@@ -60,25 +60,24 @@ public class ParserImpl {
         if (tokenizer == null) {
             throw new ParserException("Initialize tokenizer before parsing template");
         }
-        return parse();
-    }
 
-    private ArrayNode parse(TokenType... breakOn) throws ParserException {
-        log.trace("parse(TokenType): breakOn={}", new Object[]{breakOn});
-        int lastFragment = -1;
-        ArrayNode result = nodeFactory.jsonArray();
-
-        ArrayNode tree = nodeFactory.jsonArray();
-
-        //  EXPERIMENTAL
         //  http://devlabs.megafon.ru/issues/browse/HSTJ-7
+        ArrayNode result = nodeFactory.jsonArray();
         ArrayNode versionInfo = nodeFactory.jsonArray();
         ObjectNode versionObject = nodeFactory.jsonObject();
         versionInfo.add("HISTONE");
         versionObject.put("version", HistoneVersion.VERSION);
         versionInfo.add(versionObject);
         result.add(versionInfo);
+        result.add(parse());
+        return result;
+    }
 
+    private ArrayNode parse(TokenType... breakOn) throws ParserException {
+        log.trace("parse(TokenType): breakOn={}", new Object[]{breakOn});
+        int lastFragment = -1;
+
+        ArrayNode tree = nodeFactory.jsonArray();
         while (tokenizer.next(TokenType.T_EOF) == null) {
             // skip comments
             while (tokenizer.next(TokenType.T_COMMENT_START) != null) {
@@ -151,9 +150,7 @@ public class ParserImpl {
         }
 
         log.trace("parse(TokenType): result={}", new Object[]{tree});
-
-        result.add(tree);
-        return result;
+        return tree;
     }
 
     private JsonNode parseBlock() throws ParserException {
