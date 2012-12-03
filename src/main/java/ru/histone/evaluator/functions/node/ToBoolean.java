@@ -15,15 +15,8 @@
  */
 package ru.histone.evaluator.functions.node;
 
-import java.math.BigDecimal;
-import java.util.Map.Entry;
-import java.util.Set;
-
 import ru.histone.evaluator.nodes.Node;
 import ru.histone.evaluator.nodes.NodeFactory;
-import ru.histone.evaluator.nodes.ObjectHistoneNode;
-import ru.histone.evaluator.nodes.ObjectHistoneNode;
-import ru.histone.evaluator.nodes.StringHistoneNode;
 
 /**
  * Transforms to  boolean. If node is number not equal 0 then return TRUE. <br/>
@@ -40,29 +33,6 @@ public class ToBoolean extends NodeFunction<Node> {
 
 	@Override
 	public Node execute(Node target, Node... args) {
-		if (target.isNumber()) {
-			if (!BigDecimal.ZERO.equals(target.getAsNumber().getValue())) {
-				return getNodeFactory().TRUE;
-			} else {
-				return getNodeFactory().FALSE;
-			}
-		} else if (target.isBoolean()) {
-			if (target.getAsBoolean().getValue()) {
-				return getNodeFactory().TRUE;
-			} else {
-				return getNodeFactory().FALSE;
-			}
-		} else if (target.isString()) {
-			if ("".equals(target.getAsString().getValue())) {
-				return getNodeFactory().FALSE;
-			} else {
-				return getNodeFactory().TRUE;
-			}
-		} else if (target.isObject()) {
-			return getNodeFactory().TRUE;
-		} else if (target.isNull() || target.isUndefined()) {
-			return getNodeFactory().FALSE;
-		}
-		return getNodeFactory().UNDEFINED;
+        return target.getAsBoolean();
 	}
 }
