@@ -748,6 +748,7 @@ public class Evaluator {
                     context.putProp(iterKey, nodeFactory.string(key.toString()));
                 }
 
+                context.putProp("self", self);
                 sb.append(processInternal(statements.get(0), context));
 
                 idx++;
@@ -972,6 +973,9 @@ public class Evaluator {
             startIdx++;
         } else if ("global".equals(element.get(0).asText())) {
             ctx = context.getGlobal();
+            startIdx++;
+        } else if ("self".equals(element.get(0).asText())) {
+            ctx = context.getProp("self");
             startIdx++;
         } else {
             ctx = context.getAsNode();
