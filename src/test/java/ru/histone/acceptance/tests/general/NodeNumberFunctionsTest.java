@@ -10,6 +10,6 @@ public class NodeNumberFunctionsTest extends AcceptanceTest {
 
     @Override
     public String getFileName() {
-        return "/general/node-number-functions.json";
+        return "/general/number.toString.json";
     }
 }
