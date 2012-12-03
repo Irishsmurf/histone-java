@@ -65,6 +65,7 @@ public class ASTSignatureTest {
         assertTrue(outputAST.get(0).get(1).has("version"));
         assertTrue(outputAST.get(0).get(1).get("version").isTextual());
         assertTrue(outputAST.get(0).get(1).get("version").asText().length() > 0);
+        assertTrue(outputAST.get(0).get(1).get("version").asText().equals("1.0.6"));
 
         assertEquals(1, outputAST.get(1).size());
         assertTrue(outputAST.get(1).get(0).isTextual());

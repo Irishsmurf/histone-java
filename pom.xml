@@ -36,7 +36,7 @@
     </developers>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-
+        <histone.version>${project.version}</histone.version>
         <histone-acceptance-test.version>1.1.4-SNAPSHOT</histone-acceptance-test.version>
 
         <!-- deps versions -->
@@ -50,6 +50,22 @@
         <spring.version>3.1.0.RELEASE</spring.version>
     </properties>
     <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>false</filtering>
+                <excludes>
+                    <exclude>**/*version.properties</exclude>
+                </excludes>
+            </resource>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+                <includes>
+                    <include>**/*version.properties</include>
+                </includes>
+            </resource>
+        </resources>
         <testResources>
             <testResource>
                 <directory>src/test/resources</directory>

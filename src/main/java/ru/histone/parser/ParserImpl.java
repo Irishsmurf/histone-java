@@ -24,6 +24,7 @@ import ru.histone.evaluator.nodes.NodeFactory;
 import ru.histone.tokenizer.Token;
 import ru.histone.tokenizer.TokenType;
 import ru.histone.tokenizer.Tokenizer;
+import ru.histone.utils.HistoneVersion;
 import ru.histone.utils.StringEscapeUtils;
 import ru.histone.utils.StringUtils;
 
@@ -74,7 +75,7 @@ public class ParserImpl {
         ArrayNode versionInfo = nodeFactory.jsonArray();
         ObjectNode versionObject = nodeFactory.jsonObject();
         versionInfo.add("HISTONE");
-        versionObject.put("version", "1.0.6");
+        versionObject.put("version", HistoneVersion.VERSION);
         versionInfo.add(versionObject);
         result.add(versionInfo);
 
