@@ -124,8 +124,11 @@ public class AcceptanceTestsRunner extends Runner {
         final ArrayNode expectedAST = testCase.getExpectedAST();
         final EvaluatorException expectedException = testCase.getException();
         final String expectedResult = testCase.getExpected();
-        final String baseURI = this.getClass().getResource(testSuite.getFileName()).toURI().toString();
+        String baseURI = this.getClass().getResource(testSuite.getFileName()).toURI().toString();
 
+//        if(testCase.getGlobalProperties().containsKey(GlobalProperty.BASE_URI)){
+//            baseURI = testCase.getGlobalProperties().get(GlobalProperty.BASE_URI);
+//        }
 
         if (expectedAST != null) {
             try {

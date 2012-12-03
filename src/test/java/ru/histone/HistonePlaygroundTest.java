@@ -42,11 +42,24 @@ public class HistonePlaygroundTest {
 
     @Test
     public void test() throws Exception {
-        String input = "a {{global.baseURI}} b {{baseURI}} c";
-        String context = "{}";
-        String expected = "a dummy:/// b dummy:/// c";
+        /*
 
-        String result = histone.evaluate("dummy:///",input, jackson.readTree(new StringReader(context)));
+        "input": "a {{resolveURI('../testresources/tpl/test_for_include_relative.tpl', global.baseURI) is include('../testresources/tpl/test_for_include_relative.tpl').split(' ')[2]}} b",
+		"expectedResult": "a true b"
+	}, {
+		"input": "a {{'ZA' + resolveURI('../testresources/tpl/subfolder/file_for_include.tpl', global.baseURI) + 'BX' is include('../testresources/tpl/test_for_include_subfolder.tpl')}} b",
+		"expectedResult": "a true b"
+
+
+         */
+
+
+        String baseURI = getClass().getResource("/logback-test.xml").toString();
+        String input = "a  b";
+        String context = "{}";//"{\"baseURI\":\"test:///test\"}";
+        String expected = "a  b";
+
+        String result = histone.evaluate(baseURI, input, jackson.readTree(new StringReader(context)));
         assertEquals(expected, result);
     }
 

@@ -220,14 +220,20 @@ public class Evaluator {
     /**
      * Evaluate template AST using specified evaluator context
      *
-     * @param ast     tempalte AST in json representation
+     * @param ast         tempalte AST in json representation
      * @param jsonContext special context object for evaluator context
      * @return evaluation result
      * @throws ru.histone.HistoneException in case of eny errors
      */
     public String process(String baseURI, ArrayNode ast, JsonNode jsonContext) throws HistoneException {
         EvaluatorContext context = EvaluatorContext.createFromJson(nodeFactory, global, jsonContext);
-        context.setBaseURI(baseURI);
+        if (jsonContext.has("baseURI")) {
+            String globalBaseURI = jsonContext.path("baseURI").asText();
+            context.setBaseURI(baseURI);
+            context.setGlobalValue(GlobalProperty.BASE_URI, nodeFactory.string(globalBaseURI));
+        } else {
+            context.setBaseURI(baseURI);
+        }
         return processInternal(ast, context);
     }
 
@@ -342,10 +348,10 @@ public class Evaluator {
                 return processStatements(astArray.get(1), context);
 
             case AstNodeType.VAR:
-                return processVar(astArray.get(1), (ArrayNode)astArray.get(2), context);
+                return processVar(astArray.get(1), (ArrayNode) astArray.get(2), context);
 
             case AstNodeType.SELECTOR:
-                return processSelector((ArrayNode)astArray.get(1), context);
+                return processSelector((ArrayNode) astArray.get(1), context);
 
             case AstNodeType.CALL:
                 return processCall(astArray.get(1), astArray.get(2), astArray.get(3), context);
@@ -354,7 +360,7 @@ public class Evaluator {
                 return processImport(astArray.get(1), context);
 
             case AstNodeType.MACRO:
-                return processMacro(astArray.get(1), (ArrayNode)astArray.get(2), (ArrayNode)astArray.get(3), context);
+                return processMacro(astArray.get(1), (ArrayNode) astArray.get(2), (ArrayNode) astArray.get(3), context);
 
             default:
                 Histone.runtime_log_error("Unknown nodeType", null, nodeType);
@@ -490,7 +496,7 @@ public class Evaluator {
         List<Node> argsList = new ArrayList<Node>();
         if (!args.isNull()) {
             Iterator<JsonNode> iter = args.iterator();
-            while (iter.hasNext()){
+            while (iter.hasNext()) {
                 JsonNode arg = iter.next();
                 Node argNode = processNode(arg, context);
                 argsList.add(argNode);
@@ -601,12 +607,6 @@ public class Evaluator {
         } catch (JsonProcessingException e) {
             Histone.runtime_log_warn_e("Resource loadJSON failed! Unresolvable resource.", e);
             return nodeFactory.UNDEFINED;
-//        } catch (JsonSyntaxException e) {
-//            Histone.runtime_log_warn_e("Resource loadJSON failed! Unresolvable resource.", e);
-//            return nodeFactory.UNDEFINED;
-//        } catch (JsonIOException e) {
-//            Histone.runtime_log_warn_e("Resource loadJSON failed! Unresolvable resource.", e);
-//            return nodeFactory.UNDEFINED;
         } catch (IOException e) {
             Histone.runtime_log_warn_e("Resource loadJSON failed! Unresolvable resource.", e);
             return nodeFactory.UNDEFINED;
@@ -696,7 +696,9 @@ public class Evaluator {
             }
             EvaluatorContext includeContext = EvaluatorContext.createFromJson(nodeFactory, globalCopy, args.get(1).getAsJsonNode());
             includeContext.setBaseURI(resourceUri.toString());
-            return nodeFactory.string(processInternal(parseResult, includeContext));
+            StringHistoneNode result = nodeFactory.string(processInternal(parseResult, includeContext));
+            context.setBaseURI(currentBaseURI);
+            return result;
         } catch (ResourceLoadException e) {
             Histone.runtime_log_warn_e("Resource include failed! Unresolvable resource.", e);
             return nodeFactory.UNDEFINED;
@@ -761,14 +763,16 @@ public class Evaluator {
         ObjectHistoneNode self = nodeFactory.object();
         context.putProp("self", self);
 
-        // Save context state
-        context.saveState();
 
         if (collectionNode.isObject()) {
             int idx = 0;
             self.add("last", nodeFactory.number(collectionNode.getAsObject().size() - 1));
             Map<Object, Node> elements = collectionNode.getAsObject().getElements();
             for (Object key : elements.keySet()) {
+                // Save context state on each iteration
+                // HSTJ-26
+                context.saveState();
+
                 self.add("index", nodeFactory.number(idx));
 
                 context.putProp(iterVal, elements.get(key));
@@ -781,13 +785,14 @@ public class Evaluator {
 
                 idx++;
 
+                // HSTJ-26
+                context.restoreState();
             }
         } else if (statements.size() > 1) {
             String result = processInternal(statements.get(1), context);
             sb.append(result);
         }
 
-        context.restoreState();
 
         return nodeFactory.string(sb.toString());
     }
@@ -1001,13 +1006,33 @@ public class Evaluator {
             ctx = context.getInitialContext();
             startIdx++;
         } else if ("global".equals(element.get(0).asText())) {
-            ctx = context.getGlobal();
-            startIdx++;
+            if ("baseURI".equals(element.path(1).asText())) {
+                if(context.getGlobal().hasProp("baseURI")){
+                    ctx = context.getGlobal().getProp("baseURI");
+                    startIdx = startIdx + 2;
+                }else{
+                    ctx = nodeFactory.string(context.getBaseURI());//context.getProp("baseURI");
+                    startIdx = startIdx + 2;
+                }
+            } else {
+                ctx = context.getGlobal();
+                startIdx++;
+            }
         } else if ("self".equals(element.get(0).asText())) {
             ctx = context.getProp("self");
             startIdx++;
         } else {
-            ctx = context.getAsNode();
+            if("baseURI".equals(element.path(0).asText())){
+                if(context.getGlobal().hasProp("baseURI")){
+                    ctx = context.getGlobal().getProp("baseURI");
+                    startIdx = startIdx + 1;
+                }else{
+                    ctx = nodeFactory.string(context.getBaseURI());//context.getProp("baseURI");
+                    startIdx = startIdx + 1;
+                }
+            }else{
+                ctx = context.getAsNode();
+            }
         }
 
         for (int j = startIdx; j < element.size(); j++) {
@@ -1018,7 +1043,7 @@ public class Evaluator {
                 // selector is written as it is
                 propName = selector.asText();
             } else {
-                // selector is written inside ['..'], like access to array
+                // selector is written inside ['...'], like access to array
                 propName = processNode(selector, context).getAsString().getValue();
             }
 
