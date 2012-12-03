@@ -123,6 +123,7 @@ public class Evaluator {
         nodeFunctionsManager.registerBuiltInFunction(Node.class, new IsString(bootstrap.getNodeFactory()));
         nodeFunctionsManager.registerBuiltInFunction(Node.class, new IsUndefined(bootstrap.getNodeFactory()));
         nodeFunctionsManager.registerBuiltInFunction(Node.class, new ToJson(bootstrap.getNodeFactory()));
+        nodeFunctionsManager.registerBuiltInFunction(Node.class, new ToBoolean(bootstrap.getNodeFactory()));
         nodeFunctionsManager.registerBuiltInFunction(Node.class, new ToString(bootstrap.getNodeFactory()));
         nodeFunctionsManager.registerBuiltInFunction(Node.class, new ToMap(bootstrap.getNodeFactory()));
 
