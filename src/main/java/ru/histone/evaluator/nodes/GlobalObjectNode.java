@@ -33,6 +33,11 @@ public class GlobalObjectNode extends ObjectHistoneNode {
     }
 
     @Override
+    public StringHistoneNode getAsString() {
+        return getNodeFactory().string();
+    }
+
+    @Override
     public boolean isGlobalObject() {
         return true;
     }

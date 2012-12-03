@@ -77,7 +77,7 @@ public class SpringContextTest {
 
     @Test
     public void general() throws HistoneException, IOException {
-        Reader input = new StringReader("a {{true}} b {{x}} c");
+        String input = "a {{true}} b {{x}} c";
         JsonNode context = jackson.readTree("{'x':123}");
         String output = histone.evaluate(input, context);
         assertEquals("a true b 123 c", output);

@@ -15,15 +15,13 @@
  */
 package ru.histone;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.io.StringReader;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 
 import static org.junit.Assert.assertEquals;
 
@@ -32,18 +30,23 @@ import static org.junit.Assert.assertEquals;
  */
 public class HistonePlaygroundTest {
     private Histone histone;
+    private ObjectMapper jackson;
 
     @Before
     public void before() throws HistoneException, UnsupportedEncodingException {
         HistoneBuilder builder = new HistoneBuilder();
         histone = builder.build();
+//        histone.setGlobalProperty(GlobalProperty.BASE_URI, "dummy:///test");
+        jackson = new ObjectMapper();
     }
 
     @Test
-    public void test() throws HistoneException {
-        String input = "{{10/3}}";
-        String expected = "3.33";
-        String result = histone.evaluate(input);
+    public void test() throws Exception {
+        String input = "a {{global.baseURI}} b {{baseURI}} c";
+        String context = "{}";
+        String expected = "a dummy:/// b dummy:/// c";
+
+        String result = histone.evaluate("dummy:///",input, jackson.readTree(new StringReader(context)));
         assertEquals(expected, result);
     }
 

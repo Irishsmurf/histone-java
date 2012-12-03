@@ -83,7 +83,7 @@ public class MockNodeFunction extends NodeFunction {
 
             String result = null;
             try {
-                result = histone.evaluate(new StringReader(data), context);
+                result = histone.evaluate(data, context);
             } catch (HistoneException e) {
 
             }

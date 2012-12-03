@@ -15,6 +15,7 @@
  */
 package ru.histone.resourceloaders;
 
+import com.fasterxml.jackson.databind.node.NullNode;
 import org.junit.Before;
 import org.junit.Test;
 import ru.histone.GlobalProperty;
@@ -63,45 +64,45 @@ public class HistoneExternalResourcesTest {
 
     @Test
     public void testDefaultResourceLoaderRelativeLocationSuccess() throws HistoneException {
-        builder.setGlobalProperty(GlobalProperty.BASE_URI, testResourceBaseHref);
+//        builder.setGlobalProperty(GlobalProperty.BASE_URI, testResourceBaseHref);
         Histone histone = builder.build();
         String expected = "a test content b";
         String input = "a {{include('" + testResourceRelativePath + "')}} b";
 
-        String result = histone.evaluate(input);
+        String result = histone.evaluate(testResourceBaseHref, input, NullNode.instance);
         assertEquals(expected, result);
     }
 
     @Test
     public void testDefaultResourceLoaderRelativeLocationFailure() throws HistoneException {
-        builder.setGlobalProperty(GlobalProperty.BASE_URI, testResourceBaseHref);
+//        builder.setGlobalProperty(GlobalProperty.BASE_URI, testResourceBaseHref);
         Histone histone = builder.build();
         String expected = "a  b";
         String input = "a {{include('unkownfolder/unknownfile.txt')}} b";
 
-        String result = histone.evaluate(input);
+        String result = histone.evaluate(testResourceBaseHref, input, NullNode.instance);
         assertEquals(expected, result);
      }
 
     @Test
     public void testIncludeFromSubfolder() throws HistoneException {
-        builder.setGlobalProperty(GlobalProperty.BASE_URI, testResourceBaseHref);
+//        builder.setGlobalProperty(GlobalProperty.BASE_URI, testResourceBaseHref);
         Histone histone = builder.build();
         String expected = "a Z AAABBB X b";
         String input = "a {{include('resourceloader/template_for_include.tpl')}} b";
 
-        String result = histone.evaluate(input);
+        String result = histone.evaluate(testResourceBaseHref,input, NullNode.instance);
         assertEquals(expected, result);
     }
 
     @Test
     public void testImportFromSubfolder() throws HistoneException {
-        builder.setGlobalProperty(GlobalProperty.BASE_URI, testResourceBaseHref);
+//        builder.setGlobalProperty(GlobalProperty.BASE_URI, testResourceBaseHref);
         Histone histone = builder.build();
         String expected = "a  b test macro result c";
         String input = "a {{import 'resourceloader/template_for_import.tpl'}} b {{test()}} c";
 
-        String result = histone.evaluate(input);
+        String result = histone.evaluate(testResourceBaseHref,input, NullNode.instance);
         assertEquals(expected, result);
     }
 

@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import ru.histone.GlobalProperty;
 import ru.histone.evaluator.nodes.*;
 
+import java.net.URI;
 import java.util.*;
 import java.util.Map.Entry;
 
@@ -33,6 +34,7 @@ public class EvaluatorContext {
     private Node initialContext;
     private ObjectHistoneNode global;
     private Set<String> importedResources;
+    private String baseURI;
 
     /**
      * Creates evaluator context from JSON object
@@ -283,4 +285,19 @@ public class EvaluatorContext {
     }
 
     // ----------------------------------------------------
+
+
+    public String getBaseURI() {
+        return baseURI;
+    }
+
+    public void setBaseURI(String baseURI) {
+        if (baseURI != null) {
+            if (!global.hasProp("baseURI")) {
+                global.add("baseURI", nodeFactory.string(baseURI.toString()));
+            }
+
+            this.baseURI = baseURI;
+        }
+    }
 }

@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.node.NullNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.histone.evaluator.Evaluator;
+import ru.histone.evaluator.EvaluatorContext;
 import ru.histone.evaluator.nodes.NodeFactory;
 import ru.histone.optimizer.AstImportResolver;
 import ru.histone.optimizer.AstInlineOptimizer;
@@ -32,6 +33,7 @@ import ru.histone.utils.IOUtils;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
+import java.net.URI;
 
 /**
  * Main Histone engine class. Histone template parsing/evaluation is done here.<br/>
@@ -58,7 +60,7 @@ public class Histone {
 
     private Parser parser;
     private Evaluator evaluator;
-//    private NodeFactory nodeFactory;
+    private NodeFactory nodeFactory;
     private AstOptimizer astAstOptimizer;
     private AstImportResolver astImportResolver;
     private AstMarker astMarker;
@@ -67,7 +69,7 @@ public class Histone {
     public Histone(HistoneBootstrap bootstrap) {
         this.parser = bootstrap.getParser();
         this.evaluator = bootstrap.getEvaluator();
-//        this.nodeFactory = bootstrap.getNodeFactory();
+        this.nodeFactory = bootstrap.getNodeFactory();
         this.astImportResolver = bootstrap.getAstImportResolver();
         this.astMarker = bootstrap.getAstMarker();
         this.astInlineOptimizer = bootstrap.getAstInlineOptimizer();
@@ -100,19 +102,27 @@ public class Histone {
     }
 
     public String evaluateAST(ArrayNode templateAST) throws HistoneException {
-        return evaluateAST(templateAST, NullNode.instance);
+        return evaluateAST(null, templateAST, NullNode.instance);
     }
 
-    public String evaluateAST(ArrayNode templateAST, JsonNode context) throws HistoneException {
-        return evaluator.process(templateAST, context);
+    public String evaluateAST(String baseURI, ArrayNode templateAST, JsonNode context) throws HistoneException {
+        return evaluator.process(baseURI, templateAST, context);
     }
 
-    public void evaluateAST(ArrayNode templateAST, Writer outputWriter) throws HistoneException {
-        evaluateAST(templateAST, NullNode.instance, outputWriter);
+    public void evaluateAST(ArrayNode templateAST, Writer output) throws HistoneException {
+        evaluateAST(null, templateAST, NullNode.instance, output);
+    }
+
+    public void evaluateAST(String baseURI, ArrayNode templateAST, Writer output) throws HistoneException {
+        evaluateAST(baseURI, templateAST, NullNode.instance, output);
     }
 
     public void evaluateAST(ArrayNode templateAST, JsonNode context, Writer output) throws HistoneException {
-        String result = evaluateAST(templateAST, context);
+        evaluateAST(null, templateAST, context, output);
+    }
+
+    public void evaluateAST(String baseURI, ArrayNode templateAST, JsonNode context, Writer output) throws HistoneException {
+        String result = evaluateAST(baseURI, templateAST, context);
         try {
             output.write(result);
         } catch (IOException e) {
@@ -120,31 +130,35 @@ public class Histone {
         }
     }
 
+    public String evaluate(String baseURI, String templateContent, JsonNode context) throws HistoneException {
+        ArrayNode ast = parser.parse(templateContent);
+        return evaluator.process(baseURI, ast, context);
+    }
+
     public String evaluate(String templateContent) throws HistoneException {
-        return evaluator.process(templateContent, NullNode.instance);
+        return evaluate(null, templateContent, nodeFactory.jsonNull());
+    }
+
+    public String evaluate(String templateContent, JsonNode context) throws HistoneException {
+        return evaluate(null, templateContent, context);
     }
 
     public String evaluate(Reader templateReader) throws HistoneException {
-        return evaluate(templateReader, NullNode.instance);
+        return evaluate(null, templateReader, nodeFactory.jsonNull());
     }
 
-    public String evaluate(Reader templateReader, JsonNode context) throws HistoneException {
+    public String evaluate(String baseURI, Reader templateReader, JsonNode context) throws HistoneException {
         String templateContent = null;
         try {
             templateContent = IOUtils.toString(templateReader);
         } catch (IOException e) {
             throw new HistoneException("Error reading input Reader");
         }
-
-        return evaluator.process(templateContent, context);
+        return evaluate(baseURI, templateContent, context);
     }
 
-    public void evaluate(Reader templateReader, Writer outputWriter) throws HistoneException {
-        evaluate(templateReader, NullNode.instance, outputWriter);
-    }
-
-    public void evaluate(Reader templateReader, JsonNode context, Writer outputWriter) throws HistoneException {
-        String result = evaluate(templateReader, context);
+    public void evaluate(String baseURI, Reader templateReader, JsonNode context, Writer outputWriter) throws HistoneException {
+        String result = evaluate(baseURI, templateReader, context);
         try {
             outputWriter.write(result);
         } catch (IOException e) {

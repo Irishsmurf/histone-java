@@ -24,6 +24,7 @@ import ru.histone.utils.CollectionUtils;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.*;
@@ -123,6 +124,8 @@ public class AcceptanceTestsRunner extends Runner {
         final ArrayNode expectedAST = testCase.getExpectedAST();
         final EvaluatorException expectedException = testCase.getException();
         final String expectedResult = testCase.getExpected();
+        final String baseURI = this.getClass().getResource(testSuite.getFileName()).toURI().toString();
+
 
         if (expectedAST != null) {
             try {
@@ -162,7 +165,7 @@ public class AcceptanceTestsRunner extends Runner {
 
                 try {
                     JsonNode context = testCase.getContext() == null ? null : jackson.readTree(testCase.getContext());
-                    String output = histone.evaluateAST(ast, context);
+                    String output = histone.evaluateAST(baseURI, ast, context);
                     log.debug("case({}): output={}", new Object[]{testIdx, output});
                 } catch (EvaluatorException e) {
                     log.debug("case({}): e.message={}", new Object[]{testIdx, e.getMessage()});
@@ -183,7 +186,7 @@ public class AcceptanceTestsRunner extends Runner {
                 Reader input = new StringReader(testCase.getInput());
                 JsonNode context = (testCase.getContext() == null) ? jackson.getNodeFactory().nullNode() : jackson.readTree(testCase
                         .getContext());
-                String output = histone.evaluate(input, context);
+                String output = histone.evaluate(baseURI, input, context);
 //                log.debug("case({}): output={}", new Object[]{testIdx, output});
 
                 boolean result = output.equals(expectedResult);
@@ -234,9 +237,6 @@ public class AcceptanceTestsRunner extends Runner {
 
         histoneBuilder.setJackson(jackson);
 
-        String fileName = testSuite.getFileName();
-        URL fileNameURL = this.getClass().getResource(fileName);
-        testCase.getGlobalProperties().put(GlobalProperty.BASE_URI, fileNameURL.toURI().toString());
         if (CollectionUtils.isNotEmpty(testCase.getMockFiles())) {
             //TODO: histoneBuilder.setResourceResolvers(toResourceResolvers(testCase.getMockFiles()));
         }
@@ -295,8 +295,18 @@ public class AcceptanceTestsRunner extends Runner {
             }
 
         }
-        if (caseNode.get("global") != null) {
-            throw new RuntimeException("Not supported tagName: global");
+        if (caseNode.path("property").isObject()) {
+            JsonNode property = caseNode.path("property");
+
+            String name = property.path("name").asText();
+            String node = property.path("node").asText();
+            String result = property.path("result").asText();
+
+            if (!"global".equals(node)) {
+                throw new RuntimeException(String.format("Node type '%s' is not supported yet", node));
+            }
+
+            testCase.addGlobalProp(name, result);
         }
         if (caseNode.get("expectedException") != null) {
             testCase.setException(readException(caseNode.get("expectedException")));

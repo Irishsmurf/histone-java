@@ -152,53 +152,81 @@ public class Evaluator {
         global.add(property.getName(), nodeFactory.string(value));
     }
 
-    /**
-     * Process and evaluate template using specified evaluator context
-     *
-     * @param input   template content
-     * @param jsonCtx json object for evaluator context
-     * @return evaluation result
-     * @throws ru.histone.HistoneException in case of eny errors
-     */
-    public String process(String input, JsonNode jsonCtx) throws HistoneException {
-        ArrayNode ast = parser.parse(input);
-        return process(ast, jsonCtx);
-    }
-
-    /**
-     * Process and evaluate template using specified evaluator context
-     *
-     * @param input   template content
-     * @param context special context object for evaluator context
-     * @return evaluation result
-     * @throws ru.histone.HistoneException in case of eny errors
-     */
-    public String process(String input, EvaluatorContext context) throws HistoneException {
-        ArrayNode ast = parser.parse(input);
-        return process(ast, context);
-    }
+//    /**
+//     * Process and evaluate template using specified evaluator context
+//     *
+//     * @param input   template content
+//     * @param jsonCtx json object for evaluator context
+//     * @return evaluation result
+//     * @throws ru.histone.HistoneException in case of eny errors
+//     */
+//    public String process(URI baseURI, String input, JsonNode jsonCtx) throws HistoneException {
+//        ArrayNode ast = parser.parse(input);
+//        return process(baseURI, ast, jsonCtx);
+//    }
+//
+//    /**
+//     * Process and evaluate template using specified evaluator context
+//     *
+//     * @param input   template content
+//     * @param jsonCtx json object for evaluator context
+//     * @return evaluation result
+//     * @throws ru.histone.HistoneException in case of eny errors
+//     */
+//    public String process(String input, JsonNode jsonCtx) throws HistoneException {
+//        ArrayNode ast = parser.parse(input);
+//        return process(null, ast, jsonCtx);
+//    }
+//
+//    /**
+//     * Process and evaluate template using specified evaluator context
+//     *
+//     * @param input   template content
+//     * @param context special context object for evaluator context
+//     * @return evaluation result
+//     * @throws ru.histone.HistoneException in case of eny errors
+//     */
+//    public String process(URI baseURI, String input, EvaluatorContext context) throws HistoneException {
+//        ArrayNode ast = parser.parse(input);
+//        return process(baseURI, ast, context);
+//    }
+//
+//    /**
+//     * Process and evaluate template using specified evaluator context
+//     *
+//     * @param input   template content
+//     * @param context special context object for evaluator context
+//     * @return evaluation result
+//     * @throws ru.histone.HistoneException in case of eny errors
+//     */
+//    public String process(String input, EvaluatorContext context) throws HistoneException {
+//        ArrayNode ast = parser.parse(input);
+//        return process(null, ast, context);
+//    }
+//
+//    /**
+//     * Evaluate template AST using specified evaluator context
+//     *
+//     * @param ast     tempalte AST in json representation
+//     * @param jsonCtx json object for evaluator context
+//     * @return evaluation result
+//     * @throws ru.histone.HistoneException in case of eny errors
+//     */
+//    public String process(ArrayNode ast, JsonNode jsonCtx) throws HistoneException {
+//        return process(ast, EvaluatorContext.createFromJson(nodeFactory, global, jsonCtx));
+//    }
 
     /**
      * Evaluate template AST using specified evaluator context
      *
      * @param ast     tempalte AST in json representation
-     * @param jsonCtx json object for evaluator context
+     * @param jsonContext special context object for evaluator context
      * @return evaluation result
      * @throws ru.histone.HistoneException in case of eny errors
      */
-    public String process(ArrayNode ast, JsonNode jsonCtx) throws HistoneException {
-        return process(ast, EvaluatorContext.createFromJson(nodeFactory, global, jsonCtx));
-    }
-
-    /**
-     * Evaluate template AST using specified evaluator context
-     *
-     * @param ast     tempalte AST in json representation
-     * @param context special context object for evaluator context
-     * @return evaluation result
-     * @throws ru.histone.HistoneException in case of eny errors
-     */
-    public String process(ArrayNode ast, EvaluatorContext context) throws HistoneException {
+    public String process(String baseURI, ArrayNode ast, JsonNode jsonContext) throws HistoneException {
+        EvaluatorContext context = EvaluatorContext.createFromJson(nodeFactory, global, jsonContext);
+        context.setBaseURI(baseURI);
         return processInternal(ast, context);
     }
 
@@ -210,11 +238,9 @@ public class Evaluator {
         log.debug("processInternal(): template={}, context={}", ast, context);
 
         if ("HISTONE".equals(ast.path(0).path(0).asText())) {
-            //TODO will be fixed in HSTJ-7
-            //throw new EvaluatorException("AST Tree doesn't have signature element.");
-            ast = (ArrayNode) ast.get(1);
+            //TODO should be checked in HSTJ-7
+            ast = (ArrayNode) ast.path(1);
         }
-
 
         StringBuilder out = new StringBuilder();
         for (JsonNode element : ast) {
@@ -375,10 +401,10 @@ public class Evaluator {
         String currentBaseURI = getContextBaseURI(context);
         String macroBaseURI = macro.getBaseURI();
         if (macroBaseURI != null/* && macroBaseURI.isAbsolute() && !macroBaseURI.isOpaque()*/) {
-            context.setGlobalValue(GlobalProperty.BASE_URI, nodeFactory.string(macroBaseURI));
+            context.setBaseURI(macroBaseURI);
         }
         StringHistoneNode result = nodeFactory.string(processInternal(macro.getStatements(), context));
-        context.setGlobalValue(GlobalProperty.BASE_URI, currentBaseURI == null ? nodeFactory.NULL : nodeFactory.string(currentBaseURI));
+        context.setBaseURI(currentBaseURI);
         return result;
     }
 
@@ -416,11 +442,13 @@ public class Evaluator {
                 JsonNode parseResult = parser.parse(templateContent);
                 URI resourceURI = (resource.getBaseHref() != null) ? URI.create(resource.getBaseHref()) : null;
                 if (resourceURI != null && resourceURI.isAbsolute() && !resourceURI.isOpaque()) {
-                    context.setGlobalValue(GlobalProperty.BASE_URI, nodeFactory.string(resourceURI.toString()));
+                    context.setBaseURI(resourceURI.toString());
+//                    context.setGlobalValue(GlobalProperty.BASE_URI, nodeFactory.string(resourceURI.toString()));
                 }
 //                nodeFactory.string(processInternal(parseResult, context));  -  WTF??
                 processInternal(parseResult, context);
-                context.setGlobalValue(GlobalProperty.BASE_URI, currentBaseURI == null ? nodeFactory.NULL : nodeFactory.string(currentBaseURI.toString()));
+                context.setBaseURI(currentBaseURI);
+//                context.setGlobalValue(GlobalProperty.BASE_URI, currentBaseURI == null ? nodeFactory.NULL : nodeFactory.string(currentBaseURI.toString()));
 
                 return nodeFactory.UNDEFINED;
             }
@@ -440,11 +468,7 @@ public class Evaluator {
     }
 
     private String getContextBaseURI(EvaluatorContext context) {
-        Node value = context.getGlobalValue(GlobalProperty.BASE_URI);
-        if (value == null || value.isNull() || !value.isString()) {
-            return null;
-        }
-        return value.getAsString().getValue();
+        return context.getBaseURI() == null ? null : context.getBaseURI().toString();
     }
 
     private Node processCall(JsonNode target, JsonNode nameElement, JsonNode args, EvaluatorContext context) throws EvaluatorException {
@@ -660,14 +684,18 @@ public class Evaluator {
             ArrayNode parseResult = parser.parse(templateContent);
             GlobalObjectNode globalCopy = new GlobalObjectNode(nodeFactory, global);
             URI resourceUri = (resource.getBaseHref() != null) ? URI.create(resource.getBaseHref()) : null;
-            if (resourceUri != null && resourceUri.isAbsolute() && !resourceUri.isOpaque()) {
-                globalCopy.add(GlobalProperty.BASE_URI.getName(), nodeFactory.string(resourceUri.toString()));
-            }
             if (args.size() <= 1) {
-                String includeOutput = processInternal(parseResult, EvaluatorContext.createEmpty(nodeFactory, globalCopy));
+                EvaluatorContext includeContext = EvaluatorContext.createEmpty(nodeFactory, globalCopy);
+                if (resourceUri != null && resourceUri.isAbsolute() && !resourceUri.isOpaque()) {
+                    includeContext.setBaseURI(resourceUri.toString());
+//                globalCopy.add(GlobalProperty.BASE_URI.getName(), nodeFactory.string(resourceUri.toString()));
+                }
+                String includeOutput = processInternal(parseResult, includeContext);
                 return nodeFactory.string(includeOutput);
             }
-            return nodeFactory.string(processInternal(parseResult, EvaluatorContext.createFromJson(nodeFactory, globalCopy, args.get(1).getAsJsonNode())));
+            EvaluatorContext includeContext = EvaluatorContext.createFromJson(nodeFactory, globalCopy, args.get(1).getAsJsonNode());
+            includeContext.setBaseURI(resourceUri.toString());
+            return nodeFactory.string(processInternal(parseResult, includeContext));
         } catch (ResourceLoadException e) {
             Histone.runtime_log_warn_e("Resource include failed! Unresolvable resource.", e);
             return nodeFactory.UNDEFINED;
@@ -750,6 +778,7 @@ public class Evaluator {
                 sb.append(processInternal(statements.get(0), context));
 
                 idx++;
+
             }
         } else if (statements.size() > 1) {
             String result = processInternal(statements.get(1), context);
@@ -990,6 +1019,8 @@ public class Evaluator {
 
             if (ctx.hasProp(propName)) {
                 ctx = ctx.getProp(propName);
+            } else if (context.getGlobal().hasProp(propName)) {
+                ctx = context.getGlobal().getProp(propName);
             } else {
                 Histone.runtime_log_warn("Selector: in selector '{}' object '{}' doesn't have property '{}'", element, ctx, propName);
                 ctx = null;
