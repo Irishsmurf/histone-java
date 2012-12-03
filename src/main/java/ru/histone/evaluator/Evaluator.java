@@ -123,6 +123,7 @@ public class Evaluator {
         nodeFunctionsManager.registerBuiltInFunction(Node.class, new IsString(bootstrap.getNodeFactory()));
         nodeFunctionsManager.registerBuiltInFunction(Node.class, new IsUndefined(bootstrap.getNodeFactory()));
         nodeFunctionsManager.registerBuiltInFunction(Node.class, new ToJson(bootstrap.getNodeFactory()));
+        nodeFunctionsManager.registerBuiltInFunction(Node.class, new ToBoolean(bootstrap.getNodeFactory()));
         nodeFunctionsManager.registerBuiltInFunction(Node.class, new ToString(bootstrap.getNodeFactory()));
         nodeFunctionsManager.registerBuiltInFunction(Node.class, new ToMap(bootstrap.getNodeFactory()));
 
@@ -775,6 +776,7 @@ public class Evaluator {
                     context.putProp(iterKey, nodeFactory.string(key.toString()));
                 }
 
+                context.putProp("self", self);
                 sb.append(processInternal(statements.get(0), context));
 
                 idx++;
@@ -1000,6 +1002,9 @@ public class Evaluator {
             startIdx++;
         } else if ("global".equals(element.get(0).asText())) {
             ctx = context.getGlobal();
+            startIdx++;
+        } else if ("self".equals(element.get(0).asText())) {
+            ctx = context.getProp("self");
             startIdx++;
         } else {
             ctx = context.getAsNode();
