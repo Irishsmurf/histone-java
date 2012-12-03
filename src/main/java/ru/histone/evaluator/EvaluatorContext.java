@@ -98,6 +98,11 @@ public class EvaluatorContext {
                 return true;
             }
         }
+
+        if(name.equals("baseURI")){
+            return true;
+        }
+
         return initialContext.hasProp(name);
     }
 
@@ -113,7 +118,14 @@ public class EvaluatorContext {
                 return stack.get(name);
             }
         }
-        return initialContext.getProp(name);
+
+        if (initialContext.hasProp(name)) {
+            return initialContext.getProp(name);
+        } else if ("baseURI".equals(name)){
+            return nodeFactory.string(baseURI);
+        } else {
+            return nodeFactory.UNDEFINED;
+        }
     }
 
     /**
@@ -293,9 +305,9 @@ public class EvaluatorContext {
 
     public void setBaseURI(String baseURI) {
         if (baseURI != null) {
-            if (!global.hasProp("baseURI")) {
-                global.add("baseURI", nodeFactory.string(baseURI.toString()));
-            }
+//            if (!global.hasProp("baseURI")) {
+//                global.add("baseURI", nodeFactory.string(baseURI.toString()));
+//            }
 
             this.baseURI = baseURI;
         }
