@@ -15,6 +15,10 @@
  */
 package ru.histone.evaluator;
 
+import org.apache.http.conn.ClientConnectionManager;
+import org.apache.http.impl.conn.BasicClientConnectionManager;
+import org.apache.http.impl.conn.SchemeRegistryFactory;
+
 import ru.histone.evaluator.functions.global.GlobalFunctionsManager;
 import ru.histone.evaluator.functions.node.NodeFunctionsManager;
 import ru.histone.evaluator.nodes.GlobalObjectNode;
@@ -57,7 +61,7 @@ public class EvaluatorBootstrap {
         this.resourceLoader = resourceLoader;
     }
 
-    public GlobalFunctionsManager getGlobalFunctionsManager() {
+	public GlobalFunctionsManager getGlobalFunctionsManager() {
         return globalFunctionsManager;
     }
 
