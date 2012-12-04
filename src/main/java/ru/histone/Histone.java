@@ -28,11 +28,11 @@ import ru.histone.optimizer.AstInlineOptimizer;
 import ru.histone.optimizer.AstMarker;
 import ru.histone.optimizer.AstOptimizer;
 import ru.histone.parser.Parser;
+import ru.histone.resourceloaders.Resource;
+import ru.histone.resourceloaders.ResourceLoader;
 import ru.histone.utils.IOUtils;
 
-import java.io.IOException;
-import java.io.Reader;
-import java.io.Writer;
+import java.io.*;
 import java.net.URI;
 
 /**
@@ -65,6 +65,7 @@ public class Histone {
     private AstImportResolver astImportResolver;
     private AstMarker astMarker;
     private AstInlineOptimizer astInlineOptimizer;
+    private ResourceLoader resourceLoader;
 
     public Histone(HistoneBootstrap bootstrap) {
         this.parser = bootstrap.getParser();
@@ -74,6 +75,7 @@ public class Histone {
         this.astMarker = bootstrap.getAstMarker();
         this.astInlineOptimizer = bootstrap.getAstInlineOptimizer();
         this.astAstOptimizer = bootstrap.getAstAstOptimizer();
+        this.resourceLoader = bootstrap.getResourceLoader();
     }
 
     public ArrayNode parseTemplateToAST(Reader templateReader) throws HistoneException {
@@ -133,6 +135,23 @@ public class Histone {
     public String evaluate(String baseURI, String templateContent, JsonNode context) throws HistoneException {
         ArrayNode ast = parser.parse(templateContent);
         return evaluator.process(baseURI, ast, context);
+    }
+
+    public String evaluateUri(String uri, JsonNode context) throws HistoneException {
+        if (resourceLoader == null) throw new IllegalStateException("Resource loader is null for Histone instance");
+
+        try {
+            Resource resource = resourceLoader.load(uri, null);
+            String baseUri = resource.getBaseHref();
+
+            InputStream is = resource.getInputStream();
+            StringWriter sw = new StringWriter();
+            IOUtils.copy(is, sw);
+            String templateContent = sw.toString();
+            return evaluate(baseUri, templateContent, context);
+        } catch (IOException ioe) {
+            throw new HistoneException(ioe);
+        }
     }
 
     public String evaluate(String templateContent) throws HistoneException {

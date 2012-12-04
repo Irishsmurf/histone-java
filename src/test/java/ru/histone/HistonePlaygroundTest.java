@@ -53,14 +53,17 @@ public class HistonePlaygroundTest {
 
          */
 
-
-        String baseURI = getClass().getResource("/logback-test.xml").toString();
+        /*String baseURI = getClass().getResource("/logback-test.xml").toString();
         String input = "a  b";
         String context = "{}";//"{\"baseURI\":\"test:///test\"}";
         String expected = "a  b";
 
         String result = histone.evaluate(baseURI, input, jackson.readTree(new StringReader(context)));
-        assertEquals(expected, result);
+        assertEquals(expected, result);*/
+
+        String uri = "file:/D:/Megafon/workspace/histone-java/src/test/resources/relative_urls/template.tpl";
+        String result = histone.evaluateUri(uri, jackson.createObjectNode());
+        int l = 5;
     }
 
 }
