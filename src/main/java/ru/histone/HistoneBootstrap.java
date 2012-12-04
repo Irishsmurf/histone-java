@@ -23,15 +23,17 @@ import ru.histone.optimizer.AstInlineOptimizer;
 import ru.histone.optimizer.AstMarker;
 import ru.histone.optimizer.AstOptimizer;
 import ru.histone.parser.Parser;
+import ru.histone.resourceloaders.ResourceLoader;
 
 public class HistoneBootstrap {
-    private  Parser parser;
-    private  Evaluator evaluator;
+    private Parser parser;
+    private Evaluator evaluator;
     private NodeFactory nodeFactory;
     private AstOptimizer astAstOptimizer;
     private AstImportResolver astImportResolver;
     private AstMarker astMarker;
     private AstInlineOptimizer astInlineOptimizer;
+    private ResourceLoader resourceLoader;
 
     public Parser getParser() {
         return parser;
@@ -87,5 +89,13 @@ public class HistoneBootstrap {
 
     public void setAstInlineOptimizer(AstInlineOptimizer astInlineOptimizer) {
         this.astInlineOptimizer = astInlineOptimizer;
+    }
+
+    public ResourceLoader getResourceLoader() {
+        return resourceLoader;
+    }
+
+    public void setResourceLoader(ResourceLoader resourceLoader) {
+        this.resourceLoader = resourceLoader;
     }
 }

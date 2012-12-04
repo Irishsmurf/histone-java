@@ -351,6 +351,7 @@ public class HistoneBuilder {
         histoneBootstrap.setAstImportResolver(astImportResolver);
         histoneBootstrap.setAstInlineOptimizer(astInlineOptimizer);
         histoneBootstrap.setAstAstOptimizer(astOptimizer);
+        histoneBootstrap.setResourceLoader(new DefaultResourceLoader());
 
         return new Histone(histoneBootstrap);
     }
