@@ -41,20 +41,26 @@ public class Set extends NodeFunction<ObjectHistoneNode> {
     }
 
     @Override
-	public Node execute(ObjectHistoneNode target, Node... args) {
-		if (args.length != 2)
-			return getNodeFactory().UNDEFINED;
-		ObjectHistoneNode result = getNodeFactory().object();
-		//we can add only string or number
-		String key = null;
-		if (args[0].isNumber()) 
-			key = args[0].getAsNumber().getValue().toPlainString();
-		else if (args[0].isString()) 
-			key = args[0].getAsString().getValue();
-		if (key != null && !args[1].isUndefined())
-			result.add(key, args[1]);
-		return result;
-	}
-    
-    
+    public Node execute(ObjectHistoneNode target, Node... args) {
+        if (args.length < 2) {
+            return getNodeFactory().UNDEFINED;
+        }
+        ObjectHistoneNode result = getNodeFactory().object(target);
+
+        //we can add only string or number
+        Node index = args[0];
+        Node value = args[1];
+
+        if(index.isNumber() || index.isString()){
+            if (index.isNumber() && result.size() - 1 > index.getAsNumber().getValue().intValue()) {
+                result.set(index.getAsNumber().getValue().intValue(), value);
+            } else {
+                result.set(index.getAsString().getValue(), value);
+            }
+        }
+
+        return result;
+    }
+
+
 }
