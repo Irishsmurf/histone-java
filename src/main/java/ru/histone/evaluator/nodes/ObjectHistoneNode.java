@@ -136,7 +136,7 @@ public class ObjectHistoneNode extends Node {
 
     // Refactored
     public void add(Node value) {
-        int size = this.elements.size();
+        int size = this.elements.size() - stringKeysCount;
         this.add(size, value);
     }
 
@@ -340,32 +340,27 @@ public class ObjectHistoneNode extends Node {
      * Represents a key for ObjectHistoneNode, that can be either string or integer.
      */
     public class StringOrInteger {
-        private final String sValue;
-        private final Integer iValue;
+        private String sValue;
+        private Integer iValue;
 
         public StringOrInteger(String s) {
-            Integer i = null;
             try {
-                i = new Integer(s);
+                iValue = new Integer(s);
             } catch (NumberFormatException e) {
             }
 
-            sValue = (i == null ? s : null);
-            iValue = (i != null ? i : null);
+            sValue = s;
         }
 
         public StringOrInteger(Integer i) {
+            sValue = i.toString();
             iValue = i;
-            sValue = null;
         }
 
         public StringOrInteger(Object o) {
-            if (o instanceof String) {
-                sValue = (String) o;
-                iValue = null;
-            } else if (o instanceof Integer) {
+            if (o instanceof Integer) {
+                sValue = o.toString();
                 iValue = (Integer) o;
-                sValue = null;
             } else {
                 sValue = o.toString();
                 iValue = null;
@@ -373,7 +368,7 @@ public class ObjectHistoneNode extends Node {
         }
 
         public boolean isString() {
-            return sValue != null;
+            return iValue == null;
         }
 
         public boolean isInteger() {
@@ -395,7 +390,6 @@ public class ObjectHistoneNode extends Node {
 
             StringOrInteger that = (StringOrInteger) o;
 
-            if (iValue != null ? !iValue.equals(that.iValue) : that.iValue != null) return false;
             if (sValue != null ? !sValue.equals(that.sValue) : that.sValue != null) return false;
 
             return true;
@@ -403,17 +397,12 @@ public class ObjectHistoneNode extends Node {
 
         @Override
         public int hashCode() {
-            int result = sValue != null ? sValue.hashCode() : 0;
-            result = 31 * result + (iValue != null ? iValue.hashCode() : 0);
-            return result;
+            return sValue != null ? sValue.hashCode() : 0;
         }
 
         @Override
         public String toString() {
-            if (isString()) return sValue != null ? sValue : null;
-            if (isInteger()) return iValue != null ? iValue.toString() : null;
-
-            return null;
+            return sValue;
         }
     }
 
