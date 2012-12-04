@@ -182,6 +182,24 @@ public class NodeFactory {
 		if (jsonNode.isBigDecimal()) {
 			BigDecimal number = ((DecimalNode) jsonNode).decimalValue();
 			return number.toPlainString();
+		} else if (jsonNode.isArray()) {
+			ArrayNode node = (ArrayNode) jsonNode;
+			StringBuilder sb = new StringBuilder();
+			sb.append('[');
+			if (node.size() != 0) {
+				Iterator<JsonNode> it = node.elements();
+				int count = 0;
+				for (; it.hasNext();) {
+					JsonNode en = it.next();
+					if (count > 0) {
+						sb.append(',');
+					}
+					++count;
+					sb.append(toJsonString(en));
+				}
+			}
+			sb.append(']');
+			return sb.toString();
 		} else if (jsonNode.isObject()) {
 			ObjectNode objNode = (ObjectNode) jsonNode;
 			StringBuilder sb = new StringBuilder();
