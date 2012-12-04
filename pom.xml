@@ -131,6 +131,9 @@
                 <version>2.12</version>
                 <configuration>
                     <argLine>-Dfile.encoding=UTF-8</argLine>
+                    <excludes>
+                        <exclude>**/HistonePlaygroundTest.java</exclude>
+                    </excludes>
                 </configuration>
             </plugin>
             <plugin>
