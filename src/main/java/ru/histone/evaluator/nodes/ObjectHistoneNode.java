@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -27,16 +28,61 @@ import java.util.Map.Entry;
  * Class representing Object type in Histone
  */
 public class ObjectHistoneNode extends Node {
-//    private boolean globalObject = false;
+    private final Map<StringOrInteger, Node> elements = new LinkedHashMap<StringOrInteger, Node>() {
+        @Override
+        public Node put(StringOrInteger key, Node value) {
+            if (key.isString()) stringKeysCount++;
+            return super.put(key, value);
+        }
 
-    private int maxIdx = 0;
+        @Override
+        public void putAll(Map<? extends StringOrInteger, ? extends Node> m) {
+            for (StringOrInteger key : m.keySet())
+                if (key.isString())
+                    stringKeysCount++;
 
-    private Map<Object, Node> elements = new LinkedHashMap<Object, Node>();
+            super.putAll(m);
+        }
+
+        @Override
+        public Node remove(Object key) {
+            Node deleted = super.remove(key);
+            if (deleted != null) {
+                StringOrInteger soi = new StringOrInteger(key);
+                if (soi.isString()) stringKeysCount--;
+            }
+            return deleted;
+        }
+
+        @Override
+        public void clear() {
+            stringKeysCount = 0;
+        }
+    };
+
+    private int stringKeysCount = 0;
+
+
+
+    /**
+     * Stores current state of ObjectHistoneNode: array behaviour or object behaviour.
+     */
+    private boolean isArray() {
+        if (stringKeysCount > 0) return false;
+
+        int i1 = 0;
+        for (StringOrInteger key : elements.keySet()) {
+            int i2 = key.asInteger();
+            if (i1 != i2) return false;
+
+            i1++;
+        }
+        return true;
+    }
 
     protected ObjectHistoneNode(NodeFactory nodeFactory) {
         super(nodeFactory);
     }
-
 
     /**
      * Check if this is special object named GlobalObject
@@ -48,122 +94,79 @@ public class ObjectHistoneNode extends Node {
         return false;
     }
 
+    // Refactored
     @Override
     public Node getProp(String name) {
-        //If we have string key, first of all try to parse it to number
-        //if parsing was succesfull, then treat this key as number
-        try {
-            Integer keyInt = Integer.parseInt((String) name);
-            return elements.get(keyInt);
-        } catch (NumberFormatException e) {
-            //do nothing
-        }
-
-        return elements.get(name);
+        return elements.get(new StringOrInteger(name));
     }
 
+    // Refactored
     @Override
     public boolean hasProp(String name) {
-        //If we have string key, first of all try to parse it to number
-        //if parsing was succesfull, then treat this key as number
-        try {
-            Integer keyInt = Integer.parseInt((String) name);
-            return elements.containsKey(keyInt);
-        } catch (NumberFormatException e) {
-            //do nothing
-        }
-
-        return elements.containsKey(name);
+        return elements.containsKey(new StringOrInteger(name));
     }
 
-//    /**
-//     * Adds new key:value pair to this object
-//     *
-//     * @param key   key key
-//     * @param value value
-//     */
-//    public void put(JsonNode key, Node value) {
-//        if (key.isJsonNull()) {
-//            key = new JsonPrimitive("" + (elements.size()));
-//        }
-////        this.put();
-//    }
-
+    // Refactored
     public void add(Object key, Node value) {
-        //If we have string key, first of all try to parse it to number
-        //if parsing was succesfull, then treat this key as number
-        if (key instanceof String) {
-            try {
-                Integer keyInt = Integer.parseInt((String) key);
-                key = keyInt;
-            } catch (NumberFormatException e) {
-                //do nothing
-            }
-        }
-
-        if (key instanceof String) {
-            elements.put(key, value);
-        } else if (key instanceof Number) {
-            if ((Integer) key > maxIdx) {
-                maxIdx = (Integer) key;
-            }
-            elements.put(maxIdx++, value);
-        } else {
-            throw new RuntimeException(String.format("Wrong key type: (%s)%s", key.getClass(), key.toString()));
-            //TODO: log wrong key type usage
-        }
+        StringOrInteger soi = new StringOrInteger(key);
+        elements.put(soi, value);
     }
 
+    // Refactored
     public void set(String key, Node value) {
+        StringOrInteger soi = new StringOrInteger(key);
+
         if (!value.isUndefined()) {
-            elements.put(key, value);
+            elements.put(soi, value);
         } else {
-            elements.remove(key);
+            elements.remove(soi);
         }
     }
 
+    // Refactored
     public void set(Integer key, Node value) {
-        if (elements.size() - 1 > key) {
-            if (!value.isUndefined()) {
-                elements.put(key, value);
-            } else {
-                //TODO rebuild index
-                elements.remove(key);
-            }
+        StringOrInteger soi = new StringOrInteger(key);
+
+        if (!value.isUndefined()) {
+            elements.put(soi, value);
+        } else {
+            elements.remove(soi);
         }
     }
 
+    // Refactored
     public void add(Node value) {
-        this.add(0, value);
+        int size = this.elements.size();
+        this.add(size, value);
     }
-
 
     /**
      * Removes key:value using specified key key
      *
      * @param name
      */
+    // Refactored
     public void remove(String name) {
-        elements.remove(name);
+        StringOrInteger key = new StringOrInteger(name);
+        elements.remove(key);
     }
-
-    /**
-     * Return object elements presented as Set(Entry(key,value))
-     *
-     * @return set with object entries
-     */
-//    public Set<Entry<Object, Node>> entries() {
-//        return elements.entrySet();
-//    }
-
 
     /**
      * Return object elements presented as Map(key,value)
      *
      * @return map of object elements
      */
+    // Refactored
     public Map<Object, Node> getElements() {
-        return elements;
+        // UNSAFE
+        Map<Object, Node> result = new LinkedHashMap<Object, Node>();
+        for (StringOrInteger key : elements.keySet()) {
+            Node value = elements.get(key);
+            if (key.isInteger()) result.put(key.asInteger(), value);
+            if (key.isString()) result.put(key.asString(), value);
+        }
+
+        return result;
     }
 
     /**
@@ -171,6 +174,7 @@ public class ObjectHistoneNode extends Node {
      *
      * @return number of object elements
      */
+    // Refactored
     public int size() {
         return elements.size();
     }
@@ -181,15 +185,24 @@ public class ObjectHistoneNode extends Node {
             ObjectHistoneNode result = getNodeFactory().object();
             ObjectHistoneNode rightObj = right.getAsObject();
 
-            //put all elements from left object
-            for (Object key : this.elements.keySet()) {
-                result.add(key, this.elements.get(key));
+            for (Entry<StringOrInteger, Node> entry : this.elements.entrySet()) {
+                if (entry.getKey().isString()) {
+                    result.add(entry.getKey().asString(), entry.getValue());
+                }
+                if (entry.getKey().isInteger()) {
+                    result.add(entry.getValue());
+                }
             }
 
-            //put al elements from right object
-            for (Object key : rightObj.elements.keySet()) {
-                result.add(key, rightObj.elements.get(key));
+            for (Entry<StringOrInteger, Node> entry : rightObj.elements.entrySet()) {
+                if (entry.getKey().isString()) {
+                    result.add(entry.getKey().asString(), entry.getValue());
+                }
+                if (entry.getKey().isInteger()) {
+                    result.add(entry.getValue());
+                }
             }
+
             return result;
         } else if (right.isNumber()) {
             return getNodeFactory().UNDEFINED;
@@ -287,28 +300,31 @@ public class ObjectHistoneNode extends Node {
 
     @Override
     public JsonNode getAsJsonNode() {
-        //check if we have at least one element with string key
-        if (elements.size() != 0 && maxIdx != elements.size()) {
+        if (size() == 0) return getNodeFactory().jsonArray();
+
+        if (isArray()) {
+            // Return as array
+            ArrayNode json = getNodeFactory().jsonArray();
+
+            for (Entry<StringOrInteger, Node> entry : elements.entrySet()) {
+                json.add(entry.getValue().getAsJsonNode());
+            }
+
+            return json;
+        } else {
+            // Return as object
             ObjectNode json = getNodeFactory().jsonObject();
 
-            for (Entry<Object, Node> entry : elements.entrySet()) {
+            for (Entry<StringOrInteger, Node> entry : elements.entrySet()) {
                 if (!entry.getValue().isUndefined()) {
                     json.put(entry.getKey().toString(), entry.getValue().getAsJsonNode());
                 } else {
                     json.put(entry.getKey().toString(), getNodeFactory().jsonObject());
                 }
             }
-            return json;
-        } else {
-            ArrayNode json = getNodeFactory().jsonArray();
-
-            for (Entry<Object, Node> entry : elements.entrySet()) {
-                json.add(entry.getValue().getAsJsonNode());
-            }
 
             return json;
         }
-
     }
 
     @Override
@@ -318,6 +334,87 @@ public class ObjectHistoneNode extends Node {
         sb.append(elements.size());
         sb.append(")");
         return sb.toString();
+    }
+
+    /**
+     * Represents a key for ObjectHistoneNode, that can be either string or integer.
+     */
+    public class StringOrInteger {
+        private final String sValue;
+        private final Integer iValue;
+
+        public StringOrInteger(String s) {
+            Integer i = null;
+            try {
+                i = new Integer(s);
+            } catch (NumberFormatException e) {
+            }
+
+            sValue = (i == null ? s : null);
+            iValue = (i != null ? i : null);
+        }
+
+        public StringOrInteger(Integer i) {
+            iValue = i;
+            sValue = null;
+        }
+
+        public StringOrInteger(Object o) {
+            if (o instanceof String) {
+                sValue = (String) o;
+                iValue = null;
+            } else if (o instanceof Integer) {
+                iValue = (Integer) o;
+                sValue = null;
+            } else {
+                sValue = o.toString();
+                iValue = null;
+            }
+        }
+
+        public boolean isString() {
+            return sValue != null;
+        }
+
+        public boolean isInteger() {
+            return iValue != null;
+        }
+
+        public String asString() {
+            return sValue;
+        }
+
+        public Integer asInteger() {
+            return iValue;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            StringOrInteger that = (StringOrInteger) o;
+
+            if (iValue != null ? !iValue.equals(that.iValue) : that.iValue != null) return false;
+            if (sValue != null ? !sValue.equals(that.sValue) : that.sValue != null) return false;
+
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = sValue != null ? sValue.hashCode() : 0;
+            result = 31 * result + (iValue != null ? iValue.hashCode() : 0);
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            if (isString()) return sValue != null ? sValue : null;
+            if (isInteger()) return iValue != null ? iValue.toString() : null;
+
+            return null;
+        }
     }
 
 }
