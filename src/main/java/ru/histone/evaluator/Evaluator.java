@@ -15,31 +15,6 @@
  */
 package ru.histone.evaluator;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import ru.histone.GlobalProperty;
-import ru.histone.Histone;
-import ru.histone.HistoneException;
-import ru.histone.evaluator.functions.global.*;
-import ru.histone.evaluator.functions.node.*;
-import ru.histone.evaluator.functions.node.number.*;
-import ru.histone.evaluator.functions.node.object.*;
-import ru.histone.evaluator.functions.node.object.Slice;
-import ru.histone.evaluator.functions.node.string.*;
-import ru.histone.evaluator.functions.node.string.Size;
-import ru.histone.evaluator.nodes.*;
-import ru.histone.parser.AstNodeType;
-import ru.histone.parser.Parser;
-import ru.histone.parser.ParserException;
-import ru.histone.resourceloaders.Resource;
-import ru.histone.resourceloaders.ResourceLoadException;
-import ru.histone.resourceloaders.ResourceLoader;
-import ru.histone.utils.ArrayUtils;
-import ru.histone.utils.IOUtils;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -49,6 +24,81 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+
+import org.apache.http.conn.ClientConnectionManager;
+import org.apache.http.impl.conn.BasicClientConnectionManager;
+import org.apache.http.impl.conn.SchemeRegistryFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import ru.histone.GlobalProperty;
+import ru.histone.Histone;
+import ru.histone.HistoneException;
+import ru.histone.evaluator.functions.global.DayOfWeek;
+import ru.histone.evaluator.functions.global.DaysInMonth;
+import ru.histone.evaluator.functions.global.GlobalFunctionExecutionException;
+import ru.histone.evaluator.functions.global.GlobalFunctionsManager;
+import ru.histone.evaluator.functions.global.Max;
+import ru.histone.evaluator.functions.global.Min;
+import ru.histone.evaluator.functions.global.Rand;
+import ru.histone.evaluator.functions.global.Range;
+import ru.histone.evaluator.functions.global.ResolveURI;
+import ru.histone.evaluator.functions.global.UniqueId;
+import ru.histone.evaluator.functions.node.IsBoolean;
+import ru.histone.evaluator.functions.node.IsFloat;
+import ru.histone.evaluator.functions.node.IsInteger;
+import ru.histone.evaluator.functions.node.IsMap;
+import ru.histone.evaluator.functions.node.IsNull;
+import ru.histone.evaluator.functions.node.IsNumber;
+import ru.histone.evaluator.functions.node.IsString;
+import ru.histone.evaluator.functions.node.IsUndefined;
+import ru.histone.evaluator.functions.node.NodeFunctionExecutionException;
+import ru.histone.evaluator.functions.node.NodeFunctionsManager;
+import ru.histone.evaluator.functions.node.ToBoolean;
+import ru.histone.evaluator.functions.node.ToJson;
+import ru.histone.evaluator.functions.node.ToMap;
+import ru.histone.evaluator.functions.node.ToString;
+import ru.histone.evaluator.functions.node.number.Abs;
+import ru.histone.evaluator.functions.node.number.Ceil;
+import ru.histone.evaluator.functions.node.number.Floor;
+import ru.histone.evaluator.functions.node.number.Log;
+import ru.histone.evaluator.functions.node.number.Pow;
+import ru.histone.evaluator.functions.node.number.Round;
+import ru.histone.evaluator.functions.node.number.ToChar;
+import ru.histone.evaluator.functions.node.number.ToFixed;
+import ru.histone.evaluator.functions.node.object.HasKey;
+import ru.histone.evaluator.functions.node.object.Join;
+import ru.histone.evaluator.functions.node.object.Keys;
+import ru.histone.evaluator.functions.node.object.Remove;
+import ru.histone.evaluator.functions.node.object.Slice;
+import ru.histone.evaluator.functions.node.object.ToQueryString;
+import ru.histone.evaluator.functions.node.object.Values;
+import ru.histone.evaluator.functions.node.string.CharCodeAt;
+import ru.histone.evaluator.functions.node.string.Size;
+import ru.histone.evaluator.functions.node.string.Split;
+import ru.histone.evaluator.functions.node.string.Strip;
+import ru.histone.evaluator.functions.node.string.Test;
+import ru.histone.evaluator.functions.node.string.ToLowerCase;
+import ru.histone.evaluator.functions.node.string.ToNumber;
+import ru.histone.evaluator.functions.node.string.ToUpperCase;
+import ru.histone.evaluator.nodes.GlobalObjectNode;
+import ru.histone.evaluator.nodes.Node;
+import ru.histone.evaluator.nodes.NodeFactory;
+import ru.histone.evaluator.nodes.NumberHistoneNode;
+import ru.histone.evaluator.nodes.ObjectHistoneNode;
+import ru.histone.evaluator.nodes.StringHistoneNode;
+import ru.histone.parser.AstNodeType;
+import ru.histone.parser.Parser;
+import ru.histone.parser.ParserException;
+import ru.histone.resourceloaders.Resource;
+import ru.histone.resourceloaders.ResourceLoadException;
+import ru.histone.resourceloaders.ResourceLoader;
+import ru.histone.utils.ArrayUtils;
+import ru.histone.utils.IOUtils;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 
 /**
  * Histone AST evaluator<br/>
@@ -576,8 +626,12 @@ public class Evaluator {
         if (!arg.isString()) {
             throw new GlobalFunctionExecutionException("Non-string path for JSON resource location: " + arg.getAsString().getValue());
         }
+        if (args.length ==2 && !args[1].isBoolean()) {
+            throw new GlobalFunctionExecutionException("Non-boolean parameter for JSON reading jsonp: " + args[1].getAsString().getValue());
+        }
         String path = arg.getAsString().getValue();
         String currentBaseURI = getContextBaseURI(context);
+        boolean isJsonp = args.length == 2 ?  args[1].getAsBoolean().getValue(): false;
 
         Resource resource = null;
         InputStream resourceStream = null;
@@ -590,6 +644,11 @@ public class Evaluator {
 
             }
             resourceStream = resource.getInputStream();
+			if (isJsonp) {
+				char c;
+				while ((c = (char) resourceStream.read()) != -1 && c != '(') {
+				}
+			}
             if (resourceStream == null) {
                 Histone.runtime_log_warn(String.format("Can't load resource by path = '%s'. Resource is unreadable.", path));
                 return nodeFactory.UNDEFINED;

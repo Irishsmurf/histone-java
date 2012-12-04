@@ -15,6 +15,13 @@
  */
 package ru.histone.resourceloaders;
 
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.conn.ClientConnectionManager;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.conn.BasicClientConnectionManager;
+import org.apache.http.impl.conn.SchemeRegistryFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.histone.evaluator.nodes.Node;
@@ -22,7 +29,10 @@ import ru.histone.evaluator.nodes.Node;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URI;
 
 /**
@@ -31,6 +41,7 @@ import java.net.URI;
  */
 public class DefaultResourceLoader implements ResourceLoader {
     private static final Logger log = LoggerFactory.getLogger(DefaultResourceLoader.class);
+    private ClientConnectionManager  httpClientConnectionManager = new BasicClientConnectionManager(SchemeRegistryFactory.createDefault());
 
     @Override
     public String resolveFullPath(String location, String baseLocation) throws ResourceLoadException {
@@ -79,7 +90,18 @@ public class DefaultResourceLoader implements ResourceLoader {
     }
 
     private Resource loadHttpResource(URI location, Node[] args) {
-        return null;  //To change body of created methods use File | Settings | File Templates.
+        HttpClient client = new DefaultHttpClient(httpClientConnectionManager);
+        HttpGet get = new HttpGet(location);
+
+        InputStream input = null;
+        try {
+            HttpResponse response = client.execute(get);
+            input = response.getEntity().getContent();
+		} catch (IOException e) {
+            throw new ResourceLoadException(String.format("Can't load resource '%s'", location.toString()));
+        } finally {
+        }
+        return new StreamResource(input, location.toString());
     }
 
     public URI makeFullLocation(String location, String baseLocation) {
@@ -109,4 +131,14 @@ public class DefaultResourceLoader implements ResourceLoader {
 
         return locationURI;
     }
+
+	public ClientConnectionManager getHttpClientConnectionManager() {
+		return httpClientConnectionManager;
+	}
+
+	public void setHttpClientConnectionManager(ClientConnectionManager httpClientConnectionManager) {
+		this.httpClientConnectionManager = httpClientConnectionManager;
+	}
+
+    
 }

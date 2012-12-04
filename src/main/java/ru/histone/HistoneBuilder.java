@@ -18,6 +18,10 @@ package ru.histone;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import org.apache.http.conn.ClientConnectionManager;
+import org.apache.http.impl.conn.BasicClientConnectionManager;
+import org.apache.http.impl.conn.SchemeRegistryFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.histone.evaluator.Evaluator;
@@ -68,8 +72,10 @@ public class HistoneBuilder {
     private ConcurrentHashMap<String, GlobalFunction> globalFunctions = new ConcurrentHashMap<String, GlobalFunction>();
     private ConcurrentHashMap<Class<? extends Node>, ConcurrentHashMap<String, NodeFunction>> nodeFunctions = new ConcurrentHashMap<Class<? extends Node>, ConcurrentHashMap<String, NodeFunction>>();
     private ResourceLoader resourceLoader = new DefaultResourceLoader();
+    private ClientConnectionManager  httpClientConnectionManager = new BasicClientConnectionManager(SchemeRegistryFactory.createDefault());
 
     public HistoneBuilder() {
+    	((DefaultResourceLoader)resourceLoader).setHttpClientConnectionManager(httpClientConnectionManager);
     }
 
     /**
@@ -96,6 +102,15 @@ public class HistoneBuilder {
     }
 
     /**
+     * Set custom Http client connection manager
+     * 
+     * @param httpClientConnectionManager
+     */
+    public void setHttpClientConnectionManager(ClientConnectionManager httpClientConnectionManager) {
+		this.httpClientConnectionManager = httpClientConnectionManager;
+	}
+
+	/**
      * Update all global functions in HistoneBuilder<br/>
      * This method removes all previously added global functions and adds new from specified Set
      *
@@ -308,6 +323,9 @@ public class HistoneBuilder {
         GlobalFunctionsManager globalFunctionsManager = new GlobalFunctionsManager(globalFunctions);
         NodeFunctionsManager nodeFunctionsManager = new NodeFunctionsManager(nodeFunctions);
 
+        if (resourceLoader instanceof DefaultResourceLoader) {
+        	((DefaultResourceLoader)resourceLoader).setHttpClientConnectionManager(httpClientConnectionManager);
+        }
         evaluatorBootstrap.setResourceLoader(resourceLoader);
         evaluatorBootstrap.setGlobalFunctionsManager(globalFunctionsManager);
         evaluatorBootstrap.setNodeFunctionsManager(nodeFunctionsManager);
