@@ -36,34 +36,20 @@ public class HistonePlaygroundTest {
     public void before() throws HistoneException, UnsupportedEncodingException {
         HistoneBuilder builder = new HistoneBuilder();
         histone = builder.build();
-//        histone.setGlobalProperty(GlobalProperty.BASE_URI, "dummy:///test");
         jackson = new ObjectMapper();
     }
 
     @Test
     public void test() throws Exception {
-        /*
-
-        "input": "a {{resolveURI('../testresources/tpl/test_for_include_relative.tpl', global.baseURI) is include('../testresources/tpl/test_for_include_relative.tpl').split(' ')[2]}} b",
-		"expectedResult": "a true b"
-	}, {
-		"input": "a {{'ZA' + resolveURI('../testresources/tpl/subfolder/file_for_include.tpl', global.baseURI) + 'BX' is include('../testresources/tpl/test_for_include_subfolder.tpl')}} b",
-		"expectedResult": "a true b"
-
-
-         */
-
         String baseURI = getClass().getResource("/logback-test.xml").toString();
-        String input = "a  b";
-        String context = "{}";//"{\"baseURI\":\"test:///test\"}";
+        String input = "a {{var x = [1, 2, 'a':'b', 3, 4]+[10,11]}}{{x.remove(1,2).size()}} b";
+        String context = "{}";
         String expected = "a  b";
 
         String result = histone.evaluate(baseURI, input, jackson.readTree(new StringReader(context)));
-        assertEquals(expected, result);
 
-//        String uri = "file:/D:/Megafon/workspace/histone-java/src/test/resources/relative_urls/template.tpl";
-//        String result = histone.evaluateUri(uri, jackson.createObjectNode());
-//        int l = 5;
+        System.out.println("Playground test:");
+        System.out.println(result);
     }
 
 }
