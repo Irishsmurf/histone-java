@@ -154,7 +154,7 @@ public class AcceptanceTestsRunner extends Runner {
                 ArrayNode rootAST = histone.parseTemplateToAST(input);
                 ArrayNode outputAST = (ArrayNode) rootAST.get(1);
 
-                boolean result = expectedAST.toString().equals(outputAST.toString());
+                boolean result = expectedAST.toString().equals(nodeFactory.toJsonString(outputAST));
                 if (result) {
                     notifier.fireTestFinished(testCaseDescription);
                 } else {
