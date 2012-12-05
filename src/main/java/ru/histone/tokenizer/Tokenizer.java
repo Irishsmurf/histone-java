@@ -261,4 +261,7 @@ public class Tokenizer {
         return columnNumber;
     }
 
+    public String getInput() {
+        return input.toString();
+    }
 }

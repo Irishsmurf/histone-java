@@ -46,10 +46,8 @@ public class HistonePlaygroundTest {
         String context = "{}";
         String expected = "a  b";
 
-        String result = histone.evaluate(baseURI, input, jackson.readTree(new StringReader(context)));
+        String source = "[[\"HISTONE\",{\"version\":\"1.0.6\"}],[\"a \",[1001,\"x\",[9,[107,[[null,[101,1]],[null,[101,2]],[\"a\",[103,\"b\"]],[null,[101,3]],[null,[101,4]]]],[107,[[null,[101,10]],[null,[101,11]]]]]],[106,[105,[[106,[105,[\"x\"]],\"remove\",[[101,1],[101,2]]]]],\"size\",null],\" b\"]]";
 
-        System.out.println("Playground test:");
-        System.out.println(result);
+        histone.evaluate(baseURI, source, jackson.readTree(new StringReader(context)));
     }
-
 }
