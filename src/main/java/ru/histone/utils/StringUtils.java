@@ -15,6 +15,9 @@
  */
 package ru.histone.utils;
 
+import java.util.Collection;
+import java.util.Iterator;
+
 /**
  * String utils
  */
@@ -200,5 +203,25 @@ public final class StringUtils {
             return EMPTY;
         }
         return str.substring(pos + separator.length());
+    }
+
+    public static String join(String[] args, String delimeter) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < args.length; i++) {
+            sb.append(args[i]);
+            if (i != args.length - 1) sb.append(delimeter);
+        }
+        return sb.toString();
+    }
+
+    public static String join(Collection<String> args, String delimeter) {
+        StringBuilder sb = new StringBuilder();
+        Iterator<String> i = args.iterator();
+        while (i.hasNext()) {
+            String s = i.next();
+            sb.append(s);
+            if (i.hasNext()) sb.append(delimeter);
+        }
+        return sb.toString();
     }
 }
