@@ -51,7 +51,7 @@ public class Parser {
         log.debug("parse(): input={}", new Object[]{input});
 
         Tokenizer tokenizer = tokenizerFactory.match(input);
-        ParserImpl parser = new ParserImpl(tokenizer,nodeFactory);
+        ParserImpl parser = new ParserImpl(tokenizer, nodeFactory);
         ArrayNode astTree = parser.parseTemplate();
         log.debug("parse(): astTree={}", astTree);
 

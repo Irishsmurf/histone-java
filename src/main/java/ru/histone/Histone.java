@@ -137,6 +137,10 @@ public class Histone {
         return evaluator.process(baseURI, ast, context);
     }
 
+    public ArrayNode evaluateAsAST(String baseURI, String templateContent, JsonNode context) throws HistoneException {
+        return parser.parse(templateContent);
+    }
+
     public String evaluateUri(String uri, JsonNode context) throws HistoneException {
         if (resourceLoader == null) throw new IllegalStateException("Resource loader is null for Histone instance");
 
