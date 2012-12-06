@@ -34,6 +34,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Histone default resource loader<br/>
@@ -103,6 +107,26 @@ public class DefaultResourceLoader implements ResourceLoader {
         }
         return new StreamResource(input, location.toString());
     }
+    
+	private Map<String, String> filterRequestHeaders(Map<String, String> requestHeaders) {
+		String[] prohibited = { "accept-charset", "accept-encoding", "access-control-request-headers", "access-control-request-method",
+				"connection", "content-length", "cookie", "cookie2", "content-transfer-encoding", "date", "expect", "host", "keep-alive",
+				"origin", "referer", "te", "trailer", "transfer-encoding", "upgrade", "user-agent", "via" };
+		Map<String, String> headers = new HashMap<String, String>();
+		for (Map.Entry<String, String> entry : requestHeaders.entrySet()) {
+			if (entry.getValue() == null)
+				continue;
+			String name = entry.getKey().toLowerCase();
+			if (name.indexOf("sec-") == 0)
+				continue;
+			if (name.indexOf("proxy-") == 0)
+				continue;
+			if (Arrays.asList(prohibited).contains(name))
+				continue;
+			headers.put(entry.getKey(), entry.getValue());
+		}
+		return headers;
+	}
 
     public URI makeFullLocation(String location, String baseLocation) {
         if (location == null) {
