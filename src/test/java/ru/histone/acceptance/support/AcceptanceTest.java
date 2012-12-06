@@ -31,4 +31,9 @@ public abstract class AcceptanceTest implements Describable {
     public Description getDescription() {
         return description;
     }
+
+	public boolean startTestWebServer() {
+		return false;
+	}
+
 }

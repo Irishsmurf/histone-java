@@ -18,6 +18,8 @@ package ru.histone.acceptance.support;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+
+import org.eclipse.jetty.server.Server;
 import org.junit.ComparisonFailure;
 import org.junit.runner.Description;
 import org.junit.runner.Runner;
@@ -29,6 +31,7 @@ import ru.histone.GlobalProperty;
 import ru.histone.Histone;
 import ru.histone.HistoneBuilder;
 import ru.histone.HistoneException;
+import ru.histone.acceptance.websever.TestHandler;
 import ru.histone.evaluator.EvaluatorException;
 import ru.histone.evaluator.functions.global.GlobalFunction;
 import ru.histone.evaluator.functions.node.NodeFunction;
@@ -77,6 +80,9 @@ public class AcceptanceTestsRunner extends Runner {
         Description testCaseDescription = null;
         try {
             JsonNode testSuites = jackson.readTree(reader);
+            if (instance.startTestWebServer()) {
+            	startTestWebServer();
+            }
             for (JsonNode mainElement : testSuites) {
                 final String suiteName = mainElement.get("name").asText();
                 final boolean ignoreSuite = checkIgnoreField(mainElement.path("ignore"));
@@ -102,7 +108,11 @@ public class AcceptanceTestsRunner extends Runner {
             }
         } catch (Exception e2) {
             throw new RuntimeException(String.format("Error reading/parsing json file '%s'", instance.getFileName()), e2);
-        }
+		} finally {
+			if (instance.startTestWebServer()) {
+				stopTestWebServer();
+			}
+		}
     }
 
     private String generateTestCaseName(String fileName, JsonNode suiteJson, JsonNode caseJson) {
@@ -413,6 +423,29 @@ public class AcceptanceTestsRunner extends Runner {
         }
         return nodeFunctions;
     }
+    
+	private Server jetty;
 
+	public void startTestWebServer() {
+		try {
+
+			jetty = new Server(4442);
+			jetty.setHandler(new TestHandler());
+
+			jetty.start();
+			//server.join();
+
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	public void stopTestWebServer() {
+		try {
+			jetty.stop();
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
 
 }

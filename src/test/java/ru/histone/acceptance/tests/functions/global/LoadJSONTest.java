@@ -25,4 +25,9 @@ public class LoadJSONTest extends AcceptanceTest {
     public String getFileName() {
         return "/functions/global.loadJSON.json";
     }
+    
+	public boolean startTestWebServer() {
+		return true;
+	}
+
 }
