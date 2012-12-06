@@ -17,9 +17,6 @@ public class TestHandler extends AbstractHandler {
 	public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException,
 			ServletException {
 		StringBuilder b = new StringBuilder();
-		response.setContentType("text/html;charset=utf-8");
-		response.setStatus(HttpServletResponse.SC_OK);
-		baseRequest.setHandled(true);
 		//
 		final String path = request.getPathInfo();
 		final String query = request.getQueryString();
@@ -41,6 +38,16 @@ public class TestHandler extends AbstractHandler {
 			b.append(charBuffer, 0, bytesRead);
 		}
 		final String body = b.toString();
+		//
+		if (path.indexOf("/redirect:") != -1) {
+			String respCode = path.substring(10, path.indexOf("/", 9));
+			response.setHeader("Location", "/");
+			response.setStatus(Integer.parseInt(respCode));
+		} else {
+			response.setStatus(HttpServletResponse.SC_OK);
+		}
+		response.setContentType("text/html;charset=utf-8");
+		baseRequest.setHandled(true);
 		//
 		b = new StringBuilder();
 		b.append("{\n");
