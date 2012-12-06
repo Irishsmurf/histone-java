@@ -33,6 +33,12 @@
             <organization>Megafon</organization>
             <organizationUrl>http://www.megafon.ru</organizationUrl>
         </developer>
+        <developer>
+            <name>Kirill Sazonov</name>
+            <email>sazonovkirill@gmail.com</email>
+            <organization>BSC Ideas</organization>
+            <organizationUrl>http://www.bsc-ideas.ru</organizationUrl>
+        </developer>
     </developers>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
