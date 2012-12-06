@@ -20,10 +20,10 @@ import ru.histone.acceptance.support.AcceptanceTest;
 import ru.histone.acceptance.support.AcceptanceTestsRunner;
 
 @RunWith(AcceptanceTestsRunner.class)
-public class Synthetic7Test extends AcceptanceTest {
+public class Synthetic16Test extends AcceptanceTest {
 
     @Override
     public String getFileName() {
-        return "/general/synthetic7.json";
+        return "/synthetic/examples16.json";
     }
 }

@@ -24,6 +24,6 @@ public class Synthetic4Test extends AcceptanceTest {
 
     @Override
     public String getFileName() {
-        return "/general/synthetic4.json";
+        return "/synthetic/examples4.json";
     }
 }
