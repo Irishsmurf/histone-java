@@ -15,7 +15,9 @@
  */
 package ru.histone.parser;
 
+import com.fasterxml.jackson.core.*;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.slf4j.Logger;
@@ -28,6 +30,7 @@ import ru.histone.utils.HistoneVersion;
 import ru.histone.utils.StringEscapeUtils;
 import ru.histone.utils.StringUtils;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
@@ -36,6 +39,9 @@ import java.math.BigInteger;
  */
 public class ParserImpl {
     private final static Logger log = LoggerFactory.getLogger(ParserImpl.class);
+
+    private JsonFactory jsonFactory = new JsonFactory();
+    private ObjectMapper objectMapper = new ObjectMapper();
 
     private Tokenizer tokenizer;
     private NodeFactory nodeFactory;
@@ -51,7 +57,12 @@ public class ParserImpl {
     }
 
     /**
-     * Parse input sequence into AST
+     * Parse input sequence into AST.
+     *
+     * Function performs check, if source string is already evaluated HISTONE json.
+     * We assume, that if input string starts with histone signtaure:
+     * [["HISTONE":...
+     * it can be parsed by json parser (that is more effective than Histone parser).
      *
      * @return JSON representation of AST
      * @throws ParserException in case of parse error
@@ -59,6 +70,21 @@ public class ParserImpl {
     public ArrayNode parseTemplate() throws ParserException {
         if (tokenizer == null) {
             throw new ParserException("Initialize tokenizer before parsing template");
+        }
+
+        //  If input string starts with histone signature
+        if (validateHistoneSignature(tokenizer.getInput())) {
+            //  then parse it through ObjectMapper, any errors skipped
+            try {
+                JsonNode node = objectMapper.readTree(tokenizer.getInput());
+                if (node instanceof ArrayNode) return (ArrayNode) node;
+            } catch (JsonParseException e) {
+                // nothing
+            } catch (JsonProcessingException e) {
+                // nothing
+            } catch (IOException e) {
+                // nothing
+            }
         }
 
         //  http://devlabs.megafon.ru/issues/browse/HSTJ-7
@@ -71,6 +97,31 @@ public class ParserImpl {
         result.add(versionInfo);
         result.add(parse());
         return result;
+    }
+
+    /**
+     * Validates whether input string has Histone signature:
+     * [["HISTONE":...
+     */
+    private boolean validateHistoneSignature(String input) {
+        final Object[][] SIGNATURE = new Object[][] {
+                new Object[] {JsonToken.START_ARRAY},
+                new Object[] {JsonToken.START_ARRAY},
+                new Object[] {JsonToken.VALUE_STRING, "HISTONE"}
+        };
+
+        try {
+            JsonParser jp = jsonFactory.createJsonParser(tokenizer.getInput());
+
+            return
+                jp.nextToken() == SIGNATURE[0][0] &&
+                jp.nextToken() == SIGNATURE[1][0] &&
+                jp.nextToken() == SIGNATURE[2][0] &&
+                jp.getValueAsString().equals(SIGNATURE[2][1]);
+        } catch (Exception e) {
+            // nothing
+        }
+        return false;
     }
 
     private ArrayNode parse(TokenType... breakOn) throws ParserException {
