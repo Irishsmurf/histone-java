@@ -17,14 +17,20 @@ package ru.histone.resourceloaders;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.conn.ClientConnectionManager;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.BasicClientConnectionManager;
 import org.apache.http.impl.conn.SchemeRegistryFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.histone.evaluator.nodes.Node;
+import ru.histone.evaluator.nodes.ObjectHistoneNode;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -33,6 +39,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.Collection;
@@ -93,21 +100,55 @@ public class DefaultResourceLoader implements ResourceLoader {
         return new StreamResource(stream, location.toString());
     }
 
-    private Resource loadHttpResource(URI location, Node[] args) {
-        HttpClient client = new DefaultHttpClient(httpClientConnectionManager);
-        HttpGet get = new HttpGet(location);
+	private Resource loadHttpResource(URI location, Node[] args) {
+		final Map<Object, Node> requestMap = args != null && args.length != 0 && args[0] instanceof ObjectHistoneNode ? ((ObjectHistoneNode) args[0])
+				.getElements() : new HashMap<Object, Node>();
+		final String method = requestMap.containsKey("method") ? requestMap.get("method").getAsString().getValue() : "GET";
+		final Map<String, String> headers = new HashMap<String, String>();
+		if (requestMap.containsKey("headers")) {
+			for (Map.Entry<Object, Node> en : requestMap.get("headers").getAsObject().getElements().entrySet()) {
+				headers.put(en.getKey().toString(), en.getValue().getAsString().getValue());
+			}
+		}
+		final Map<String, String> filteredHeaders = filterRequestHeaders(headers);
+		final Node data = requestMap.containsKey("data") ? (Node) requestMap.get("data") : null;
 
-        InputStream input = null;
-        try {
-            HttpResponse response = client.execute(get);
-            input = response.getEntity().getContent();
+		// Prepare request
+		HttpRequestBase request = new HttpGet(location);
+		if ("POST".equals(method)) {
+			request = new HttpPost(location);
+		} else if ("PUT".equals(method)) {
+			request = new HttpPut(location);
+		}
+
+		if (("POST".equals(method) || "PUT".equals(method)) && data != null) {
+			final String stringData = data.isString() ? data.getAsString().getValue() : data.getAsObject().toString();
+			StringEntity se;
+			try {
+				se = new StringEntity(stringData);
+			} catch (UnsupportedEncodingException e) {
+				throw new ResourceLoadException(String.format("Can't encode data '%s'", stringData));
+			}
+			((HttpEntityEnclosingRequestBase) request).setEntity(se);
+			// request.setHeader("Content-Type","application/json");
+		}
+		for (Map.Entry<String, String> en : filteredHeaders.entrySet()) {
+			request.setHeader(en.getKey(), en.getValue());
+		}
+
+		// Execute request
+		HttpClient client = new DefaultHttpClient(httpClientConnectionManager);
+		InputStream input = null;
+		try {
+			HttpResponse response = client.execute(request);
+			input = response.getEntity().getContent();
 		} catch (IOException e) {
-            throw new ResourceLoadException(String.format("Can't load resource '%s'", location.toString()));
-        } finally {
-        }
-        return new StreamResource(input, location.toString());
-    }
-    
+			throw new ResourceLoadException(String.format("Can't load resource '%s'", location.toString()));
+		} finally {
+		}
+		return new StreamResource(input, location.toString());
+	}
+
 	private Map<String, String> filterRequestHeaders(Map<String, String> requestHeaders) {
 		String[] prohibited = { "accept-charset", "accept-encoding", "access-control-request-headers", "access-control-request-method",
 				"connection", "content-length", "cookie", "cookie2", "content-transfer-encoding", "date", "expect", "host", "keep-alive",
