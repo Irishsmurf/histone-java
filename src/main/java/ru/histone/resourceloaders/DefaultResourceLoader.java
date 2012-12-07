@@ -29,6 +29,8 @@ import org.apache.http.impl.conn.BasicClientConnectionManager;
 import org.apache.http.impl.conn.SchemeRegistryFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import ru.histone.evaluator.functions.node.object.ToQueryString;
 import ru.histone.evaluator.nodes.Node;
 import ru.histone.evaluator.nodes.ObjectHistoneNode;
 
@@ -122,7 +124,8 @@ public class DefaultResourceLoader implements ResourceLoader {
 		}
 
 		if (("POST".equals(method) || "PUT".equals(method)) && data != null) {
-			final String stringData = data.isString() ? data.getAsString().getValue() : data.getAsObject().toString();
+			final String stringData = data.isString() ? data.getAsString().getValue() : ToQueryString.toQueryString(data.getAsObject(),
+					null, "&");
 			StringEntity se;
 			try {
 				se = new StringEntity(stringData);

@@ -22,6 +22,7 @@ import java.util.Set;
 
 import ru.histone.Histone;
 import ru.histone.evaluator.functions.node.NodeFunction;
+import ru.histone.evaluator.functions.node.NodeFunctionExecutionException;
 import ru.histone.evaluator.nodes.Node;
 import ru.histone.evaluator.nodes.NodeFactory;
 import ru.histone.evaluator.nodes.ObjectHistoneNode;
@@ -48,7 +49,11 @@ public class ToQueryString extends NodeFunction<ObjectHistoneNode> {
 		}
 		final String keyPrefix = args.length > 0 && !args[0].isNull() ? args[0].getAsString().getValue() : null;
 		final String separator = args.length > 1 ? args[1].getAsString().getValue() : "&";
-		Set<Entry<Object, Node>> entries = target.getElements().entrySet();
+		return getNodeFactory().string(toQueryString(target, keyPrefix, separator));
+	}
+
+	public static String toQueryString(final ObjectHistoneNode node, final String keyPrefix, final String separator) {
+		Set<Entry<Object, Node>> entries = node.getElements().entrySet();
 		StringBuilder b = new StringBuilder();
 		for (Entry<Object, Node> entry : entries) {
 			String key = entry.getKey().toString();
@@ -58,10 +63,10 @@ public class ToQueryString extends NodeFunction<ObjectHistoneNode> {
 			addValue(keyPrefix, separator, b, key, entry.getValue());
 		}
 		String result = entries.size() == 0 ? "" : b.substring(1);
-		return getNodeFactory().string(result);
+		return result;
 	}
 
-	private void addValue(final String keyPrefix, final String separator, final StringBuilder b, final String key, Node node) {
+	private static void addValue(final String keyPrefix, final String separator, final StringBuilder b, final String key, Node node) {
 		if (node.isObject()) {
 			Set<Entry<Object, Node>> entries = node.getAsObject().getElements().entrySet();
 			for (Entry<Object, Node> entry : entries) {
@@ -76,8 +81,7 @@ public class ToQueryString extends NodeFunction<ObjectHistoneNode> {
 			try {
 				value = URLEncoder.encode(value, "UTF-8").replace("+", "%20");
 			} catch (UnsupportedEncodingException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				throw new NodeFunctionExecutionException("Can't encode value: " + value, e);
 			}
 			b.append(separator).append(key).append("=").append(value);
 		}
