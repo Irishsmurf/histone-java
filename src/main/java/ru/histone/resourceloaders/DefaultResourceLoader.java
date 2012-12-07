@@ -117,13 +117,13 @@ public class DefaultResourceLoader implements ResourceLoader {
 
 		// Prepare request
 		HttpRequestBase request = new HttpGet(location);
-		if ("POST".equals(method)) {
+		if ("POST".equalsIgnoreCase(method)) {
 			request = new HttpPost(location);
-		} else if ("PUT".equals(method)) {
+		} else if ("PUT".equalsIgnoreCase(method)) {
 			request = new HttpPut(location);
 		}
 
-		if (("POST".equals(method) || "PUT".equals(method)) && data != null) {
+		if (("POST".equalsIgnoreCase(method) || "PUT".equalsIgnoreCase(method)) && data != null) {
 			final String stringData = data.isString() ? data.getAsString().getValue() : ToQueryString.toQueryString(data.getAsObject(),
 					null, "&");
 			StringEntity se;

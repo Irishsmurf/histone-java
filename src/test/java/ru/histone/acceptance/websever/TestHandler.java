@@ -66,11 +66,11 @@ public class TestHandler extends AbstractHandler {
 		//
 		b = new StringBuilder();
 		b.append("{\n");
-		b.append("path: \"").append(path).append("\",\n");
-		b.append("query: \"").append(query).append("\",\n");
-		b.append("method: \"").append(method).append("\",\n");
-		b.append("headers: ").append(headers).append(",\n");
-		b.append("body: \"").append(body).append("\"\n");
+		b.append("\"path\": \"").append(path).append("\",\n");
+		b.append("\"query\": \"").append(query).append("\",\n");
+		b.append("\"method\": \"").append(method).append("\",\n");
+		b.append("\"headers\": ").append(headers).append(",\n");
+		b.append("\"body\": \"").append(body).append("\"\n");
 		b.append("}");
 		response.getWriter().println(b.toString());
 	}
