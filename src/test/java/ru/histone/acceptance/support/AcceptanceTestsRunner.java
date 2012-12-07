@@ -109,9 +109,8 @@ public class AcceptanceTestsRunner extends Runner {
         } catch (Exception e2) {
             throw new RuntimeException(String.format("Error reading/parsing json file '%s'", instance.getFileName()), e2);
 		} finally {
-			if (instance.startTestWebServer()) {
+//			if (instance.startTestWebServer()) 
 				stopTestWebServer();
-			}
 		}
     }
 
@@ -437,15 +436,19 @@ public class AcceptanceTestsRunner extends Runner {
 
 		} catch (Exception e) {
 			throw new RuntimeException(e);
-		}
+		} 
 	}
 
-	public void stopTestWebServer() {
-		try {
-			jetty.stop();
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
+    public void stopTestWebServer() {
+        if (jetty == null)
+            return;
+        try {
+            jetty.stop();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        } finally {
+            jetty = null;
+        }
+    }
 
 }
