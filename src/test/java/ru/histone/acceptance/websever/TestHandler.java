@@ -74,7 +74,7 @@ public class TestHandler extends AbstractHandler {
         b.append("{\n");
         b.append("\"path\": \"").append(path).append("\",\n");
         if (query == null) {
-            b.append("\"query\": null,\n");
+            b.append("\"query\": \"\",\n");
         } else {
             b.append("\"query\": \"").append(query).append("\",\n");
         }
