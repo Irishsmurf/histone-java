@@ -622,33 +622,39 @@ public class Evaluator {
         if (ArrayUtils.isEmpty(args)) {
             return nodeFactory.UNDEFINED;
         }
-        Node arg = args[0];
-        if (!arg.isString()) {
-            throw new GlobalFunctionExecutionException("Non-string path for JSON resource location: " + arg.getAsString().getValue());
+        if (!args[0].isString()) {
+            throw new GlobalFunctionExecutionException("Non-string path for JSON resource location: " + args[0].getAsString().getValue());
         }
-        if (args.length ==2 && !args[1].isBoolean()) {
-            throw new GlobalFunctionExecutionException("Non-boolean parameter for JSON reading jsonp: " + args[1].getAsString().getValue());
+        //
+        final String path = args[0].getAsString().getValue();
+        final String currentBaseURI = getContextBaseURI(context);
+        boolean isJsonp = false;
+        ObjectHistoneNode requestMap = null;
+        if (args.length == 2) {
+            if (args[1].isBoolean()) {
+                isJsonp = args[1].getAsBoolean().getValue();
+            } else if (args[1].isObject()) {
+                requestMap = args[1].getAsObject();
+            } else {
+                throw new GlobalFunctionExecutionException("Wrong argument type: " + args[1].getAsString().getValue());
+            }
         }
-        String path = arg.getAsString().getValue();
-        String currentBaseURI = getContextBaseURI(context);
-        boolean isJsonp = args.length == 2 ?  args[1].getAsBoolean().getValue(): false;
-
         Resource resource = null;
         InputStream resourceStream = null;
         InputStreamReader reader = null;
         try {
-            resource = resourceLoader.load(path, currentBaseURI, args);
+            resource = resourceLoader.load(path, currentBaseURI, requestMap);
             if (resource == null) {
                 Histone.runtime_log_warn(String.format("Can't load resource by path = '%s'. Resource was not found.", path));
                 return nodeFactory.UNDEFINED;
 
             }
             resourceStream = resource.getInputStream();
-			if (isJsonp) {
-				char c;
-				while ((c = (char) resourceStream.read()) != -1 && c != '(') {
-				}
-			}
+            if (isJsonp) {
+                char c;
+                while ((c = (char) resourceStream.read()) != -1 && c != '(') {
+                }
+            }
             if (resourceStream == null) {
                 Histone.runtime_log_warn(String.format("Can't load resource by path = '%s'. Resource is unreadable.", path));
                 return nodeFactory.UNDEFINED;
@@ -681,18 +687,25 @@ public class Evaluator {
         if (ArrayUtils.isEmpty(args)) {
             return nodeFactory.UNDEFINED;
         }
-        Node arg = args[0];
-        if (!arg.isString()) {
-            Histone.runtime_log_warn("Non-string path for text resource location: " + arg.getAsString().getValue());
-            return nodeFactory.UNDEFINED;
+        if (!args[0].isString()) {
+            throw new GlobalFunctionExecutionException("Non-string path for JSON resource location: " + args[0].getAsString().getValue());
         }
-        String path = arg.getAsString().getValue();
-        String currentBaseURI = getContextBaseURI(context);
+        //
+        final String path = args[0].getAsString().getValue();
+        final String currentBaseURI = getContextBaseURI(context);
+        ObjectHistoneNode requestMap = null;
+        if (args.length == 2) {
+            if (args[1].isObject()) {
+                requestMap = args[1].getAsObject();
+            } else {
+                throw new GlobalFunctionExecutionException("Wrong argument type: " + args[1].getAsString().getValue());
+            }
+        }
 
         Resource resource = null;
         InputStream resourceStream = null;
         try {
-            resource = resourceLoader.load(path, currentBaseURI, args);
+            resource = resourceLoader.load(path, currentBaseURI, requestMap);
             if (resource == null) {
                 Histone.runtime_log_warn(String.format("Can't load resource by path = '%s'. Resource was not found.", path));
                 return nodeFactory.UNDEFINED;
@@ -720,17 +733,26 @@ public class Evaluator {
         if (args.size() == 0) {
             return nodeFactory.UNDEFINED;
         }
-        Node uriNode = args.get(0);
-        if (!uriNode.isString()) {
-            throw new GlobalFunctionExecutionException("Non-string path for template location: " + args.get(0).getAsString().getValue());
+        if (!args.get(0).isString()) {
+            throw new GlobalFunctionExecutionException("Non-string path for JSON resource location: "
+                    + args.get(0).getAsString().getValue());
         }
-        String path = args.get(0).getAsString().getValue();
+        //
+        final String path = args.get(0).getAsString().getValue();
+        final String currentBaseURI = getContextBaseURI(context);
+        ObjectHistoneNode requestMap = null;
+        if (args.size() == 2) {
+            if (args.get(1).isObject()) {
+                requestMap = args.get(1).getAsObject();
+            } else {
+                throw new GlobalFunctionExecutionException("Wrong argument type: " + args.get(1).getAsString().getValue());
+            }
+        }
 
         Resource resource = null;
         InputStream resourceStream = null;
         try {
-            String currentBaseURI = getContextBaseURI(context);
-            resource = resourceLoader.load(path, currentBaseURI);
+            resource = resourceLoader.load(path, currentBaseURI, requestMap);
             if (resource == null) {
                 Histone.runtime_log_warn("Can't include resource by path = '{}'. Resource was not found.", path);
                 return nodeFactory.UNDEFINED;
