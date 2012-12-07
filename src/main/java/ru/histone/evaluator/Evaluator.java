@@ -639,6 +639,7 @@ public class Evaluator {
                 throw new GlobalFunctionExecutionException("Wrong argument type: " + args[1].getAsString().getValue());
             }
         }
+        
         Resource resource = null;
         InputStream resourceStream = null;
         InputStreamReader reader = null;
@@ -659,8 +660,21 @@ public class Evaluator {
                 Histone.runtime_log_warn(String.format("Can't load resource by path = '%s'. Resource is unreadable.", path));
                 return nodeFactory.UNDEFINED;
             }
+            JsonNode json = null;
             reader = new InputStreamReader(resourceStream);
-            JsonNode json = nodeFactory.jsonNode(reader);
+            //if server returned normal json, not jsonp we need to return it, regardless jsonp boolean flag
+            try {
+                json = nodeFactory.jsonNode(reader);
+            } catch (JsonProcessingException e) {
+                // try isJsonp
+                reader.reset();
+                if (isJsonp) {
+                    char c;
+                    while ((c = (char) resourceStream.read()) != -1 && c != '(') {
+                    }
+                }
+                json = nodeFactory.jsonNode(reader);
+            }
             if (json == null) {
                 Histone.runtime_log_warn("Invalid JSON data found by path: " + path);
                 return nodeFactory.UNDEFINED;

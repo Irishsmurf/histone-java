@@ -160,6 +160,8 @@ public class DefaultResourceLoader implements ResourceLoader {
 
 		// Execute request
 		HttpClient client = new DefaultHttpClient(httpClientConnectionManager);
+		client.getParams().setParameter("http.socket.timeout", new Integer(1000));
+        client.getParams().setParameter("http.connection.timeout", new Integer(1000));
 		InputStream input = null;
 		try {
 			HttpResponse response = client.execute(request);
