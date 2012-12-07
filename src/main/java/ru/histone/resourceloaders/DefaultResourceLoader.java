@@ -17,11 +17,14 @@ package ru.histone.resourceloaders;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpOptions;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.client.methods.HttpTrace;
 import org.apache.http.conn.ClientConnectionManager;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
@@ -121,7 +124,13 @@ public class DefaultResourceLoader implements ResourceLoader {
 			request = new HttpPost(location);
 		} else if ("PUT".equalsIgnoreCase(method)) {
 			request = new HttpPut(location);
-		}
+        } else if ("DELETE".equalsIgnoreCase(method)) {
+            request = new HttpDelete(location);
+        } else if ("TRACE".equalsIgnoreCase(method)) {
+            request = new HttpTrace(location);
+        } else if ("OPTIONS".equalsIgnoreCase(method)) {
+            request = new HttpOptions(location);
+        }
 
 		if (("POST".equalsIgnoreCase(method) || "PUT".equalsIgnoreCase(method)) && data != null) {
 			final String stringData = data.isString() ? data.getAsString().getValue() : ToQueryString.toQueryString(data.getAsObject(),

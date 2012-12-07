@@ -40,7 +40,7 @@ public class TestHandler extends AbstractHandler {
 		b = new StringBuilder();
 		for (Enumeration<String> it = request.getHeaderNames(); it.hasMoreElements();) {
 			String name = it.nextElement();
-			b.append(", \"").append(name).append("\": \"").append(request.getHeader(name)).append("\"");
+			b.append(", \"").append(name.toLowerCase()).append("\": \"").append(request.getHeader(name)).append("\"");
 		}
 		final String headers = b.length() == 0 ? "{ }" : "{" + b.substring(1) + "}";
 		//
