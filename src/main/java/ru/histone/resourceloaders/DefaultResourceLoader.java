@@ -112,7 +112,12 @@ public class DefaultResourceLoader implements ResourceLoader {
 		final Map<String, String> headers = new HashMap<String, String>();
 		if (requestMap.containsKey("headers")) {
 			for (Map.Entry<Object, Node> en : requestMap.get("headers").getAsObject().getElements().entrySet()) {
-				headers.put(en.getKey().toString(), en.getValue().getAsString().getValue());
+			    String value = null;
+			    if (en.getValue().isUndefined())
+			        value = "undefined";
+			    else 
+			        value = en.getValue().getAsString().getValue();
+				headers.put(en.getKey().toString(), value);
 			}
 		}
 		final Map<String, String> filteredHeaders = filterRequestHeaders(headers);
@@ -132,18 +137,23 @@ public class DefaultResourceLoader implements ResourceLoader {
             request = new HttpOptions(location);
         }
 
-		if (("POST".equalsIgnoreCase(method) || "PUT".equalsIgnoreCase(method)) && data != null) {
-			final String stringData = data.isString() ? data.getAsString().getValue() : ToQueryString.toQueryString(data.getAsObject(),
-					null, "&");
-			StringEntity se;
-			try {
-				se = new StringEntity(stringData);
-			} catch (UnsupportedEncodingException e) {
-				throw new ResourceLoadException(String.format("Can't encode data '%s'", stringData));
-			}
-			((HttpEntityEnclosingRequestBase) request).setEntity(se);
-			// request.setHeader("Content-Type","application/json");
-		}
+        if (("POST".equalsIgnoreCase(method) || "PUT".equalsIgnoreCase(method)) && data != null) {
+            String stringData = null;
+            if (data.isNull()) {
+            } else {
+                stringData = data.isString() ? data.getAsString().getValue() : ToQueryString.toQueryString(data.getAsObject(), null, "&");
+            }
+            if (stringData != null) {
+                StringEntity se;
+                try {
+                    se = new StringEntity(stringData);
+                } catch (UnsupportedEncodingException e) {
+                    throw new ResourceLoadException(String.format("Can't encode data '%s'", stringData));
+                }
+                ((HttpEntityEnclosingRequestBase) request).setEntity(se);
+                // request.setHeader("Content-Type","application/json");
+            }
+        }
 		for (Map.Entry<String, String> en : filteredHeaders.entrySet()) {
 			request.setHeader(en.getKey(), en.getValue());
 		}

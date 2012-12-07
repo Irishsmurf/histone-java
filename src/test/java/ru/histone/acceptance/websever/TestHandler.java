@@ -39,39 +39,53 @@ public class TestHandler extends AbstractHandler {
 		//
 		b = new StringBuilder();
 		for (Enumeration<String> it = request.getHeaderNames(); it.hasMoreElements();) {
-			String name = it.nextElement();
-			b.append(", \"").append(name.toLowerCase()).append("\": \"").append(request.getHeader(name)).append("\"");
-		}
-		final String headers = b.length() == 0 ? "{ }" : "{" + b.substring(1) + "}";
-		//
-		b = new StringBuilder();
-		final BufferedReader bodyReader = request.getReader();
-		b.append("");
-		char[] charBuffer = new char[128];
-		int bytesRead = -1;
-		while ((bytesRead = bodyReader.read(charBuffer)) > 0) {
-			b.append(charBuffer, 0, bytesRead);
-		}
-		final String body = b.toString();
-		//
-		if (path.indexOf("/redirect:") != -1) {
-			String respCode = path.substring(10, path.indexOf("/", 9));
-			response.setHeader("Location", "/");
-			response.setStatus(Integer.parseInt(respCode));
-		} else {
-			response.setStatus(HttpServletResponse.SC_OK);
-		}
-		response.setContentType("text/html;charset=utf-8");
-		baseRequest.setHandled(true);
-		//
-		b = new StringBuilder();
-		b.append("{\n");
-		b.append("\"path\": \"").append(path).append("\",\n");
-		b.append("\"query\": \"").append(query).append("\",\n");
-		b.append("\"method\": \"").append(method).append("\",\n");
-		b.append("\"headers\": ").append(headers).append(",\n");
-		b.append("\"body\": \"").append(body).append("\"\n");
-		b.append("}");
-		response.getWriter().println(b.toString());
+            String name = it.nextElement();
+            String value = request.getHeader(name);
+            b.append(", \"").append(name.toLowerCase()).append("\": ");
+            if ("undefined".equals(value)) {
+                b.append(request.getHeader(name));
+            } else {
+                b.append("\"").append(request.getHeader(name)).append("\"");
+            }
+        }
+        final String headers = b.length() == 0 ? "{ }" : "{" + b.substring(1) + "}";
+        //
+        b = new StringBuilder();
+        final BufferedReader bodyReader = request.getReader();
+        b.append("");
+        char[] charBuffer = new char[128];
+        int bytesRead = -1;
+        while ((bytesRead = bodyReader.read(charBuffer)) > 0) {
+            b.append(charBuffer, 0, bytesRead);
+        }
+        final String body = b.length() == 0 ? null : b.toString();
+        //
+        if (path.indexOf("/redirect:") != -1) {
+            String respCode = path.substring(10, path.indexOf("/", 9));
+            response.setHeader("Location", "/");
+            response.setStatus(Integer.parseInt(respCode));
+        } else {
+            response.setStatus(HttpServletResponse.SC_OK);
+        }
+        response.setContentType("text/html;charset=utf-8");
+        baseRequest.setHandled(true);
+        //
+        b = new StringBuilder();
+        b.append("{\n");
+        b.append("\"path\": \"").append(path).append("\",\n");
+        if (query == null) {
+            b.append("\"query\": null,\n");
+        } else {
+            b.append("\"query\": \"").append(query).append("\",\n");
+        }
+        b.append("\"method\": \"").append(method).append("\",\n");
+        b.append("\"headers\": ").append(headers).append(",\n");
+        if (body == null) {
+            b.append("\"body\": null\n");
+        } else {
+            b.append("\"body\": \"").append(body).append("\n");
+        }
+        b.append("}");
+        response.getWriter().println(b.toString());
 	}
 }
