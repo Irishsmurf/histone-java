@@ -651,11 +651,6 @@ public class Evaluator {
 
             }
             resourceStream = resource.getInputStream();
-            if (isJsonp) {
-                char c;
-                while ((c = (char) resourceStream.read()) != -1 && c != '(') {
-                }
-            }
             if (resourceStream == null) {
                 Histone.runtime_log_warn(String.format("Can't load resource by path = '%s'. Resource is unreadable.", path));
                 return nodeFactory.UNDEFINED;

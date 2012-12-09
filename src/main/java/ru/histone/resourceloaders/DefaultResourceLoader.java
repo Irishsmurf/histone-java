@@ -21,6 +21,7 @@ import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpOptions;
+import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpRequestBase;
@@ -106,6 +107,7 @@ public class DefaultResourceLoader implements ResourceLoader {
     }
 
 	private Resource loadHttpResource(URI location, Node[] args) {
+        URI newLocation = location;
 		final Map<Object, Node> requestMap = args != null && args.length != 0 && args[0] instanceof ObjectHistoneNode ? ((ObjectHistoneNode) args[0])
 				.getElements() : new HashMap<Object, Node>();
 		final String method = requestMap.containsKey("method") ? requestMap.get("method").getAsString().getValue() : "GET";
@@ -120,28 +122,44 @@ public class DefaultResourceLoader implements ResourceLoader {
 				headers.put(en.getKey().toString(), value);
 			}
 		}
+        // if we are doing http request, then check query parameters and if
+        // there no 'callback' parameter add it with random string value (random
+        // string should be generated, using all english symbols, length = 6)
+        {
+            final String query = location.getQuery();
+            if (query != null && query.indexOf("callback=") == -1) {
+                newLocation = URI.create(location.toString() + "&callback=qwqwqw");
+            }
+        }
+
 		final Map<String, String> filteredHeaders = filterRequestHeaders(headers);
 		final Node data = requestMap.containsKey("data") ? (Node) requestMap.get("data") : null;
 
 		// Prepare request
-		HttpRequestBase request = new HttpGet(location);
+		HttpRequestBase request = new HttpGet(newLocation);
 		if ("POST".equalsIgnoreCase(method)) {
-			request = new HttpPost(location);
+			request = new HttpPost(newLocation);
 		} else if ("PUT".equalsIgnoreCase(method)) {
-			request = new HttpPut(location);
+			request = new HttpPut(newLocation);
         } else if ("DELETE".equalsIgnoreCase(method)) {
-            request = new HttpDelete(location);
+            request = new HttpDelete(newLocation);
         } else if ("TRACE".equalsIgnoreCase(method)) {
-            request = new HttpTrace(location);
+            request = new HttpTrace(newLocation);
         } else if ("OPTIONS".equalsIgnoreCase(method)) {
-            request = new HttpOptions(location);
+            request = new HttpOptions(newLocation);
+        } else if ("PATCH".equalsIgnoreCase(method)) {
+            request = new HttpPatch(newLocation);
         }
 
         if (("POST".equalsIgnoreCase(method) || "PUT".equalsIgnoreCase(method)) && data != null) {
             String stringData = null;
-            if (data.isNull()) {
+            if (data.isNull() && data.isUndefined()) {
+            } else if (data.isString()) {
+                stringData = data.getAsString().getValue();
+            } else if (data.isObject()) {
+                stringData = ToQueryString.toQueryString(data.getAsObject(), null, "&");
             } else {
-                stringData = data.isString() ? data.getAsString().getValue() : ToQueryString.toQueryString(data.getAsObject(), null, "&");
+                stringData = data.getAsString().getValue();
             }
             if (stringData != null) {
                 StringEntity se;
@@ -157,11 +175,12 @@ public class DefaultResourceLoader implements ResourceLoader {
 		for (Map.Entry<String, String> en : filteredHeaders.entrySet()) {
 			request.setHeader(en.getKey(), en.getValue());
 		}
+		if (request.getHeaders("content-Type").length == 0) {
+		    request.setHeader("Content-Type","application/x-www-form-urlencoded");
+		}
 
 		// Execute request
 		HttpClient client = new DefaultHttpClient(httpClientConnectionManager);
-		client.getParams().setParameter("http.socket.timeout", new Integer(1000));
-        client.getParams().setParameter("http.connection.timeout", new Integer(1000));
 		InputStream input = null;
 		try {
 			HttpResponse response = client.execute(request);

@@ -33,7 +33,7 @@ public class TestHandler extends AbstractHandler {
 			ServletException {
 		StringBuilder b = new StringBuilder();
 		//
-		final String path = request.getPathInfo();
+		String path = request.getPathInfo();
 		final String query = request.getQueryString();
 		final String method = request.getMethod();
 		//
@@ -58,16 +58,22 @@ public class TestHandler extends AbstractHandler {
         while ((bytesRead = bodyReader.read(charBuffer)) > 0) {
             b.append(charBuffer, 0, bytesRead);
         }
-        final String body = b.length() == 0 ? null : b.toString();
+        final String body = b.length() == 0 ? "" : b.toString();
         //
         if (path.indexOf("/redirect:") != -1) {
-            String respCode = path.substring(10, path.indexOf("/", 9));
+            int endIndex = path.indexOf("/", 9);
+            endIndex = endIndex == -1 ? path.indexOf("?", 9) : endIndex;
+            endIndex = endIndex == -1 ? path.length() : endIndex;
+            String respCode = path.substring(10, endIndex);
             response.setHeader("Location", "/");
             response.setStatus(Integer.parseInt(respCode));
+//            path = path.substring(endIndex);
+//            path = path.indexOf("/") != 0 ? "/" + path : path;
         } else {
             response.setStatus(HttpServletResponse.SC_OK);
         }
         response.setContentType("text/html;charset=utf-8");
+        //response.setContentType("application/x-www-form-urlencoded");
         baseRequest.setHandled(true);
         //
         b = new StringBuilder();
@@ -80,11 +86,7 @@ public class TestHandler extends AbstractHandler {
         }
         b.append("\"method\": \"").append(method).append("\",\n");
         b.append("\"headers\": ").append(headers).append(",\n");
-        if (body == null) {
-            b.append("\"body\": null\n");
-        } else {
-            b.append("\"body\": \"").append(body).append("\n");
-        }
+        b.append("\"body\": \"").append(body).append("\"\n");
         b.append("}");
         response.getWriter().println(b.toString());
 	}
