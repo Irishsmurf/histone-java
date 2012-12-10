@@ -20,6 +20,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpOptions;
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPost;
@@ -51,6 +52,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 
 /**
  * Histone default resource loader<br/>
@@ -122,16 +124,7 @@ public class DefaultResourceLoader implements ResourceLoader {
 				headers.put(en.getKey().toString(), value);
 			}
 		}
-        // if we are doing http request, then check query parameters and if
-        // there no 'callback' parameter add it with random string value (random
-        // string should be generated, using all english symbols, length = 6)
-        {
-            final String query = location.getQuery();
-            if (query != null && query.indexOf("callback=") == -1) {
-                newLocation = URI.create(location.toString() + "&callback=qwqwqw");
-            }
-        }
-
+		
 		final Map<String, String> filteredHeaders = filterRequestHeaders(headers);
 		final Node data = requestMap.containsKey("data") ? (Node) requestMap.get("data") : null;
 
@@ -149,6 +142,8 @@ public class DefaultResourceLoader implements ResourceLoader {
             request = new HttpOptions(newLocation);
         } else if ("PATCH".equalsIgnoreCase(method)) {
             request = new HttpPatch(newLocation);
+        } else if ("HEAD".equalsIgnoreCase(method)) {
+            request = new HttpHead(newLocation);
         }
 
         if (("POST".equalsIgnoreCase(method) || "PUT".equalsIgnoreCase(method)) && data != null) {
@@ -191,7 +186,7 @@ public class DefaultResourceLoader implements ResourceLoader {
 		}
 		return new StreamResource(input, location.toString());
 	}
-
+	
 	private Map<String, String> filterRequestHeaders(Map<String, String> requestHeaders) {
 		String[] prohibited = { "accept-charset", "accept-encoding", "access-control-request-headers", "access-control-request-method",
 				"connection", "content-length", "cookie", "cookie2", "content-transfer-encoding", "date", "expect", "host", "keep-alive",

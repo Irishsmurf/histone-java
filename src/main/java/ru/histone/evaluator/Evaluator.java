@@ -95,6 +95,7 @@ import ru.histone.resourceloaders.ResourceLoadException;
 import ru.histone.resourceloaders.ResourceLoader;
 import ru.histone.utils.ArrayUtils;
 import ru.histone.utils.IOUtils;
+import ru.histone.utils.StringUtils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -626,7 +627,7 @@ public class Evaluator {
             throw new GlobalFunctionExecutionException("Non-string path for JSON resource location: " + args[0].getAsString().getValue());
         }
         //
-        final String path = args[0].getAsString().getValue();
+        String path = args[0].getAsString().getValue();
         final String currentBaseURI = getContextBaseURI(context);
         boolean isJsonp = false;
         ObjectHistoneNode requestMap = null;
@@ -637,6 +638,18 @@ public class Evaluator {
                 requestMap = args[1].getAsObject();
             } else {
                 throw new GlobalFunctionExecutionException("Wrong argument type: " + args[1].getAsString().getValue());
+            }
+        }
+        // if we are doing http request, then check query parameters and if
+        // there no 'callback' parameter add it with random string value (random
+        // string should be generated, using all english symbols, length = 6)
+        {
+            if (isJsonp && path.indexOf("http://") != -1 && path.indexOf("callback=") == -1) {
+                if (path.indexOf("/?") == -1) {
+                    path = path + "/?callback=" + StringUtils.randomString(6);
+                } else {
+                    path = path + "&callback=" + StringUtils.randomString(6);
+                }
             }
         }
         
