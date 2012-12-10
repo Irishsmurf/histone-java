@@ -20,8 +20,9 @@
     <logger name="ru.histone.evaluator.Evaluator">
         <level value="error" />
     </logger>
-    <logger name="ru.histone.acceptance.tests.functions.global.LoadJSONTest">
-        <level value="trace" />
+
+    <logger name="ru.histone.acceptance.tests">
+        <level value="error" />
     </logger>
 
 	<root>
