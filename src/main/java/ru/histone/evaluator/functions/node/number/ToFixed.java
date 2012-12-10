@@ -15,14 +15,13 @@
  */
 package ru.histone.evaluator.functions.node.number;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-
 import ru.histone.evaluator.functions.node.NodeFunction;
 import ru.histone.evaluator.nodes.Node;
 import ru.histone.evaluator.nodes.NodeFactory;
 import ru.histone.evaluator.nodes.NumberHistoneNode;
-import ru.histone.evaluator.nodes.NumberHistoneNode;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 /**
  *  Format a number up to required decimal places.

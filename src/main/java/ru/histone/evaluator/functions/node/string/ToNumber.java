@@ -15,13 +15,13 @@
  */
 package ru.histone.evaluator.functions.node.string;
 
-import java.math.BigDecimal;
-
 import ru.histone.evaluator.functions.node.NodeFunction;
 import ru.histone.evaluator.nodes.Node;
 import ru.histone.evaluator.nodes.NodeFactory;
 import ru.histone.evaluator.nodes.NumberHistoneNode;
 import ru.histone.evaluator.nodes.StringHistoneNode;
+
+import java.math.BigDecimal;
 
 /**
  * Convert target string to number<br/>

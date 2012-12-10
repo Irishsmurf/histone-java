@@ -15,15 +15,11 @@
  */
 package ru.histone.evaluator.functions.global;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-
-import ru.histone.Histone;
 import ru.histone.evaluator.nodes.Node;
 import ru.histone.evaluator.nodes.NodeFactory;
-import ru.histone.evaluator.nodes.NumberHistoneNode;
-import ru.histone.evaluator.nodes.ObjectHistoneNode;
-import ru.histone.evaluator.nodes.StringHistoneNode;
+
+import java.net.URI;
+import java.net.URISyntaxException;
 
 /**
  * Returns the URI to be resolved against given URI <br/>

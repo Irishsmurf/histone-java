@@ -15,16 +15,13 @@
  */
 package ru.histone.evaluator.functions.global;
 
-import java.util.Map;
-
-import com.fasterxml.jackson.databind.node.ObjectNode;
-
 import ru.histone.evaluator.nodes.Node;
 import ru.histone.evaluator.nodes.NodeFactory;
 import ru.histone.evaluator.nodes.NumberHistoneNode;
-import ru.histone.evaluator.nodes.NumberHistoneNode;
 import ru.histone.evaluator.nodes.ObjectHistoneNode;
 import ru.histone.utils.ArrayUtils;
+
+import java.util.Map;
 
 /**
  * Return minimum value from specified arguments<br/>

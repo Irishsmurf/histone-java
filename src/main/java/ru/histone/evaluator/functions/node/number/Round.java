@@ -15,13 +15,12 @@
  */
 package ru.histone.evaluator.functions.node.number;
 
-import java.math.RoundingMode;
-
 import ru.histone.evaluator.functions.node.NodeFunction;
 import ru.histone.evaluator.nodes.Node;
 import ru.histone.evaluator.nodes.NodeFactory;
 import ru.histone.evaluator.nodes.NumberHistoneNode;
-import ru.histone.evaluator.nodes.NumberHistoneNode;
+
+import java.math.RoundingMode;
 
 /**
  * Return standard math round value form target value

@@ -18,7 +18,6 @@ package ru.histone;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-
 import org.apache.http.conn.ClientConnectionManager;
 import org.apache.http.impl.conn.BasicClientConnectionManager;
 import org.apache.http.impl.conn.SchemeRegistryFactory;
@@ -30,7 +29,9 @@ import ru.histone.evaluator.functions.global.GlobalFunction;
 import ru.histone.evaluator.functions.global.GlobalFunctionsManager;
 import ru.histone.evaluator.functions.node.NodeFunction;
 import ru.histone.evaluator.functions.node.NodeFunctionsManager;
-import ru.histone.evaluator.nodes.*;
+import ru.histone.evaluator.nodes.GlobalObjectNode;
+import ru.histone.evaluator.nodes.Node;
+import ru.histone.evaluator.nodes.NodeFactory;
 import ru.histone.optimizer.AstImportResolver;
 import ru.histone.optimizer.AstInlineOptimizer;
 import ru.histone.optimizer.AstMarker;

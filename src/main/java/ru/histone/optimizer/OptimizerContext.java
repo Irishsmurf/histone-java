@@ -15,7 +15,12 @@
  */
 package ru.histone.optimizer;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public class OptimizerContext {
     private Deque<Set<String>> stacksVars;

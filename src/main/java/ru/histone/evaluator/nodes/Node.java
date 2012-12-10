@@ -15,9 +15,7 @@
  */
 package ru.histone.evaluator.nodes;
 
-import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import ru.histone.Histone;
 
 public abstract class Node {

@@ -17,7 +17,6 @@ package ru.histone.evaluator.functions.node;
 
 import ru.histone.evaluator.nodes.Node;
 import ru.histone.evaluator.nodes.NodeFactory;
-import ru.histone.evaluator.nodes.StringHistoneNode;
 
 /**
  * Convert current target to JSON string

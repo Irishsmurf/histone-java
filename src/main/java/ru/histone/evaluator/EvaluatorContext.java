@@ -16,13 +16,21 @@
 package ru.histone.evaluator;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import ru.histone.GlobalProperty;
-import ru.histone.evaluator.nodes.*;
+import ru.histone.evaluator.nodes.ContextWrapperNode;
+import ru.histone.evaluator.nodes.GlobalObjectNode;
+import ru.histone.evaluator.nodes.Node;
+import ru.histone.evaluator.nodes.NodeFactory;
+import ru.histone.evaluator.nodes.ObjectHistoneNode;
 
-import java.net.URI;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * Special object for storing evaluator context<br/>

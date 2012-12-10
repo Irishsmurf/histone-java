@@ -15,7 +15,8 @@
  */
 package ru.histone.evaluator.functions.node;
 
-import ru.histone.evaluator.nodes.*;
+import ru.histone.evaluator.nodes.Node;
+import ru.histone.evaluator.nodes.NodeFactory;
 import ru.histone.evaluator.nodes.NumberHistoneNode;
 import ru.histone.evaluator.nodes.UndefinedNumberHistoneNode;
 

@@ -15,14 +15,13 @@
  */
 package ru.histone.evaluator.functions.global;
 
-import java.util.Map;
-
 import ru.histone.evaluator.nodes.Node;
 import ru.histone.evaluator.nodes.NodeFactory;
 import ru.histone.evaluator.nodes.NumberHistoneNode;
-import ru.histone.evaluator.nodes.NumberHistoneNode;
 import ru.histone.evaluator.nodes.ObjectHistoneNode;
 import ru.histone.utils.ArrayUtils;
+
+import java.util.Map;
 
 /**
  * Return maximum value from specified arguments<br/>

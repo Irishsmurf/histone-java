@@ -15,13 +15,13 @@
  */
 package ru.histone.evaluator.functions.node.string;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import ru.histone.evaluator.functions.node.NodeFunction;
 import ru.histone.evaluator.nodes.Node;
 import ru.histone.evaluator.nodes.NodeFactory;
 import ru.histone.evaluator.nodes.StringHistoneNode;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Check string against Regular Expression

@@ -21,11 +21,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.DecimalNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.node.TextNode;
-
 import ru.histone.utils.IOUtils;
 import ru.histone.utils.StringUtils;
-import sun.security.util.BigInt;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -35,8 +32,6 @@ import java.math.BigInteger;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
-import java.util.Map.Entry;
 
 public class NodeFactory {
     private ObjectMapper jackson;

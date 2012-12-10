@@ -17,8 +17,6 @@ package ru.histone.evaluator.functions.node;
 
 import ru.histone.evaluator.nodes.Node;
 import ru.histone.evaluator.nodes.NodeFactory;
-import ru.histone.evaluator.nodes.ObjectHistoneNode;
-import ru.histone.evaluator.nodes.ObjectHistoneNode;
 
 /**
  * If current target is array, then return this array, in other cases - return array containing only current target as it's single element

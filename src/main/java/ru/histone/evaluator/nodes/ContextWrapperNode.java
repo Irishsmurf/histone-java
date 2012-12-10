@@ -15,9 +15,6 @@
  */
 package ru.histone.evaluator.nodes;
 
-import java.util.Map.Entry;
-import java.util.Set;
-
 import ru.histone.evaluator.EvaluatorContext;
 
 /**

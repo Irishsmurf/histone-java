@@ -15,12 +15,12 @@
  */
 package ru.histone.evaluator.functions.node.object;
 
-import java.util.Map;
-
 import ru.histone.evaluator.functions.node.NodeFunction;
 import ru.histone.evaluator.nodes.Node;
 import ru.histone.evaluator.nodes.NodeFactory;
 import ru.histone.evaluator.nodes.ObjectHistoneNode;
+
+import java.util.Map;
 
 /**
  * Return slice from current array<br/>

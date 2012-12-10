@@ -15,7 +15,6 @@
  */
 package ru.histone;
 
-import com.fasterxml.jackson.core.JsonFactory;
 import ru.histone.evaluator.Evaluator;
 import ru.histone.evaluator.nodes.NodeFactory;
 import ru.histone.optimizer.AstImportResolver;

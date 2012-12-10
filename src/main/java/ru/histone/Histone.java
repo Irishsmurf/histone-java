@@ -21,7 +21,6 @@ import com.fasterxml.jackson.databind.node.NullNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.histone.evaluator.Evaluator;
-import ru.histone.evaluator.EvaluatorContext;
 import ru.histone.evaluator.nodes.NodeFactory;
 import ru.histone.optimizer.AstImportResolver;
 import ru.histone.optimizer.AstInlineOptimizer;
@@ -32,8 +31,11 @@ import ru.histone.resourceloaders.Resource;
 import ru.histone.resourceloaders.ResourceLoader;
 import ru.histone.utils.IOUtils;
 
-import java.io.*;
-import java.net.URI;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Reader;
+import java.io.StringWriter;
+import java.io.Writer;
 
 /**
  * Main Histone engine class. Histone template parsing/evaluation is done here.<br/>

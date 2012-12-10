@@ -15,11 +15,10 @@
  */
 package ru.histone.evaluator.functions.global;
 
-import java.math.BigDecimal;
-
 import ru.histone.evaluator.nodes.Node;
 import ru.histone.evaluator.nodes.NodeFactory;
-import ru.histone.evaluator.nodes.NumberHistoneNode;
+
+import java.math.BigDecimal;
 
 /**
  * Returns value chosen pseudorandomly. <br/>

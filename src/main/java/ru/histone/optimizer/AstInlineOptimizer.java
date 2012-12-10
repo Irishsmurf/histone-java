@@ -15,9 +15,6 @@
  */
 package ru.histone.optimizer;
 
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import ru.histone.HistoneException;
-
 public class AstInlineOptimizer {
 
 /*    public ArrayNode inline(ArrayNode ast) throws HistoneException {

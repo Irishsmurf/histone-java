@@ -18,7 +18,10 @@ package ru.histone.optimizer;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import ru.histone.evaluator.MacroFunc;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.Map;
 
 public class InlineOptimizerContext {
     private Deque<Map<String, ArrayNode>> stacksVar;

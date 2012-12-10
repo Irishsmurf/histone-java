@@ -19,7 +19,6 @@ import ru.histone.evaluator.functions.node.NodeFunction;
 import ru.histone.evaluator.nodes.Node;
 import ru.histone.evaluator.nodes.NodeFactory;
 import ru.histone.evaluator.nodes.NumberHistoneNode;
-import ru.histone.evaluator.nodes.StringHistoneNode;
 
 /**
  * Converts target value to char according to ASCII table

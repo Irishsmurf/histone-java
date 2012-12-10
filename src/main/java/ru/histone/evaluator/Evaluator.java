@@ -15,49 +15,16 @@
  */
 package ru.histone.evaluator;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.lang.reflect.Array;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-
-import org.apache.http.conn.ClientConnectionManager;
-import org.apache.http.impl.conn.BasicClientConnectionManager;
-import org.apache.http.impl.conn.SchemeRegistryFactory;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import ru.histone.GlobalProperty;
 import ru.histone.Histone;
 import ru.histone.HistoneException;
-import ru.histone.evaluator.functions.global.DayOfWeek;
-import ru.histone.evaluator.functions.global.DaysInMonth;
-import ru.histone.evaluator.functions.global.GlobalFunctionExecutionException;
-import ru.histone.evaluator.functions.global.GlobalFunctionsManager;
-import ru.histone.evaluator.functions.global.Max;
-import ru.histone.evaluator.functions.global.Min;
-import ru.histone.evaluator.functions.global.Rand;
-import ru.histone.evaluator.functions.global.Range;
-import ru.histone.evaluator.functions.global.ResolveURI;
-import ru.histone.evaluator.functions.global.UniqueId;
-import ru.histone.evaluator.functions.node.IsBoolean;
-import ru.histone.evaluator.functions.node.IsFloat;
-import ru.histone.evaluator.functions.node.IsInteger;
-import ru.histone.evaluator.functions.node.IsMap;
-import ru.histone.evaluator.functions.node.IsNull;
-import ru.histone.evaluator.functions.node.IsNumber;
-import ru.histone.evaluator.functions.node.IsString;
-import ru.histone.evaluator.functions.node.IsUndefined;
-import ru.histone.evaluator.functions.node.NodeFunctionExecutionException;
-import ru.histone.evaluator.functions.node.NodeFunctionsManager;
-import ru.histone.evaluator.functions.node.ToBoolean;
-import ru.histone.evaluator.functions.node.ToJson;
-import ru.histone.evaluator.functions.node.ToMap;
-import ru.histone.evaluator.functions.node.ToString;
+import ru.histone.evaluator.functions.global.*;
+import ru.histone.evaluator.functions.node.*;
 import ru.histone.evaluator.functions.node.number.Abs;
 import ru.histone.evaluator.functions.node.number.Ceil;
 import ru.histone.evaluator.functions.node.number.Floor;
@@ -97,9 +64,16 @@ import ru.histone.utils.ArrayUtils;
 import ru.histone.utils.IOUtils;
 import ru.histone.utils.StringUtils;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.lang.reflect.Array;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Histone AST evaluator<br/>
@@ -655,7 +629,7 @@ public class Evaluator {
         
         Resource resource = null;
         InputStream resourceStream = null;
-        InputStreamReader reader = null;
+        BufferedReader reader = null;
         try {
             resource = resourceLoader.load(path, currentBaseURI, requestMap);
             if (resource == null) {
@@ -669,7 +643,8 @@ public class Evaluator {
                 return nodeFactory.UNDEFINED;
             }
             JsonNode json = null;
-            reader = new InputStreamReader(resourceStream);
+            reader = new BufferedReader(new InputStreamReader(resourceStream));
+            reader.mark(1024);
             //if server returned normal json, not jsonp we need to return it, regardless jsonp boolean flag
             try {
                 json = nodeFactory.jsonNode(reader);

@@ -15,14 +15,13 @@
  */
 package ru.histone.evaluator.functions.global;
 
-import java.util.Calendar;
-import java.util.GregorianCalendar;
-
 import ru.histone.Histone;
 import ru.histone.evaluator.nodes.Node;
 import ru.histone.evaluator.nodes.NodeFactory;
 import ru.histone.evaluator.nodes.NumberHistoneNode;
-import ru.histone.evaluator.nodes.NumberHistoneNode;
+
+import java.util.Calendar;
+import java.util.GregorianCalendar;
 
 /**
  * Returns day of week as a number for specified date<br/>

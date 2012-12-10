@@ -15,11 +15,10 @@
  */
 package ru.histone.evaluator.functions.global;
 
-import java.util.UUID;
-
 import ru.histone.evaluator.nodes.Node;
 import ru.histone.evaluator.nodes.NodeFactory;
-import ru.histone.evaluator.nodes.StringHistoneNode;
+
+import java.util.UUID;
 
 /**
  * Generates unique string<br/>

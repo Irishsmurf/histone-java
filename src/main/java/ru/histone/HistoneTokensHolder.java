@@ -15,9 +15,17 @@
  */
 package ru.histone;
 
-import ru.histone.tokenizer.*;
+import ru.histone.tokenizer.TokenContext;
+import ru.histone.tokenizer.TokenDef;
+import ru.histone.tokenizer.TokenKind;
+import ru.histone.tokenizer.TokenTransitionCallback;
+import ru.histone.tokenizer.TokenType;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 
 /**
  * This class stores all tokens that exists in Histone syntax<br/>
