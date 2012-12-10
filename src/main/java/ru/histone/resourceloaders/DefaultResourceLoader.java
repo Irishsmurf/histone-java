@@ -109,7 +109,7 @@ public class DefaultResourceLoader implements ResourceLoader {
     }
 
 	private Resource loadHttpResource(URI location, Node[] args) {
-        URI newLocation = location;
+        URI newLocation = URI.create(location.toString().replace("#fragment", ""));
 		final Map<Object, Node> requestMap = args != null && args.length != 0 && args[0] instanceof ObjectHistoneNode ? ((ObjectHistoneNode) args[0])
 				.getElements() : new HashMap<Object, Node>();
 		final String method = requestMap.containsKey("method") ? requestMap.get("method").getAsString().getValue() : "GET";
@@ -146,13 +146,20 @@ public class DefaultResourceLoader implements ResourceLoader {
             request = new HttpHead(newLocation);
         }
 
+        for (Map.Entry<String, String> en : filteredHeaders.entrySet()) {
+            request.setHeader(en.getKey(), en.getValue());
+        }
         if (("POST".equalsIgnoreCase(method) || "PUT".equalsIgnoreCase(method)) && data != null) {
             String stringData = null;
-            if (data.isNull() && data.isUndefined()) {
+            String contentType = "";
+            if (data.isNull() || data.isUndefined()) {
             } else if (data.isString()) {
+                stringData = data.getAsString().getValue();
+            } else if (data.isBoolean()) {
                 stringData = data.getAsString().getValue();
             } else if (data.isObject()) {
                 stringData = ToQueryString.toQueryString(data.getAsObject(), null, "&");
+                contentType = "application/x-www-form-urlencoded";
             } else {
                 stringData = data.getAsString().getValue();
             }
@@ -164,14 +171,11 @@ public class DefaultResourceLoader implements ResourceLoader {
                     throw new ResourceLoadException(String.format("Can't encode data '%s'", stringData));
                 }
                 ((HttpEntityEnclosingRequestBase) request).setEntity(se);
-                // request.setHeader("Content-Type","application/json");
+                request.setHeader("Content-Type", contentType);
             }
         }
-		for (Map.Entry<String, String> en : filteredHeaders.entrySet()) {
-			request.setHeader(en.getKey(), en.getValue());
-		}
 		if (request.getHeaders("content-Type").length == 0) {
-		    request.setHeader("Content-Type","application/x-www-form-urlencoded");
+            request.setHeader("Content-Type","");
 		}
 
 		// Execute request
@@ -179,7 +183,7 @@ public class DefaultResourceLoader implements ResourceLoader {
 		InputStream input = null;
 		try {
 			HttpResponse response = client.execute(request);
-			input = response.getEntity().getContent();
+			input = response.getEntity() == null ? null: response.getEntity().getContent();
 		} catch (IOException e) {
 			throw new ResourceLoadException(String.format("Can't load resource '%s'", location.toString()));
 		} finally {
