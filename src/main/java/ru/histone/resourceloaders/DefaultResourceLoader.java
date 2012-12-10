@@ -151,7 +151,7 @@ public class DefaultResourceLoader implements ResourceLoader {
         }
         if (("POST".equalsIgnoreCase(method) || "PUT".equalsIgnoreCase(method)) && data != null) {
             String stringData = null;
-            String contentType = "";
+            String contentType = filteredHeaders.get("content-type") == null ? "": filteredHeaders.get("content-type"); 
             if (data.isNull() || data.isUndefined()) {
             } else if (data.isString()) {
                 stringData = data.getAsString().getValue();
@@ -171,8 +171,8 @@ public class DefaultResourceLoader implements ResourceLoader {
                     throw new ResourceLoadException(String.format("Can't encode data '%s'", stringData));
                 }
                 ((HttpEntityEnclosingRequestBase) request).setEntity(se);
-                request.setHeader("Content-Type", contentType);
             }
+            request.setHeader("Content-Type", contentType);
         }
 		if (request.getHeaders("content-Type").length == 0) {
             request.setHeader("Content-Type","");
