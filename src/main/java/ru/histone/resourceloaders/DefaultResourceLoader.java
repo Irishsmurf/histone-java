@@ -112,7 +112,9 @@ public class DefaultResourceLoader implements ResourceLoader {
         URI newLocation = URI.create(location.toString().replace("#fragment", ""));
 		final Map<Object, Node> requestMap = args != null && args.length != 0 && args[0] instanceof ObjectHistoneNode ? ((ObjectHistoneNode) args[0])
 				.getElements() : new HashMap<Object, Node>();
-		final String method = requestMap.containsKey("method") ? requestMap.get("method").getAsString().getValue() : "GET";
+		Node methodNode =  requestMap.get("method");
+        final String method = methodNode != null && methodNode.isString() && methodNode.getAsString().getValue().length() != 0 ? requestMap
+                .get("method").getAsString().getValue() : "GET";
 		final Map<String, String> headers = new HashMap<String, String>();
 		if (requestMap.containsKey("headers")) {
 			for (Map.Entry<Object, Node> en : requestMap.get("headers").getAsObject().getElements().entrySet()) {
@@ -144,6 +146,8 @@ public class DefaultResourceLoader implements ResourceLoader {
             request = new HttpPatch(newLocation);
         } else if ("HEAD".equalsIgnoreCase(method)) {
             request = new HttpHead(newLocation);
+        } else if (method != null && !"GET".equalsIgnoreCase(method)){
+            return new StreamResource(null, location.toString());
         }
 
         for (Map.Entry<String, String> en : filteredHeaders.entrySet()) {
