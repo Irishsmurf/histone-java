@@ -645,8 +645,8 @@ public class Evaluator {
         // string should be generated, using all english symbols, length = 6)
         {
             if (isJsonp && path.indexOf("http://") != -1 && path.indexOf("callback=") == -1) {
-                if (path.indexOf("/?") == -1) {
-                    path = path + "/?callback=" + StringUtils.randomString(6);
+                if (path.indexOf("?") == -1) {
+                    path = path + "?callback=" + StringUtils.randomString(6);
                 } else {
                     path = path + "&callback=" + StringUtils.randomString(6);
                 }
