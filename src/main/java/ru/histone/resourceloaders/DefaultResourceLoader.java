@@ -164,18 +164,11 @@ public class DefaultResourceLoader implements ResourceLoader {
         }
         if (("POST".equalsIgnoreCase(method) || "PUT".equalsIgnoreCase(method)) && data != null) {
             String stringData = null;
-            String contentType = filteredHeaders.get("content-type") == null ? "": filteredHeaders.get("content-type"); 
-            if (data.isNull()) {
-            } else if (data.isUndefined()) {
-                stringData = "";
-            } else if (data.isString()) {
-                stringData = data.getAsString().getValue();
-            } else if (data.isBoolean()) {
-                stringData = data.getAsString().getValue();
-            } else if (data.isObject()) {
+            String contentType = filteredHeaders.get("content-type") == null ? "": filteredHeaders.get("content-type");
+            if(data.isObject()){
                 stringData = ToQueryString.toQueryString(data.getAsObject(), null, "&");
                 contentType = "application/x-www-form-urlencoded";
-            } else {
+            }else{
                 stringData = data.getAsString().getValue();
             }
             if (stringData != null) {

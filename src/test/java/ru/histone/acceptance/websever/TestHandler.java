@@ -87,7 +87,7 @@ public class TestHandler extends AbstractHandler {
         b.append("\"method\": \"").append(method).append("\",\n");
         b.append("\"headers\": ").append(headers).append(",\n");
         if (body == null)
-            b.append("\"body\": null \n");
+            b.append("\"body\": \"\" \n");
         else
             b.append("\"body\": \"").append(body).append("\"\n");
         b.append("}");
