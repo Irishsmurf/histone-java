@@ -165,7 +165,9 @@ public class DefaultResourceLoader implements ResourceLoader {
         if (("POST".equalsIgnoreCase(method) || "PUT".equalsIgnoreCase(method)) && data != null) {
             String stringData = null;
             String contentType = filteredHeaders.get("content-type") == null ? "": filteredHeaders.get("content-type"); 
-            if (data.isNull() || data.isUndefined()) {
+            if (data.isNull()) {
+            } else if (data.isUndefined()) {
+                stringData = "";
             } else if (data.isString()) {
                 stringData = data.getAsString().getValue();
             } else if (data.isBoolean()) {

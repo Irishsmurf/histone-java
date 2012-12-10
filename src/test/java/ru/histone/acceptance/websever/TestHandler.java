@@ -58,7 +58,7 @@ public class TestHandler extends AbstractHandler {
         while ((bytesRead = bodyReader.read(charBuffer)) > 0) {
             b.append(charBuffer, 0, bytesRead);
         }
-        final String body = b.length() == 0 ? "" : b.toString();
+        final String body = b.length() == 0 && ("POST".equals(method) || "PUT".equals(method)) ? null : b.toString();
         //
         if (path.indexOf("/redirect:") != -1) {
             int endIndex = path.indexOf("/", 9);
@@ -86,7 +86,10 @@ public class TestHandler extends AbstractHandler {
         }
         b.append("\"method\": \"").append(method).append("\",\n");
         b.append("\"headers\": ").append(headers).append(",\n");
-        b.append("\"body\": \"").append(body).append("\"\n");
+        if (body == null)
+            b.append("\"body\": null \n");
+        else
+            b.append("\"body\": \"").append(body).append("\"\n");
         b.append("}");
         response.getWriter().println(b.toString());
 	}
