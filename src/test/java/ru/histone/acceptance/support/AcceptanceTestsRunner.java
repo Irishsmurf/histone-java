@@ -27,6 +27,7 @@ import org.junit.runner.notification.Failure;
 import org.junit.runner.notification.RunNotifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import ru.histone.GlobalProperty;
 import ru.histone.Histone;
 import ru.histone.HistoneBuilder;
@@ -54,6 +55,7 @@ public class AcceptanceTestsRunner extends Runner {
     private NodeFactory nodeFactory;
     private int testIdx = 0;
     private AcceptanceTest instance;
+    private static final String MDC_TEST_NAME = "MDS_TEST_NAME";
 
     public AcceptanceTestsRunner(Class<?> testClass) throws IllegalAccessException, InstantiationException {
         instance = (AcceptanceTest) testClass.newInstance();
@@ -74,14 +76,13 @@ public class AcceptanceTestsRunner extends Runner {
 
     @Override
     public void run(RunNotifier notifier) {
-//        MDC.put(MDC_TEST_NAME, "before");
 //        notifier.fireTestStarted(instance.getDescription());
         Reader reader = new InputStreamReader(getClass().getResourceAsStream(instance.getFileName()));
         Description testCaseDescription = null;
         try {
             JsonNode testSuites = jackson.readTree(reader);
             if (instance.startTestWebServer()) {
-            	startTestWebServer();
+                startTestWebServer();
             }
             for (JsonNode mainElement : testSuites) {
                 final String suiteName = mainElement.get("name").asText();
@@ -91,6 +92,8 @@ public class AcceptanceTestsRunner extends Runner {
 
                 for (JsonNode element : cases) {
                     testIdx++;
+
+                    MDC.put(MDC_TEST_NAME, testIdx + " " + suiteName);
                     testCaseDescription = Description.createTestDescription(instance.getClass(), testIdx + " " + generateTestCaseName(instance.getFileName(), mainElement, element));
                     description.addChild(testCaseDescription);
                     notifier.fireTestStarted(testCaseDescription);
@@ -102,16 +105,18 @@ public class AcceptanceTestsRunner extends Runner {
                         }
                         runTestCase(notifier, testCaseDescription, suite, testCase);
                     } catch (Exception e) {
+                        log.error("Test failure", e);
                         notifier.fireTestFailure(new Failure(testCaseDescription, e));
                     }
+                    MDC.put(MDC_TEST_NAME, "");
                 }
             }
         } catch (Exception e2) {
+            log.error(String.format("Error reading/parsing json file '%s'", instance.getFileName()), e2);
             throw new RuntimeException(String.format("Error reading/parsing json file '%s'", instance.getFileName()), e2);
-		} finally {
-//			if (instance.startTestWebServer()) 
-				stopTestWebServer();
-		}
+        } finally {
+            stopTestWebServer();
+        }
     }
 
     private String generateTestCaseName(String fileName, JsonNode suiteJson, JsonNode caseJson) {
@@ -136,9 +141,10 @@ public class AcceptanceTestsRunner extends Runner {
     }
 
     private void runTestCase(RunNotifier notifier, Description testCaseDescription, TestSuiteHolder testSuite, TestCaseHolder testCase) throws HistoneException, URISyntaxException {
-        log.debug("case({}): input={}, context={}, expected={}, exception={}", new Object[]{testIdx, testCase.getInput(), testCase.getContext(), testCase.getExpected(), testCase.getException()});
+        log.trace("runTestCase({}): input={}, context={}, expected={}, exception={}", new Object[]{testIdx, testCase.getInput(), testCase.getContext(), testCase.getExpected(), testCase.getException()});
 
         if (testCase.isIgnore()) {
+            log.debug("Test ignored");
             notifier.fireTestIgnored(testCaseDescription);
             return;
         }
@@ -150,16 +156,12 @@ public class AcceptanceTestsRunner extends Runner {
         final String expectedResult = testCase.getExpected();
         String baseURI = this.getClass().getResource(testSuite.getFileName()).toURI().toString();
 
-//        if(testCase.getGlobalProperties().containsKey(GlobalProperty.BASE_URI)){
-//            baseURI = testCase.getGlobalProperties().get(GlobalProperty.BASE_URI);
-//        }
-
         if (expectedAST != null) {
             try {
                 // TEST FOR EXPECTED-AST
                 Reader input = new StringReader(testCase.getInput());
 
-                // http://devlabs.megafon.ru/issues/browse/HSTJ-7
+                // HSTJ-7
                 ArrayNode rootAST = histone.parseTemplateToAST(input);
                 ArrayNode outputAST = (ArrayNode) rootAST.get(1);
 
@@ -172,7 +174,7 @@ public class AcceptanceTestsRunner extends Runner {
                 }
             } catch (Exception e) {
                 String msg = "For input='" + testCase.getInput() + "', expectedAST=" + testCase.getExpectedAST() + ", but exception occured=" + e.getMessage();
-                log.debug("Error msg={}", msg, e);
+                log.debug("Test failure: " + msg, e);
                 notifier.fireTestFailure(new Failure(testCaseDescription, e));
             }
         }
@@ -187,9 +189,7 @@ public class AcceptanceTestsRunner extends Runner {
                 try {
                     Reader input = new StringReader(testCase.getInput());
                     ast = histone.parseTemplateToAST(input);
-//                log.debug("case({}): tree.json={}", new Object[]{testIdx, ast.toString()});
                 } catch (ParserException e) {
-//                log.debug("case({}): e.message={}", new Object[]{testIdx, e.getMessage()});
                     checkExpectedExceptionAndFireTest(notifier, testCaseDescription, msgF, expectedException, e);
                     return;
                 }
@@ -197,9 +197,7 @@ public class AcceptanceTestsRunner extends Runner {
                 try {
                     JsonNode context = testCase.getContext() == null ? null : jackson.readTree(testCase.getContext());
                     String output = histone.evaluateAST(baseURI, ast, context);
-                    log.debug("case({}): output={}", new Object[]{testIdx, output});
                 } catch (EvaluatorException e) {
-                    log.debug("case({}): e.message={}", new Object[]{testIdx, e.getMessage()});
                     checkExpectedExceptionAndFireTest(notifier, testCaseDescription, msgF, expectedException, e);
                     return;
                 }
@@ -208,7 +206,7 @@ public class AcceptanceTestsRunner extends Runner {
                 notifier.fireTestFailure(new Failure(testCaseDescription, new ComparisonFailure(msgF, expectedF, "")));
             } catch (Exception e) {
                 String msg = "For input='" + testCase.getInput() + "', expectedException=" + testCase.getException().toString() + ", but exception occured=" + e.getMessage();
-                log.debug("Error msg={}", msg, e);
+                log.debug("Test failure: " + msg, e);
                 notifier.fireTestFailure(new Failure(testCaseDescription, e));
             }
         } else if (expectedResult != null) {
@@ -218,10 +216,8 @@ public class AcceptanceTestsRunner extends Runner {
                 JsonNode context = (testCase.getContext() == null) ? jackson.getNodeFactory().nullNode() : jackson.readTree(testCase
                         .getContext());
                 String output = histone.evaluate(baseURI, input, context);
-//                log.debug("case({}): output={}", new Object[]{testIdx, output});
 
                 boolean result = output.equals(expectedResult);
-//                log.debug("case({}): result={}", new Object[]{testIdx, result});
                 if (result) {
                     notifier.fireTestFinished(testCaseDescription);
                 } else {
@@ -230,14 +226,12 @@ public class AcceptanceTestsRunner extends Runner {
                 }
             } catch (Exception e) {
                 String msg = "For input='" + testCase.getInput() + "', expectedAST=" + testCase.getExpectedAST() + ", but exception occured=" + e.getMessage();
-                log.debug("Error msg={}", msg, e);
+                log.debug("Test failure: " + msg, e);
                 notifier.fireTestFailure(new Failure(testCaseDescription, e));
             }
-
         } else {
-            //TODO
+            log.debug("!!! Wrong test data !!!");
         }
-
     }
 
     private void checkExpectedExceptionAndFireTest(RunNotifier notifier, Description description, String msgF, EvaluatorException expected,
@@ -258,6 +252,8 @@ public class AcceptanceTestsRunner extends Runner {
             String expectedF = "line=" + expected.getLineNumber() + ", expected=" + expected.getExpected() + ", found="
                     + expected.getFound();
             String actualF = "line=" + errLine + ", expected=" + errExpectedToken + ", found=" + errFoundToken;
+
+            log.debug("Test failure", real);
             notifier.fireTestFailure(new Failure(description, new ComparisonFailure(msgF, expectedF, actualF)));
             return;
         }
@@ -344,8 +340,6 @@ public class AcceptanceTestsRunner extends Runner {
         }
 
         return testCase;
-//        runTestCase(notifier, testCase);
-//        log.debug("readCase(): >>>", new Object[] {});
     }
 
     private boolean checkIgnoreField(JsonNode ignore) {
@@ -422,29 +416,32 @@ public class AcceptanceTestsRunner extends Runner {
         }
         return nodeFunctions;
     }
-    
-	private Server jetty;
 
-	public void startTestWebServer() {
-		try {
+    private Server jetty;
 
-			jetty = new Server(4442);
-			jetty.setHandler(new TestHandler());
+    public void startTestWebServer() {
+        try {
+            log.debug("Starting jetty web-server");
+            jetty = new Server(4442);
+            jetty.setHandler(new TestHandler());
 
-			jetty.start();
-			//server.join();
+            jetty.start();
+            //server.join();
 
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		} 
-	}
+        } catch (Exception e) {
+            log.error("Error starting jetty web-server", e);
+            throw new RuntimeException(e);
+        }
+    }
 
     public void stopTestWebServer() {
         if (jetty == null)
             return;
         try {
+            log.debug("Stopping jetty web-server");
             jetty.stop();
         } catch (Exception e) {
+            log.error("Error stoping jetty web-server", e);
             throw new RuntimeException(e);
         } finally {
             jetty = null;

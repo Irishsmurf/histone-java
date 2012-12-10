@@ -3,7 +3,7 @@
 
 	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%d{HH:mm:ss.SSS} %-5level %logger{36} - %-10X{testCaseName} - %msg%n</pattern>
+            <pattern>%d{HH:mm:ss.SSS} %-5level %logger{36} - %-20X{MDS_TEST_NAME} - %msg%n</pattern>
         </encoder>
 	</appender>
 
@@ -20,8 +20,8 @@
     <logger name="ru.histone.evaluator.Evaluator">
         <level value="error" />
     </logger>
-    <logger name="ru.histone.acceptance.EvaluatorAcceptanceTest">
-        <level value="error" />
+    <logger name="ru.histone.acceptance.tests.functions.global.LoadJSONTest">
+        <level value="trace" />
     </logger>
 
 	<root>
