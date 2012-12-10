@@ -15,7 +15,11 @@
  */
 package ru.histone.resourceloaders;
 
+import org.apache.http.Header;
+import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
+import org.apache.http.ProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
@@ -29,9 +33,14 @@ import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.methods.HttpTrace;
 import org.apache.http.conn.ClientConnectionManager;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.AbstractHttpClient;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.client.DefaultRedirectHandler;
+import org.apache.http.impl.client.DefaultRedirectStrategy;
 import org.apache.http.impl.conn.BasicClientConnectionManager;
 import org.apache.http.impl.conn.SchemeRegistryFactory;
+import org.apache.http.protocol.ExecutionContext;
+import org.apache.http.protocol.HttpContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -184,6 +193,7 @@ public class DefaultResourceLoader implements ResourceLoader {
 
 		// Execute request
 		HttpClient client = new DefaultHttpClient(httpClientConnectionManager);
+		((AbstractHttpClient) client).setRedirectStrategy(new RedirectStrategy());
 		InputStream input = null;
 		try {
 			HttpResponse response = client.execute(request);
@@ -251,5 +261,29 @@ public class DefaultResourceLoader implements ResourceLoader {
 		this.httpClientConnectionManager = httpClientConnectionManager;
 	}
 
+
+    private class RedirectStrategy extends DefaultRedirectStrategy {
+        @Override
+        public boolean isRedirected(
+                final HttpRequest request,
+                final HttpResponse response,
+                final HttpContext context) throws ProtocolException {
+            if (request == null) {
+                throw new IllegalArgumentException("HTTP request may not be null");
+            }
+            if (response == null) {
+                throw new IllegalArgumentException("HTTP response may not be null");
+            }
+
+            int statusCode = response.getStatusLine().getStatusCode();
+            String method = request.getRequestLine().getMethod();
+            Header locationHeader = response.getFirstHeader("location");
+            if (301 <= statusCode && statusCode <= 399) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+    }
     
 }
