@@ -27,7 +27,6 @@ import ru.histone.evaluator.functions.node.NodeFunctionExecutionException;
 import ru.histone.evaluator.nodes.Node;
 import ru.histone.evaluator.nodes.NodeFactory;
 
-import java.io.StringReader;
 import java.math.BigDecimal;
 
 /**

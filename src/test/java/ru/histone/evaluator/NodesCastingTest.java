@@ -15,14 +15,14 @@
  */
 package ru.histone.evaluator;
 
-import java.math.BigDecimal;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Before;
 import org.junit.Test;
-import ru.histone.evaluator.nodes.*;
-import ru.histone.evaluator.nodes.NumberHistoneNode;
-import ru.histone.evaluator.nodes.ObjectHistoneNode;
+import ru.histone.evaluator.nodes.Node;
+import ru.histone.evaluator.nodes.NodeFactory;
+import ru.histone.evaluator.nodes.StringHistoneNode;
+
+import java.math.BigDecimal;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;

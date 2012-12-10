@@ -17,8 +17,8 @@ package ru.histone.spring.stubs;
 
 import ru.histone.evaluator.nodes.Node;
 import ru.histone.resourceloaders.Resource;
-import ru.histone.resourceloaders.ResourceLoader;
 import ru.histone.resourceloaders.ResourceLoadException;
+import ru.histone.resourceloaders.ResourceLoader;
 
 /**
  * @author P.Salnikov <p.salnikov@gmail.com>

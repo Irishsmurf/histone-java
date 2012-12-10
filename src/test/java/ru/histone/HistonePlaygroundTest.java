@@ -16,14 +16,11 @@
 package ru.histone;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.*;
-
-import static org.junit.Assert.assertEquals;
+import java.io.StringReader;
+import java.io.UnsupportedEncodingException;
 
 /**
  * Test correct work of Histone public methods

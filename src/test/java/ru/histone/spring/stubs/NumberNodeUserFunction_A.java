@@ -20,7 +20,6 @@ import ru.histone.evaluator.functions.node.NodeFunctionExecutionException;
 import ru.histone.evaluator.nodes.Node;
 import ru.histone.evaluator.nodes.NodeFactory;
 import ru.histone.evaluator.nodes.NumberHistoneNode;
-import ru.histone.evaluator.nodes.StringHistoneNode;
 
 /**
  * @author P.Salnikov <p.salnikov@gmail.com>

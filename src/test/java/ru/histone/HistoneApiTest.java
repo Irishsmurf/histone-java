@@ -16,7 +16,6 @@
 package ru.histone;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.util.Assert;

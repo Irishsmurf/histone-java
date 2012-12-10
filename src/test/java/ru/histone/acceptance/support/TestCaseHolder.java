@@ -15,18 +15,17 @@
  */
 package ru.histone.acceptance.support;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
 import com.fasterxml.jackson.databind.node.ArrayNode;
-
 import ru.histone.GlobalProperty;
 import ru.histone.evaluator.EvaluatorException;
 import ru.histone.utils.CollectionUtils;
 import ru.histone.utils.StringEscapeUtils;
 import ru.histone.utils.StringUtils;
+
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public class TestCaseHolder {
     private String input;

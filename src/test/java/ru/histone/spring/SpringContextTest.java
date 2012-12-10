@@ -26,12 +26,9 @@ import ru.histone.HistoneBuilder;
 import ru.histone.HistoneException;
 
 import java.io.IOException;
-import java.io.Reader;
-import java.io.StringReader;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNotNull;
-import static junit.framework.Assert.assertNotSame;
 import static org.junit.Assert.assertSame;
 
 /**

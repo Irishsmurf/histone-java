@@ -22,13 +22,11 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import ru.histone.evaluator.nodes.Node;
 import ru.histone.evaluator.nodes.NodeFactory;
-import ru.histone.evaluator.nodes.StringHistoneNode;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 public class GlobalFunctionsManagerTest {
 

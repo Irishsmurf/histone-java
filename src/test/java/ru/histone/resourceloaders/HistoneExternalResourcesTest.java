@@ -18,7 +18,6 @@ package ru.histone.resourceloaders;
 import com.fasterxml.jackson.databind.node.NullNode;
 import org.junit.Before;
 import org.junit.Test;
-import ru.histone.GlobalProperty;
 import ru.histone.Histone;
 import ru.histone.HistoneBuilder;
 import ru.histone.HistoneException;

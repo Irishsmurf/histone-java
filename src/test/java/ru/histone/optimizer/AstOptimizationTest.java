@@ -16,7 +16,6 @@
 package ru.histone.optimizer;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
-
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -24,9 +23,9 @@ import ru.histone.Histone;
 import ru.histone.HistoneException;
 import ru.histone.utils.IOUtils;
 
-import java.io.*;
-
-import static org.junit.Assert.assertEquals;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.StringReader;
 
 @Ignore
 public class AstOptimizationTest {

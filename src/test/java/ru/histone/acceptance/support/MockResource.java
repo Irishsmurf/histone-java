@@ -15,10 +15,10 @@
  */
 package ru.histone.acceptance.support;
 
+import ru.histone.resourceloaders.Resource;
+
 import java.io.IOException;
 import java.io.InputStream;
-
-import ru.histone.resourceloaders.Resource;
 
 public class MockResource implements Resource {
 //    private MockFileDataHolder dataHolder;

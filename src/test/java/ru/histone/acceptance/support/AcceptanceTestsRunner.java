@@ -18,7 +18,6 @@ package ru.histone.acceptance.support;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-
 import org.eclipse.jetty.server.Server;
 import org.junit.ComparisonFailure;
 import org.junit.runner.Description;
@@ -28,7 +27,6 @@ import org.junit.runner.notification.RunNotifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
-import ru.histone.GlobalProperty;
 import ru.histone.Histone;
 import ru.histone.HistoneBuilder;
 import ru.histone.HistoneException;
@@ -36,17 +34,22 @@ import ru.histone.acceptance.websever.TestHandler;
 import ru.histone.evaluator.EvaluatorException;
 import ru.histone.evaluator.functions.global.GlobalFunction;
 import ru.histone.evaluator.functions.node.NodeFunction;
-import ru.histone.evaluator.nodes.*;
+import ru.histone.evaluator.nodes.BooleanHistoneNode;
+import ru.histone.evaluator.nodes.Node;
+import ru.histone.evaluator.nodes.NodeFactory;
+import ru.histone.evaluator.nodes.NumberHistoneNode;
+import ru.histone.evaluator.nodes.StringHistoneNode;
 import ru.histone.parser.ParserException;
 import ru.histone.utils.CollectionUtils;
 
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
-import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public class AcceptanceTestsRunner extends Runner {
     private Logger log;

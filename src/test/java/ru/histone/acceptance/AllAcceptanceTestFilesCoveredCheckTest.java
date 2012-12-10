@@ -32,8 +32,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 public class AllAcceptanceTestFilesCoveredCheckTest {

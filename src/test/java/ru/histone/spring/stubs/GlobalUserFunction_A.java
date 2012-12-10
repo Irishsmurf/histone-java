@@ -19,7 +19,6 @@ import ru.histone.evaluator.functions.global.GlobalFunction;
 import ru.histone.evaluator.functions.global.GlobalFunctionExecutionException;
 import ru.histone.evaluator.nodes.Node;
 import ru.histone.evaluator.nodes.NodeFactory;
-import ru.histone.evaluator.nodes.StringHistoneNode;
 
 /**
  * @author P.Salnikov <p.salnikov@gmail.com>
