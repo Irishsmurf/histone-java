@@ -25,35 +25,12 @@ import ru.histone.Histone;
 import ru.histone.HistoneException;
 import ru.histone.evaluator.functions.global.*;
 import ru.histone.evaluator.functions.node.*;
-import ru.histone.evaluator.functions.node.number.Abs;
-import ru.histone.evaluator.functions.node.number.Ceil;
-import ru.histone.evaluator.functions.node.number.Floor;
-import ru.histone.evaluator.functions.node.number.Log;
-import ru.histone.evaluator.functions.node.number.Pow;
-import ru.histone.evaluator.functions.node.number.Round;
-import ru.histone.evaluator.functions.node.number.ToChar;
-import ru.histone.evaluator.functions.node.number.ToFixed;
-import ru.histone.evaluator.functions.node.object.HasKey;
-import ru.histone.evaluator.functions.node.object.Join;
-import ru.histone.evaluator.functions.node.object.Keys;
-import ru.histone.evaluator.functions.node.object.Remove;
+import ru.histone.evaluator.functions.node.number.*;
+import ru.histone.evaluator.functions.node.object.*;
 import ru.histone.evaluator.functions.node.object.Slice;
-import ru.histone.evaluator.functions.node.object.ToQueryString;
-import ru.histone.evaluator.functions.node.object.Values;
-import ru.histone.evaluator.functions.node.string.CharCodeAt;
+import ru.histone.evaluator.functions.node.string.*;
 import ru.histone.evaluator.functions.node.string.Size;
-import ru.histone.evaluator.functions.node.string.Split;
-import ru.histone.evaluator.functions.node.string.Strip;
-import ru.histone.evaluator.functions.node.string.Test;
-import ru.histone.evaluator.functions.node.string.ToLowerCase;
-import ru.histone.evaluator.functions.node.string.ToNumber;
-import ru.histone.evaluator.functions.node.string.ToUpperCase;
-import ru.histone.evaluator.nodes.GlobalObjectNode;
-import ru.histone.evaluator.nodes.Node;
-import ru.histone.evaluator.nodes.NodeFactory;
-import ru.histone.evaluator.nodes.NumberHistoneNode;
-import ru.histone.evaluator.nodes.ObjectHistoneNode;
-import ru.histone.evaluator.nodes.StringHistoneNode;
+import ru.histone.evaluator.nodes.*;
 import ru.histone.parser.AstNodeType;
 import ru.histone.parser.Parser;
 import ru.histone.parser.ParserException;
@@ -64,10 +41,7 @@ import ru.histone.utils.ArrayUtils;
 import ru.histone.utils.IOUtils;
 import ru.histone.utils.StringUtils;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.lang.reflect.Array;
 import java.net.URI;
 import java.util.ArrayList;
@@ -618,15 +592,15 @@ public class Evaluator {
         // there no 'callback' parameter add it with random string value (random
         // string should be generated, using all english symbols, length = 6)
         {
-            if (isJsonp && path.indexOf("http://") != -1 && path.indexOf("callback=") == -1) {
-                if (path.indexOf("?") == -1) {
+            if (isJsonp && path.contains("http://") && !path.contains("callback=")) {
+                if (!path.contains("?")) {
                     path = path + "?callback=" + StringUtils.randomString(6);
                 } else {
                     path = path + "&callback=" + StringUtils.randomString(6);
                 }
             }
         }
-        
+
         Resource resource = null;
         InputStream resourceStream = null;
         BufferedReader reader = null;
@@ -642,21 +616,28 @@ public class Evaluator {
                 Histone.runtime_log_warn(String.format("Can't load resource by path = '%s'. Resource is unreadable.", path));
                 return nodeFactory.UNDEFINED;
             }
+
             JsonNode json = null;
-            reader = new BufferedReader(new InputStreamReader(resourceStream));
-            reader.mark(1024);
+
+            StringWriter writer = new StringWriter();
+            IOUtils.copy(resourceStream, writer);
+            String s = writer.toString();
+
             //if server returned normal json, not jsonp we need to return it, regardless jsonp boolean flag
             try {
-                json = nodeFactory.jsonNode(reader);
+
+                json = nodeFactory.jsonNode(new StringReader(s));
             } catch (JsonProcessingException e) {
                 // try isJsonp
-                reader.reset();
                 if (isJsonp) {
-                    char c;
-                    while ((c = (char) resourceStream.read()) != -1 && c != '(') {
+                    int i1 = s.indexOf("(");
+                    int i2 = s.indexOf(")");
+
+                    if (i1 > 0 && i2 > 0 && i1 < i2) {
+                        s = s.substring(s.indexOf('(') + 1, s.lastIndexOf(')'));
+                        json = nodeFactory.jsonNode(new StringReader(s));
                     }
                 }
-                json = nodeFactory.jsonNode(reader);
             }
             if (json == null) {
                 Histone.runtime_log_warn("Invalid JSON data found by path: " + path);
@@ -1085,10 +1066,10 @@ public class Evaluator {
             startIdx++;
         } else if ("global".equals(element.get(0).asText())) {
             if ("baseURI".equals(element.path(1).asText())) {
-                if(context.getGlobal().hasProp("baseURI")){
+                if (context.getGlobal().hasProp("baseURI")) {
                     ctx = context.getGlobal().getProp("baseURI");
                     startIdx = startIdx + 2;
-                }else{
+                } else {
                     ctx = nodeFactory.string(context.getBaseURI());//context.getProp("baseURI");
                     startIdx = startIdx + 2;
                 }
@@ -1100,15 +1081,15 @@ public class Evaluator {
             ctx = context.getProp("self");
             startIdx++;
         } else {
-            if("baseURI".equals(element.path(0).asText())){
-                if(context.getGlobal().hasProp("baseURI")){
+            if ("baseURI".equals(element.path(0).asText())) {
+                if (context.getGlobal().hasProp("baseURI")) {
                     ctx = context.getGlobal().getProp("baseURI");
                     startIdx = startIdx + 1;
-                }else{
+                } else {
                     ctx = nodeFactory.string(context.getBaseURI());//context.getProp("baseURI");
                     startIdx = startIdx + 1;
                 }
-            }else{
+            } else {
                 ctx = context.getAsNode();
             }
         }

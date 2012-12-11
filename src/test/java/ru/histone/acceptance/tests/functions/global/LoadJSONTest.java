@@ -20,15 +20,13 @@ import ru.histone.acceptance.support.AcceptanceTest;
 import ru.histone.acceptance.support.AcceptanceTestsRunner;
 
 @RunWith(AcceptanceTestsRunner.class)
-
 public class LoadJSONTest extends AcceptanceTest {
     @Override
     public String getFileName() {
         return "/functions/global.loadJSON.json";
     }
-    
-	public boolean startTestWebServer() {
-		return true;
-	}
 
+    public boolean startTestWebServer() {
+        return true;
+    }
 }
