@@ -16,20 +16,17 @@
 package ru.histone.spring.stubs;
 
 import ru.histone.evaluator.nodes.Node;
-import ru.histone.resourceloaders.Resource;
-import ru.histone.resourceloaders.ResourceLoadException;
-import ru.histone.resourceloaders.ResourceLoader;
-import ru.histone.resourceloaders.StreamResource;
+import ru.histone.resourceloaders.*;
 
 import java.io.ByteArrayInputStream;
 
 public class ResourceLoaderStub implements ResourceLoader {
     @Override
-    public Resource load(String href, String baseHref, Node... args) throws ResourceLoadException {
+    public Resource load(String href, String baseHref, String[] contentType, Node... args) throws ResourceLoadException {
         if (href.equals("dummyA:/text.txt")) {
-            return new StreamResource(new ByteArrayInputStream("resolver_a_result".getBytes()), "dummyA:/text.txt");
+            return new StreamResource(new ByteArrayInputStream("resolver_a_result".getBytes()), "dummyA:/text.txt", ContentType.TEXT);
         } else if (href.equals("dummyB:/text.txt")) {
-            return new StreamResource(new ByteArrayInputStream("resolver_b_result".getBytes()), "dummyB:/text.txt");
+            return new StreamResource(new ByteArrayInputStream("resolver_b_result".getBytes()), "dummyB:/text.txt", ContentType.TEXT);
         } else {
             throw new ResourceLoadException("Resource nto found");
         }

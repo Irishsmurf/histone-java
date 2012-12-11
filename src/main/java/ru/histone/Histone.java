@@ -27,15 +27,12 @@ import ru.histone.optimizer.AstInlineOptimizer;
 import ru.histone.optimizer.AstMarker;
 import ru.histone.optimizer.AstOptimizer;
 import ru.histone.parser.Parser;
+import ru.histone.resourceloaders.ContentType;
 import ru.histone.resourceloaders.Resource;
 import ru.histone.resourceloaders.ResourceLoader;
 import ru.histone.utils.IOUtils;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Reader;
-import java.io.StringWriter;
-import java.io.Writer;
+import java.io.*;
 
 /**
  * Main Histone engine class. Histone template parsing/evaluation is done here.<br/>
@@ -147,7 +144,7 @@ public class Histone {
         if (resourceLoader == null) throw new IllegalStateException("Resource loader is null for Histone instance");
 
         try {
-            Resource resource = resourceLoader.load(uri, null);
+            Resource resource = resourceLoader.load(uri, null, new String[]{ContentType.TEXT});
             String baseUri = resource.getBaseHref();
 
             InputStream is = resource.getInputStream();

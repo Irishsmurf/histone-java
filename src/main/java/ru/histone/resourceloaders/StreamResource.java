@@ -21,12 +21,14 @@ import java.io.IOException;
 import java.io.InputStream;
 
 public class StreamResource implements Resource {
-    private InputStream stream;
-    private String baseHref;
+    private final InputStream stream;
+    private final String baseHref;
+    private final String contentType;
 
-    public StreamResource(InputStream stream, String baseHref) {
+    public StreamResource(InputStream stream, String baseHref, String contentType) {
         this.stream = stream;
         this.baseHref = baseHref;
+        this.contentType = contentType;
     }
 
     @Override
@@ -37,6 +39,11 @@ public class StreamResource implements Resource {
     @Override
     public String getBaseHref() {
         return baseHref;
+    }
+
+    @Override
+    public String getContentType() {
+        return contentType;
     }
 
     @Override
