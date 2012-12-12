@@ -17,23 +17,29 @@ package ru.histone.resourceloaders;
 
 import ru.histone.utils.IOUtils;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class StreamResource implements Resource {
-    private final InputStream stream;
+/**
+ * @author sazonovkirill@gmail.com
+ */
+public class StringResource implements Resource {
+    private final String content;
     private final String baseHref;
     private final String contentType;
+    private final InputStream inputStream;
 
-    public StreamResource(InputStream stream, String baseHref, String contentType) {
-        this.stream = stream;
+    public StringResource(String content, String baseHref, String contentType) {
+        this.content = content;
         this.baseHref = baseHref;
         this.contentType = contentType;
+        this.inputStream = new ByteArrayInputStream(content.getBytes());
     }
 
     @Override
     public InputStream getInputStream() throws IOException {
-        return stream;
+        return inputStream;
     }
 
     @Override
@@ -48,6 +54,6 @@ public class StreamResource implements Resource {
 
     @Override
     public void close() throws IOException {
-        IOUtils.closeQuietly(stream);
+        IOUtils.closeQuietly(inputStream);
     }
 }

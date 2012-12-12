@@ -66,17 +66,17 @@ import java.util.concurrent.ConcurrentHashMap;
 public class HistoneBuilder {
     private static final Logger log = LoggerFactory.getLogger(HistoneBuilder.class);
 
-//    private Gson gson = new Gson();
+    //    private Gson gson = new Gson();
     private NodeFactory nodeFactory = new NodeFactory(new ObjectMapper());
 
     private ConcurrentHashMap<GlobalProperty, Node> globalProperties = new ConcurrentHashMap<GlobalProperty, Node>();
     private ConcurrentHashMap<String, GlobalFunction> globalFunctions = new ConcurrentHashMap<String, GlobalFunction>();
     private ConcurrentHashMap<Class<? extends Node>, ConcurrentHashMap<String, NodeFunction>> nodeFunctions = new ConcurrentHashMap<Class<? extends Node>, ConcurrentHashMap<String, NodeFunction>>();
     private ResourceLoader resourceLoader = new DefaultResourceLoader();
-    private ClientConnectionManager  httpClientConnectionManager = new BasicClientConnectionManager(SchemeRegistryFactory.createDefault());
+    private ClientConnectionManager httpClientConnectionManager = new BasicClientConnectionManager(SchemeRegistryFactory.createDefault());
 
     public HistoneBuilder() {
-    	((DefaultResourceLoader)resourceLoader).setHttpClientConnectionManager(httpClientConnectionManager);
+        ((DefaultResourceLoader) resourceLoader).setHttpClientConnectionManager(httpClientConnectionManager);
     }
 
     /**
@@ -104,14 +104,14 @@ public class HistoneBuilder {
 
     /**
      * Set custom Http client connection manager
-     * 
+     *
      * @param httpClientConnectionManager
      */
     public void setHttpClientConnectionManager(ClientConnectionManager httpClientConnectionManager) {
-		this.httpClientConnectionManager = httpClientConnectionManager;
-	}
+        this.httpClientConnectionManager = httpClientConnectionManager;
+    }
 
-	/**
+    /**
      * Update all global functions in HistoneBuilder<br/>
      * This method removes all previously added global functions and adds new from specified Set
      *
@@ -307,7 +307,7 @@ public class HistoneBuilder {
         log.debug("Building new Histone template engine");
 
         TokenizerFactory tokenizerFactory = new TokenizerFactory(HistoneTokensHolder.getTokens());
-        Parser parser = new Parser(tokenizerFactory,nodeFactory);
+        Parser parser = new Parser(tokenizerFactory, nodeFactory);
 
         EvaluatorBootstrap evaluatorBootstrap = new EvaluatorBootstrap();
         evaluatorBootstrap.setNodeFactory(nodeFactory);
@@ -325,7 +325,7 @@ public class HistoneBuilder {
         NodeFunctionsManager nodeFunctionsManager = new NodeFunctionsManager(nodeFunctions);
 
         if (resourceLoader instanceof DefaultResourceLoader) {
-        	((DefaultResourceLoader)resourceLoader).setHttpClientConnectionManager(httpClientConnectionManager);
+            ((DefaultResourceLoader) resourceLoader).setHttpClientConnectionManager(httpClientConnectionManager);
         }
         evaluatorBootstrap.setResourceLoader(resourceLoader);
         evaluatorBootstrap.setGlobalFunctionsManager(globalFunctionsManager);

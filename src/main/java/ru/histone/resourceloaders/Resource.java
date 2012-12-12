@@ -41,4 +41,6 @@ public interface Resource extends Closeable {
      * @return base href value
      */
     public String getBaseHref();
+
+    public String getContentType();
 }
