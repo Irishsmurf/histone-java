@@ -48,7 +48,7 @@ public class DefaultResourceLoaderTest {
 
     @Test
     public void testSuccessfulLoad() throws IOException {
-        Resource resource = resourceLoader.load("test.txt", baseHref);
+        Resource resource = resourceLoader.load("test.txt", baseHref, new String[]{ContentType.TEXT});
         assertNotNull(resource);
 
         String content = IOUtils.toString(resource.getInputStream());
@@ -59,21 +59,21 @@ public class DefaultResourceLoaderTest {
     public void testWrongFileLocation() throws IOException {
         thrown.expect(ResourceLoadException.class);
         thrown.expectMessage(containsString("Can't read file"));
-        resourceLoader.load("unknown.txt", baseHref);
+        resourceLoader.load("unknown.txt", baseHref, new String[]{ContentType.TEXT});
     }
 
     @Test
     public void testBaseLocation() throws IOException {
         thrown.expect(ResourceLoadException.class);
         thrown.expectMessage(containsString("Can't read file"));
-        resourceLoader.load("test.txt", "file:/tmp/unknown/");
+        resourceLoader.load("test.txt", "file:/tmp/unknown/", new String[]{ContentType.TEXT});
     }
 
     @Test
     public void testNullBaseLocation() throws IOException {
         thrown.expect(ResourceLoadException.class);
         thrown.expectMessage(containsString("Base HREF is empty and resource location is not absolute!"));
-        resourceLoader.load("test.txt", null);
+        resourceLoader.load("test.txt", null, new String[]{ContentType.TEXT});
     }
 
 

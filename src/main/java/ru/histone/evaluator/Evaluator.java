@@ -34,6 +34,7 @@ import ru.histone.evaluator.nodes.*;
 import ru.histone.parser.AstNodeType;
 import ru.histone.parser.Parser;
 import ru.histone.parser.ParserException;
+import ru.histone.resourceloaders.ContentType;
 import ru.histone.resourceloaders.Resource;
 import ru.histone.resourceloaders.ResourceLoadException;
 import ru.histone.resourceloaders.ResourceLoader;
@@ -430,7 +431,7 @@ public class Evaluator {
                 Histone.runtime_log_info("Resource already imported.");
                 return nodeFactory.UNDEFINED;
             } else {
-                resource = resourceLoader.load(path, currentBaseURI);
+                resource = resourceLoader.load(path, currentBaseURI, new String[]{ContentType.TEXT});
                 if (resource == null) {
                     Histone.runtime_log_warn("Can't import resource by path = '{}'. Resource was not found.", path);
                     return nodeFactory.UNDEFINED;
@@ -605,7 +606,7 @@ public class Evaluator {
         InputStream resourceStream = null;
         BufferedReader reader = null;
         try {
-            resource = resourceLoader.load(path, currentBaseURI, requestMap);
+            resource = resourceLoader.load(path, currentBaseURI, new String[]{ContentType.TEXT}, requestMap);
             if (resource == null) {
                 Histone.runtime_log_warn(String.format("Can't load resource by path = '%s'. Resource was not found.", path));
                 return nodeFactory.UNDEFINED;
@@ -683,7 +684,7 @@ public class Evaluator {
         Resource resource = null;
         InputStream resourceStream = null;
         try {
-            resource = resourceLoader.load(path, currentBaseURI, requestMap);
+            resource = resourceLoader.load(path, currentBaseURI, new String[]{ContentType.TEXT}, requestMap);
             if (resource == null) {
                 Histone.runtime_log_warn(String.format("Can't load resource by path = '%s'. Resource was not found.", path));
                 return nodeFactory.UNDEFINED;
@@ -730,7 +731,7 @@ public class Evaluator {
         Resource resource = null;
         InputStream resourceStream = null;
         try {
-            resource = resourceLoader.load(path, currentBaseURI, requestMap);
+            resource = resourceLoader.load(path, currentBaseURI, new String[]{ContentType.TEXT}, requestMap);
             if (resource == null) {
                 Histone.runtime_log_warn("Can't include resource by path = '{}'. Resource was not found.", path);
                 return nodeFactory.UNDEFINED;

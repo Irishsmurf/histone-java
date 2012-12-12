@@ -59,12 +59,12 @@ public class ResourceLoaderSubtype_A implements ResourceLoader {
 //    }
 
     @Override
-    public Resource load(String href, String baseHref, Node... args) throws ResourceLoadException {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    public Resource load(String href, String baseHref, String[] contentTypes, Node... args) throws ResourceLoadException {
+        return null;
     }
 
     @Override
     public String resolveFullPath(String href, String baseHref) throws ResourceLoadException {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        return null;
     }
 }

@@ -36,13 +36,14 @@ public interface ResourceLoader {
     /**
      * Load resource using specified href, baseHref and arguments
      *
-     * @param href     resource location
-     * @param baseHref base href for loading
-     * @param args     additional custom arguments for resource loader
+     * @param href         resource location
+     * @param baseHref     base href for loading
+     * @param contentTypes types of resources
+     * @param args         additional custom arguments for resource loader
      * @return resource object
      * @throws ResourceLoadException if errors occur
      */
-    public Resource load(String href, String baseHref, Node... args) throws ResourceLoadException;
+    public Resource load(String href, String baseHref, String[] contentTypes, Node... args) throws ResourceLoadException;
 
     /**
      * Return full path for specified resource href and base href

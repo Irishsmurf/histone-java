@@ -15,6 +15,7 @@
  */
 package ru.histone.resourceloaders;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.http.Header;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
@@ -31,20 +32,17 @@ import org.apache.http.impl.conn.SchemeRegistryFactory;
 import org.apache.http.protocol.HttpContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import ru.histone.HistoneTokensHolder;
 import ru.histone.evaluator.functions.node.object.ToQueryString;
 import ru.histone.evaluator.nodes.Node;
+import ru.histone.evaluator.nodes.NodeFactory;
 import ru.histone.evaluator.nodes.ObjectHistoneNode;
+import ru.histone.parser.Parser;
+import ru.histone.tokenizer.TokenizerFactory;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.net.URI;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Histone default resource loader<br/>
@@ -52,7 +50,12 @@ import java.util.Map;
  */
 public class DefaultResourceLoader implements ResourceLoader {
     private static final Logger log = LoggerFactory.getLogger(DefaultResourceLoader.class);
-    private ClientConnectionManager  httpClientConnectionManager = new BasicClientConnectionManager(SchemeRegistryFactory.createDefault());
+
+    private ClientConnectionManager httpClientConnectionManager = new BasicClientConnectionManager(SchemeRegistryFactory.createDefault());
+
+    private TokenizerFactory tokenizerFactory = new TokenizerFactory(HistoneTokensHolder.getTokens());
+    private NodeFactory nodeFactory = new NodeFactory(new ObjectMapper());
+    private Parser parser = new Parser(tokenizerFactory, nodeFactory);
 
     @Override
     public String resolveFullPath(String location, String baseLocation) throws ResourceLoadException {
@@ -63,14 +66,15 @@ public class DefaultResourceLoader implements ResourceLoader {
         return fullLocation.toString();
     }
 
-    @Override
-    public Resource load(String location, String baseLocation, Node... args) throws ResourceLoadException {
+    /**
+     * {@inheritDoc}
+     */
+    protected Resource load(String location, String baseLocation, Node... args) throws ResourceLoadException {
         log.debug("Trying to load resource from location={}, with baseLocation={}", new Object[]{location, baseLocation});
 
         URI fullLocation = makeFullLocation(location, baseLocation);
 
         Resource resource = null;
-
         if (fullLocation.getScheme().equals("file")) {
             resource = loadFileResource(fullLocation);
         } else if (fullLocation.getScheme().equals("http")) {
@@ -81,6 +85,21 @@ public class DefaultResourceLoader implements ResourceLoader {
 
 
         return resource;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Resource load(String href, String baseHref, String[] contentTypes, Node... args) throws ResourceLoadException {
+        final Set<String> contentTypesSet = new HashSet<String>();
+        contentTypesSet.addAll(Arrays.asList(contentTypes));
+
+        if (contentTypesSet.contains(ContentType.TEXT)) {
+            return load(href, baseHref, args);
+        } else {
+            throw new UnsupportedContentTypeException(contentTypes, getClass());
+        }
     }
 
     private Resource loadFileResource(URI location) {
@@ -97,37 +116,37 @@ public class DefaultResourceLoader implements ResourceLoader {
             throw new ResourceLoadException(String.format("Can't read file '%s'", location.toString()));
         }
 
-        return new StreamResource(stream, location.toString());
+        return new StreamResource(stream, location.toString(), ContentType.TEXT);
     }
 
-	private Resource loadHttpResource(URI location, Node[] args) {
+    private Resource loadHttpResource(URI location, Node[] args) {
         URI newLocation = URI.create(location.toString().replace("#fragment", ""));
-		final Map<Object, Node> requestMap = args != null && args.length != 0 && args[0] instanceof ObjectHistoneNode ? ((ObjectHistoneNode) args[0])
-				.getElements() : new HashMap<Object, Node>();
-		Node methodNode =  requestMap.get("method");
+        final Map<Object, Node> requestMap = args != null && args.length != 0 && args[0] instanceof ObjectHistoneNode ? ((ObjectHistoneNode) args[0])
+                .getElements() : new HashMap<Object, Node>();
+        Node methodNode = requestMap.get("method");
         final String method = methodNode != null && methodNode.isString() && methodNode.getAsString().getValue().length() != 0 ? requestMap
                 .get("method").getAsString().getValue() : "GET";
-		final Map<String, String> headers = new HashMap<String, String>();
-		if (requestMap.containsKey("headers")) {
-			for (Map.Entry<Object, Node> en : requestMap.get("headers").getAsObject().getElements().entrySet()) {
-			    String value = null;
-			    if (en.getValue().isUndefined())
-			        value = "undefined";
-			    else 
-			        value = en.getValue().getAsString().getValue();
-				headers.put(en.getKey().toString(), value);
-			}
-		}
-		
-		final Map<String, String> filteredHeaders = filterRequestHeaders(headers);
-		final Node data = requestMap.containsKey("data") ? (Node) requestMap.get("data") : null;
+        final Map<String, String> headers = new HashMap<String, String>();
+        if (requestMap.containsKey("headers")) {
+            for (Map.Entry<Object, Node> en : requestMap.get("headers").getAsObject().getElements().entrySet()) {
+                String value = null;
+                if (en.getValue().isUndefined())
+                    value = "undefined";
+                else
+                    value = en.getValue().getAsString().getValue();
+                headers.put(en.getKey().toString(), value);
+            }
+        }
 
-		// Prepare request
-		HttpRequestBase request = new HttpGet(newLocation);
-		if ("POST".equalsIgnoreCase(method)) {
-			request = new HttpPost(newLocation);
-		} else if ("PUT".equalsIgnoreCase(method)) {
-			request = new HttpPut(newLocation);
+        final Map<String, String> filteredHeaders = filterRequestHeaders(headers);
+        final Node data = requestMap.containsKey("data") ? (Node) requestMap.get("data") : null;
+
+        // Prepare request
+        HttpRequestBase request = new HttpGet(newLocation);
+        if ("POST".equalsIgnoreCase(method)) {
+            request = new HttpPost(newLocation);
+        } else if ("PUT".equalsIgnoreCase(method)) {
+            request = new HttpPut(newLocation);
         } else if ("DELETE".equalsIgnoreCase(method)) {
             request = new HttpDelete(newLocation);
         } else if ("TRACE".equalsIgnoreCase(method)) {
@@ -138,8 +157,8 @@ public class DefaultResourceLoader implements ResourceLoader {
             request = new HttpPatch(newLocation);
         } else if ("HEAD".equalsIgnoreCase(method)) {
             request = new HttpHead(newLocation);
-        } else if (method != null && !"GET".equalsIgnoreCase(method)){
-            return new StreamResource(null, location.toString());
+        } else if (method != null && !"GET".equalsIgnoreCase(method)) {
+            return new StreamResource(null, location.toString(), ContentType.TEXT);
         }
 
         for (Map.Entry<String, String> en : filteredHeaders.entrySet()) {
@@ -147,11 +166,11 @@ public class DefaultResourceLoader implements ResourceLoader {
         }
         if (("POST".equalsIgnoreCase(method) || "PUT".equalsIgnoreCase(method)) && data != null) {
             String stringData = null;
-            String contentType = filteredHeaders.get("content-type") == null ? "": filteredHeaders.get("content-type");
-            if(data.isObject()){
+            String contentType = filteredHeaders.get("content-type") == null ? "" : filteredHeaders.get("content-type");
+            if (data.isObject()) {
                 stringData = ToQueryString.toQueryString(data.getAsObject(), null, "&");
                 contentType = "application/x-www-form-urlencoded";
-            }else{
+            } else {
                 stringData = data.getAsString().getValue();
             }
             if (stringData != null) {
@@ -165,43 +184,43 @@ public class DefaultResourceLoader implements ResourceLoader {
             }
             request.setHeader("Content-Type", contentType);
         }
-		if (request.getHeaders("content-Type").length == 0) {
-            request.setHeader("Content-Type","");
-		}
+        if (request.getHeaders("content-Type").length == 0) {
+            request.setHeader("Content-Type", "");
+        }
 
-		// Execute request
-		HttpClient client = new DefaultHttpClient(httpClientConnectionManager);
-		((AbstractHttpClient) client).setRedirectStrategy(new RedirectStrategy());
-		InputStream input = null;
-		try {
-			HttpResponse response = client.execute(request);
-			input = response.getEntity() == null ? null: response.getEntity().getContent();
-		} catch (IOException e) {
-			throw new ResourceLoadException(String.format("Can't load resource '%s'", location.toString()));
-		} finally {
-		}
-		return new StreamResource(input, location.toString());
-	}
-	
-	private Map<String, String> filterRequestHeaders(Map<String, String> requestHeaders) {
-		String[] prohibited = { "accept-charset", "accept-encoding", "access-control-request-headers", "access-control-request-method",
-				"connection", "content-length", "cookie", "cookie2", "content-transfer-encoding", "date", "expect", "host", "keep-alive",
-				"origin", "referer", "te", "trailer", "transfer-encoding", "upgrade", "user-agent", "via" };
-		Map<String, String> headers = new HashMap<String, String>();
-		for (Map.Entry<String, String> entry : requestHeaders.entrySet()) {
-			if (entry.getValue() == null)
-				continue;
-			String name = entry.getKey().toLowerCase();
-			if (name.indexOf("sec-") == 0)
-				continue;
-			if (name.indexOf("proxy-") == 0)
-				continue;
-			if (Arrays.asList(prohibited).contains(name))
-				continue;
-			headers.put(entry.getKey(), entry.getValue());
-		}
-		return headers;
-	}
+        // Execute request
+        HttpClient client = new DefaultHttpClient(httpClientConnectionManager);
+        ((AbstractHttpClient) client).setRedirectStrategy(new RedirectStrategy());
+        InputStream input = null;
+        try {
+            HttpResponse response = client.execute(request);
+            input = response.getEntity() == null ? null : response.getEntity().getContent();
+        } catch (IOException e) {
+            throw new ResourceLoadException(String.format("Can't load resource '%s'", location.toString()));
+        } finally {
+        }
+        return new StreamResource(input, location.toString(), ContentType.TEXT);
+    }
+
+    private Map<String, String> filterRequestHeaders(Map<String, String> requestHeaders) {
+        String[] prohibited = {"accept-charset", "accept-encoding", "access-control-request-headers", "access-control-request-method",
+                "connection", "content-length", "cookie", "cookie2", "content-transfer-encoding", "date", "expect", "host", "keep-alive",
+                "origin", "referer", "te", "trailer", "transfer-encoding", "upgrade", "user-agent", "via"};
+        Map<String, String> headers = new HashMap<String, String>();
+        for (Map.Entry<String, String> entry : requestHeaders.entrySet()) {
+            if (entry.getValue() == null)
+                continue;
+            String name = entry.getKey().toLowerCase();
+            if (name.indexOf("sec-") == 0)
+                continue;
+            if (name.indexOf("proxy-") == 0)
+                continue;
+            if (Arrays.asList(prohibited).contains(name))
+                continue;
+            headers.put(entry.getKey(), entry.getValue());
+        }
+        return headers;
+    }
 
     public URI makeFullLocation(String location, String baseLocation) {
         if (location == null) {
@@ -214,10 +233,10 @@ public class DefaultResourceLoader implements ResourceLoader {
             throw new ResourceLoadException("Base HREF is empty and resource location is not absolute!");
         }
 
-		if (baseLocation != null) {
-			baseLocation = baseLocation.replace("\\", "/");
-			baseLocation = baseLocation.replace("file://", "file:/");
-		}
+        if (baseLocation != null) {
+            baseLocation = baseLocation.replace("\\", "/");
+            baseLocation = baseLocation.replace("file://", "file:/");
+        }
         URI baseLocationURI = (baseLocation != null) ? URI.create(baseLocation) : null;
 
         if (!locationURI.isAbsolute() && baseLocation != null) {
@@ -231,13 +250,13 @@ public class DefaultResourceLoader implements ResourceLoader {
         return locationURI;
     }
 
-	public ClientConnectionManager getHttpClientConnectionManager() {
-		return httpClientConnectionManager;
-	}
+    public ClientConnectionManager getHttpClientConnectionManager() {
+        return httpClientConnectionManager;
+    }
 
-	public void setHttpClientConnectionManager(ClientConnectionManager httpClientConnectionManager) {
-		this.httpClientConnectionManager = httpClientConnectionManager;
-	}
+    public void setHttpClientConnectionManager(ClientConnectionManager httpClientConnectionManager) {
+        this.httpClientConnectionManager = httpClientConnectionManager;
+    }
 
 
     private class RedirectStrategy extends DefaultRedirectStrategy {
@@ -263,5 +282,5 @@ public class DefaultResourceLoader implements ResourceLoader {
             }
         }
     }
-    
+
 }

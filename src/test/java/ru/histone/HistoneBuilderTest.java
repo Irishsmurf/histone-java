@@ -25,10 +25,7 @@ import ru.histone.evaluator.functions.node.NodeFunctionExecutionException;
 import ru.histone.evaluator.nodes.Node;
 import ru.histone.evaluator.nodes.NodeFactory;
 import ru.histone.evaluator.nodes.StringHistoneNode;
-import ru.histone.resourceloaders.Resource;
-import ru.histone.resourceloaders.ResourceLoadException;
-import ru.histone.resourceloaders.ResourceLoader;
-import ru.histone.resourceloaders.StreamResource;
+import ru.histone.resourceloaders.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.UnsupportedEncodingException;
@@ -106,13 +103,13 @@ public class HistoneBuilderTest {
         };
         resourceLoader1 = new ResourceLoader() {
             @Override
-            public Resource load(String href, String baseHref, Node... args) throws ResourceLoadException {
+            public Resource load(String href, String baseHref, String[] contentType, Node... args) throws ResourceLoadException {
                 if (!href.equals("r1:/test.txt")) {
                     throw new ResourceLoadException("Resource not found");
                 }
 
                 try {
-                    return new StreamResource(new ByteArrayInputStream("test".getBytes("UTF-8")), "r1:/test.txt");
+                    return new StreamResource(new ByteArrayInputStream("test".getBytes("UTF-8")), "r1:/test.txt", ContentType.TEXT);
                 } catch (UnsupportedEncodingException e) {
                     throw new ResourceLoadException("Error", e);
                 }
@@ -125,13 +122,13 @@ public class HistoneBuilderTest {
         };
         resourceLoader2 = new ResourceLoader() {
             @Override
-            public Resource load(String href, String baseHref, Node... args) throws ResourceLoadException {
+            public Resource load(String href, String baseHref, String[] contentType, Node... args) throws ResourceLoadException {
                 if (!href.equals("r2:/test.txt")) {
                     throw new ResourceLoadException("Resource not found");
                 }
 
                 try {
-                    return new StreamResource(new ByteArrayInputStream("TEST".getBytes("UTF-8")), "r2:/test.txt");
+                    return new StreamResource(new ByteArrayInputStream("TEST".getBytes("UTF-8")), "r2:/test.txt", ContentType.TEXT);
                 } catch (UnsupportedEncodingException e) {
                     throw new ResourceLoadException("Error", e);
                 }
@@ -308,7 +305,6 @@ public class HistoneBuilderTest {
     @Test
     public void tttttt() throws HistoneException {
         HistoneBuilder builder = new HistoneBuilder();
-
 
 
     }
