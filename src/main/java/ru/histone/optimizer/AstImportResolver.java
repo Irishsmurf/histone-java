@@ -15,13 +15,29 @@
  */
 package ru.histone.optimizer;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import ru.histone.Histone;
+import ru.histone.HistoneException;
+import ru.histone.evaluator.nodes.NodeFactory;
+import ru.histone.parser.AstNodeType;
 import ru.histone.parser.Parser;
+import ru.histone.parser.ParserException;
+import ru.histone.resourceloaders.Resource;
+import ru.histone.resourceloaders.ResourceLoadException;
 import ru.histone.resourceloaders.ResourceLoader;
+import ru.histone.utils.IOUtils;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
 
 public class AstImportResolver {
     private static final Logger log = LoggerFactory.getLogger(AstImportResolver.class);
+    private NodeFactory nodeFactory = new NodeFactory(new ObjectMapper());
 
     private ResourceLoader resourceLoader;
     private Parser parser;
@@ -31,18 +47,18 @@ public class AstImportResolver {
         this.resourceLoader = resourceLoader;
     }
 
-/*    public ArrayNode resolve(ArrayNode ast) throws HistoneException {
+    public ArrayNode resolve(ArrayNode ast) throws HistoneException {
         ImportResolverContext context = new ImportResolverContext();
         return resolveInternal(ast, context);
     }
 
     private ArrayNode resolveInternal(ArrayNode ast, ImportResolverContext context) throws HistoneException {
-        ArrayNode result = new ArrayNode();
+        ArrayNode result = nodeFactory.jsonArray();
 
         for (JsonNode element : ast) {
             JsonNode node = scanInstructions(element, context);
-            if (node.isArrayNode() && node.getAsArrayNode().get(0).isArrayNode()) {
-                result.addAll(node.getAsArrayNode());
+            if (node.isArray() && node.get(0).isArray()) {
+                result.addAll((ArrayNode)node);
             } else {
                 result.add(node);
             }
@@ -56,12 +72,12 @@ public class AstImportResolver {
             return element;
         }
 
-        if (!element.isArrayNode()) {
+        if (!element.isArray()) {
             Histone.runtime_log_warn("Invalid JSON element! Neither 'string', nor 'array'. Element: '{}'", element.toString());
             return element;
         }
 
-        ArrayNode astArray = element.getAsArrayNode();
+        ArrayNode astArray = (ArrayNode) element;
 
         int nodeType = getNodeType(astArray);
         switch (nodeType) {
@@ -78,18 +94,19 @@ public class AstImportResolver {
     private ArrayNode resolveImport(JsonNode pathElement, ImportResolverContext context) throws HistoneException {
         if (!isString(pathElement)) {
             Histone.runtime_log_warn("Invalid path to imported template: '{}'", pathElement.toString());
-            return AstNodeFactory.createNode(AstNodeType.STRING, "");
+            return nodeFactory.jsonArray(AstNodeType.STRING);
         }
-        String path = pathElement.getAsJsonPrimitive().getAsString();
+        String path = pathElement.asText();
         Resource resource = null;
         InputStream resourceStream = null;
         try {
             String currentBaseURI = getContextBaseURI(context);
             String resourceFullPath = resourceLoader.resolveFullPath(path, currentBaseURI);
 
-            if (context.hasImportedResource(resourceFullPath.toString())) {
+            if (context.hasImportedResource(resourceFullPath)) {
                 Histone.runtime_log_info("Resource already imported.");
-                return AstNodeFactory.createNode(AstNodeType.STRING, "");
+                //return AstNodeFactory.createNode(AstNodeType.STRING, "");
+                return nodeFactory.jsonArray(AstNodeType.STRING);
             } else {
                 if (currentBaseURI == null) {
 //                    if (!resourceLoader.isCacheable(path, null)) {
@@ -102,40 +119,42 @@ public class AstImportResolver {
 //                        return AstNodeFactory.createNode(AstNodeType.IMPORT, fullPath);
 //                    }
                 }
-                resource = resourceLoader.load(path, currentBaseURI);
+                resource = resourceLoader.load(path, currentBaseURI, null);
 
                 if (resource == null) {
                     Histone.runtime_log_warn("Can't import resource by path = '{}'. Resource was not found.", path);
-                    return AstNodeFactory.createNode(AstNodeType.STRING, "");
+                    //return AstNodeFactory.createNode(AstNodeType.STRING, "");
+                    return nodeFactory.jsonArray(AstNodeType.STRING);
                 }
                 resourceStream = resource.getInputStream();
                 if (resourceStream == null) {
                     Histone.runtime_log_warn("Can't import resource by path = '{}'. Resource is unreadable", path);
-                    return AstNodeFactory.createNode(AstNodeType.STRING, "");
+                    //return AstNodeFactory.createNode(AstNodeType.STRING, "");
+                    return nodeFactory.jsonArray(AstNodeType.STRING);
                 }
                 String templateContent = IOUtils.toString(resourceStream); //yeah... full file reading, because of our tokenizer is regexp-based :(
 
                 // Add this resource full path to context
-                context.addImportedResource(resourceFullPath.toString());
+                context.addImportedResource(resourceFullPath);
 
-                ArrayNode parseResult = parser.parse(templateContent).getAsArrayNode();
+                ArrayNode parseResult = parser.parse(templateContent);
                 URI resourceURI = null; //TODO: refactor //resource.getURI();
                 if (resourceURI != null && resourceURI.isAbsolute() && !resourceURI.isOpaque()) {
                     context.setBaseURI(resourceURI.resolve("").toString());
                 }
 
 
-                ArrayNode result = new ArrayNode();
+                ArrayNode result =  nodeFactory.jsonArray();
                 for (JsonNode elem : parseResult) {
-                    if (elem.isArrayNode()) {
-                        int nodeType = getNodeType(elem.getAsArrayNode());
+                    if (elem.isArray()) {
+                        int nodeType = getNodeType((ArrayNode) elem);
                         switch (nodeType) {
                             case AstNodeType.MACRO:
                                 result.add(elem);
                                 break;
                             case AstNodeType.IMPORT:
-                                ArrayNode resolvedAst = resolveImport(elem.getAsArrayNode().get(1), context);
-                                if (resolvedAst.get(0).isArrayNode()) {
+                                ArrayNode resolvedAst = resolveImport(elem.get(1), context);
+                                if (resolvedAst.get(0).isArray()) {
                                     result.addAll(resolvedAst);
                                 } else {
                                     result.add(resolvedAst);
@@ -148,19 +167,22 @@ public class AstImportResolver {
                     }
                 }
 
-                context.setBaseURI(currentBaseURI == null ? null : currentBaseURI.toString());
+                context.setBaseURI(currentBaseURI == null ? null : currentBaseURI);
 
                 return result;
             }
         } catch (ResourceLoadException e) {
             Histone.runtime_log_warn_e("Resource import failed! Unresolvable resource.", e);
-            return AstNodeFactory.createNode(AstNodeType.STRING, "");
+            //return AstNodeFactory.createNode(AstNodeType.STRING, "");
+            return nodeFactory.jsonArray(AstNodeType.STRING);
         } catch (IOException e) {
             Histone.runtime_log_warn_e("Resource import failed! Resource reading error.", e);
-            return AstNodeFactory.createNode(AstNodeType.STRING, "");
+            //return AstNodeFactory.createNode(AstNodeType.STRING, "");
+            return nodeFactory.jsonArray(AstNodeType.STRING);
         } catch (ParserException e) {
             Histone.runtime_log_warn_e("Resource import failed! Resource parsing error.", e);
-            return AstNodeFactory.createNode(AstNodeType.STRING, "");
+            //return AstNodeFactory.createNode(AstNodeType.STRING, "");
+            return nodeFactory.jsonArray(AstNodeType.STRING);
         } finally {
             IOUtils.closeQuietly(resourceStream, log);
             IOUtils.closeQuietly(resource, log);
@@ -168,11 +190,11 @@ public class AstImportResolver {
     }
 
     private boolean isString(JsonNode element) {
-        return element.isJsonPrimitive() && element.getAsJsonPrimitive().isString();
+        return element.isTextual();
     }
 
     private int getNodeType(ArrayNode astArray) {
-        return astArray.get(0).getAsJsonPrimitive().getAsInt();
+        return astArray.get(0).asInt();
     }
 
     private String getContextBaseURI(ImportResolverContext context) {
@@ -182,5 +204,5 @@ public class AstImportResolver {
         }
         return value;
     }
-      */
+
 }

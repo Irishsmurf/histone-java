@@ -20,6 +20,7 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import ru.histone.Histone;
+import ru.histone.HistoneBuilder;
 import ru.histone.HistoneException;
 import ru.histone.utils.IOUtils;
 
@@ -30,7 +31,7 @@ import java.io.StringReader;
 @Ignore
 public class AstOptimizationTest {
     private Histone histone;
-//    private Gson gson;
+    //private Gson gson;
 
     @Before
     public void before() throws HistoneException {
@@ -177,18 +178,24 @@ public class AstOptimizationTest {
 
     @Test
     public void test() throws HistoneException, IOException {
+
+
+        HistoneBuilder histoneBuilder = new HistoneBuilder();
+        histone = histoneBuilder.build();
+//        HistoneBootstrap  histoneBootstrap = new HistoneBootstrap();
+  //      histone = new Histone(histoneBootstrap);
         String input = "{{for v in array(1,2,3)}} {{if v is 1}}te{{vv}}st{{/if}} {{/for}}";
-        input = "A{{import 'file:///Users/psalnikov/Work/Admin/src/main/webapp/index.html'}}B" +
+//        input = "A{{import 'file:///Users/psalnikov/Work/Admin/src/main/webapp/index.html'}}B" +
 //                "{{macro test2()}} ZZ{{self.arguments}}XX{{global.ttt}}YY {{/macro}}" +
 //                "{{macro test(a,b)}} AA{{self.arguments}}BB{{a}}CC{{test2(0)}}DD {{/macro}}" +
 
-                "";
+ //               "";
 
 //        input = "{{object('arguments':array(1,2,'ttt'))}} {{test(1,2,'ttt')}}";
 //        input = "{{x}} {{global.x}} {{this.x}} {{global.uniqueId()}} {{uniqueId()}} {{'test'.toUpperCase()}} {{(1+2-4).abs()}}";
 //        input  = "{{for x in object('arguments':array(1,2,3)).arguments}} {{x}} {{/for}}";
 //        input = "{{call test(1,2)}}ABC{{x}}ZXY{{/call}}";
-        FileInputStream fis = new FileInputStream("/Users/psalnikov/Work/Admin/src/main/webapp/index.html");
+        FileInputStream fis = new FileInputStream("C:\\Projects\\histon-java\\src\\test\\resources\\relative_urls\\template.tpl");
         input = IOUtils.toString(fis);
 //        input="{{var extName = requestParams.ext}}";
 
@@ -197,15 +204,15 @@ public class AstOptimizationTest {
 
         ArrayNode normalAst = histone.parseTemplateToAST(new StringReader(input));
         System.out.println("\n\nNormal AST");
-//        System.out.println(gson.toJson(normalAst));
+        System.out.println(normalAst.toString());
 
         String normalResult = histone.evaluateAST(normalAst);
         System.out.println("\nNormal Result");
         System.out.println(normalResult);
 
-//        ArrayNode importsAst = histone.resolveImports(normalAst);
-//        System.out.println("\n\nImports AST");
-//        System.out.println(gson.toJson(importsAst));
+        ArrayNode importsAst = histone.optimizeAST(normalAst);
+        System.out.println("\n\nImports AST");
+        System.out.println(importsAst.toString());
 //
 //        ArrayNode markedAst = histone.markAst(importsAst);
 //        System.out.println("\n\nMarked AST");
