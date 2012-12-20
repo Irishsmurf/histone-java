@@ -53,7 +53,6 @@ public class SpringContextTest {
         assertNotNull(context);
         assertNotNull(histone);
 
-
         histone = context.getBean("histone", Histone.class);
         assertNotNull(histone);
     }
@@ -75,7 +74,7 @@ public class SpringContextTest {
     @Test
     public void general() throws HistoneException, IOException {
         String input = "a {{true}} b {{x}} c";
-        JsonNode context = jackson.readTree("{'x':123}");
+        JsonNode context = jackson.readTree("{\"x\":123}");
         String output = histone.evaluate(input, context);
         assertEquals("a true b 123 c", output);
     }
@@ -107,5 +106,4 @@ public class SpringContextTest {
         String output = histone.evaluate(input);
         assertEquals("a resolver_a_result b resolver_b_result c", output);
     }
-
-}
+ }
