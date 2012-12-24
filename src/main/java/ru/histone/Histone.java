@@ -88,10 +88,12 @@ public class Histone {
         return parser.parse(inputString);
     }
 
-    public ArrayNode optimizeAST(ArrayNode templateAST) throws HistoneException {
-//        ArrayNode importsResolved = astImportResolver.resolve(templateAST);
+    public ArrayNode optimizeAST(String baseUri, ArrayNode templateAST) throws HistoneException {
+
+
+        ArrayNode importsResolved = astImportResolver.resolve(baseUri, templateAST);
 //
-//        ArrayNode markedAst = astMarker.mark(importsResolved);
+        //ArrayNode markedAst = astMarker.mark(importsResolved);
 //
 //        ArrayNode inlinedAst = astInlineOptimizer.inline(markedAst);
 //
@@ -99,7 +101,27 @@ public class Histone {
 //
 //        return optimizedAst;
 
-        throw new RuntimeException("Not implemented yet");//TODO
+        return importsResolved;
+
+        //throw new RuntimeException("Not implemented yet");//TODO
+    }
+
+    public ArrayNode optimizeAST(ArrayNode templateAST) throws HistoneException {
+        
+        
+        ArrayNode importsResolved = astImportResolver.resolve(templateAST);
+//
+        //ArrayNode markedAst = astMarker.mark(importsResolved);
+//
+//        ArrayNode inlinedAst = astInlineOptimizer.inline(markedAst);
+//
+//        ArrayNode optimizedAst = astAstOptimizer.optimize(inlinedAst);
+//
+//        return optimizedAst;
+
+        return importsResolved;
+
+        //throw new RuntimeException("Not implemented yet");//TODO
     }
 
     public String evaluateAST(ArrayNode templateAST) throws HistoneException {
