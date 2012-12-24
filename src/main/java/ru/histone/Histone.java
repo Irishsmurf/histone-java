@@ -52,11 +52,6 @@ public class Histone {
      */
     private static final Logger RUNTIME_LOG = LoggerFactory.getLogger(Histone.class.getName() + ".RUNTIME_LOG");
 
-    /**
-     * @deprecated (should be moved to GlobalProperties)
-     */
-    private static boolean devMode = false;
-
     private Parser parser;
     private Evaluator evaluator;
     private NodeFactory nodeFactory;
@@ -86,6 +81,10 @@ public class Histone {
             throw new HistoneException("Error reading input Reader", e);
         }
         return parser.parse(inputString);
+    }
+
+    public ArrayNode parseTemplateToAST(String templateString) throws HistoneException {
+        return parser.parse(templateString);
     }
 
     public ArrayNode optimizeAST(ArrayNode templateAST) throws HistoneException {
@@ -193,32 +192,13 @@ public class Histone {
     }
 
     /**
-     * Logs histone syntax error to special logger
-     *
-     * @param msg  message
-     * @param e    exception
-     * @param args arguments values that should be replaced in message
-     */
-    public static void runtime_log_error(String msg, Throwable e, Object... args) {
-        RUNTIME_LOG.error(msg, args);
-
-        StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
-        // throw new HistoneException();
-
-    }
-
-    /**
      * Logs histone syntax info to special logger
      *
      * @param msg  message
      * @param args arguments values that should be replaced in message
      */
     public static void runtime_log_info(String msg, Object... args) {
-        if (devMode) {
-            runtime_log_error(msg, null, args);
-        } else {
-            RUNTIME_LOG.info(msg, args);
-        }
+        RUNTIME_LOG.info(msg, args);
     }
 
     /**
@@ -229,11 +209,7 @@ public class Histone {
      */
 
     public static void runtime_log_warn(String msg, Object... args) {
-        if (devMode) {
-            runtime_log_error(msg, null, args);
-        } else {
-            RUNTIME_LOG.warn(msg, args);
-        }
+        RUNTIME_LOG.warn(msg, args);
     }
 
     /**
@@ -245,11 +221,8 @@ public class Histone {
      */
 
     public static void runtime_log_warn_e(String msg, Throwable e, Object... args) {
-        if (devMode) {
-            runtime_log_error(msg, e, args);
-        } else {
-            RUNTIME_LOG.warn(msg, e, args);
-        }
+        RUNTIME_LOG.warn(msg, args);
+        RUNTIME_LOG.warn(msg, e);
     }
 
 }
