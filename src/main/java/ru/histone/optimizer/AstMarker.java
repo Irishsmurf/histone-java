@@ -16,8 +16,8 @@
 package ru.histone.optimizer;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.IntNode;
 import ru.histone.Histone;
 import ru.histone.HistoneException;
 import ru.histone.evaluator.nodes.NodeFactory;
@@ -26,22 +26,28 @@ import ru.histone.parser.AstNodeType;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * @author sazonovkirill@gmail.com
+ */
 public class AstMarker {
-
-    private AstOptimizer optimizer;
-    private NodeFactory nodeFactory = new NodeFactory(new ObjectMapper());
-
-    public AstMarker(AstOptimizer optimizer) {
-        this.optimizer = optimizer;
-    }
+    private NodeFactory nodeFactory;
 
     public ArrayNode mark(ArrayNode ast) throws HistoneException {
+        if (ast == null) throw new IllegalArgumentException();
+
         OptimizerContext context = new OptimizerContext();
         return markInternal(ast, context);
     }
 
     private ArrayNode markInternal(ArrayNode ast, OptimizerContext context) throws HistoneException {
         ArrayNode result = nodeFactory.jsonArray();
+
+        if (ast.size() == 2 &&
+                ast.get(0).isArray() &&
+                ast.get(1).isArray() &&
+                "HISTONE".equals(ast.get(0).get(0).asText())) {
+            ast = (ArrayNode) ast.get(1);
+        }
 
         for (JsonNode element : ast) {
             JsonNode node = markNode(element, context);
@@ -51,29 +57,24 @@ public class AstMarker {
         return result;
     }
 
-//    private ArrayNode markStatements(ArrayNode statements, OptimizerContext context) throws HistoneException {
-//        ArrayNode result = nodeFactory.jsonArray();
-//
-//        result.add(markInternal(statements, context));
-//
-//        return result;
-//
-//    }
 
     private JsonNode markNode(JsonNode element, OptimizerContext context) throws HistoneException {
+        // All text nodes are returned 'as it'
         if (isString(element)) {
             return element;
         }
 
+        // We expect text nodes or array nodes. Any other are returned 'as it'
         if (!element.isArray()) {
             Histone.runtime_log_warn("Invalid JSON element! Neither 'string', nor 'array'. Element: '{}'", element.toString());
             return element;
         }
 
-        ArrayNode astArray = (ArrayNode)element;
+        ArrayNode astArray = (ArrayNode) element;
 
         int nodeType = getNodeType(astArray);
         switch (nodeType) {
+            // Constants are always safe
             case AstNodeType.TRUE:
             case AstNodeType.FALSE:
             case AstNodeType.NULL:
@@ -82,72 +83,74 @@ public class AstMarker {
             case AstNodeType.STRING:
                 return element;
 
-//            case AstNodeType.MAP:
-            //TODO:
-//            case AstNodeType.ARRAY:
-//                return markArray((ArrayNode)astArray.get(1), context);
-//
-//            case AstNodeType.OBJECT:
-//                return markObject((ArrayNode)astArray.get(1), context);
+            case AstNodeType.MAP:
+                // TODO: Map safe check is not implemented. If you have time, implement it!
+                // Now we consider all maps to be un safe.
+                return makeElementUnsafe(astArray);
+
+            case AstNodeType.IMPORT:
+                // TODO: Import safe check is not implemented. If you have time, implement it!
+                // Now we consider all imports to be un safe.
+                return makeElementUnsafe(astArray);
+
 
             case AstNodeType.ADD:
-                return markBinaryOperation(AstNodeType.ADD, (ArrayNode)astArray.get(1), (ArrayNode)astArray.get(2), context);
+                return markBinaryOperation(AstNodeType.ADD, (ArrayNode) astArray.get(1), (ArrayNode) astArray.get(2), context);
             case AstNodeType.SUB:
-                return markBinaryOperation(AstNodeType.SUB, (ArrayNode)astArray.get(1), (ArrayNode)astArray.get(2), context);
+                return markBinaryOperation(AstNodeType.SUB, (ArrayNode) astArray.get(1), (ArrayNode) astArray.get(2), context);
             case AstNodeType.MUL:
-                return markBinaryOperation(AstNodeType.MUL, (ArrayNode)astArray.get(1), (ArrayNode)astArray.get(2), context);
+                return markBinaryOperation(AstNodeType.MUL, (ArrayNode) astArray.get(1), (ArrayNode) astArray.get(2), context);
             case AstNodeType.DIV:
-                return markBinaryOperation(AstNodeType.DIV, (ArrayNode)astArray.get(1), (ArrayNode)astArray.get(2), context);
+                return markBinaryOperation(AstNodeType.DIV, (ArrayNode) astArray.get(1), (ArrayNode) astArray.get(2), context);
             case AstNodeType.MOD:
-                return markBinaryOperation(AstNodeType.MOD, (ArrayNode)astArray.get(1), (ArrayNode)astArray.get(2), context);
+                return markBinaryOperation(AstNodeType.MOD, (ArrayNode) astArray.get(1), (ArrayNode) astArray.get(2), context);
 
             case AstNodeType.NEGATE:
-                return markUnaryOperation(AstNodeType.NEGATE, (ArrayNode)astArray.get(1), context);
+                return markUnaryOperation(AstNodeType.NEGATE, (ArrayNode) astArray.get(1), context);
 
             case AstNodeType.OR:
-                return markBinaryOperation(AstNodeType.OR, (ArrayNode)astArray.get(1), (ArrayNode)astArray.get(2), context);
+                return markBinaryOperation(AstNodeType.OR, (ArrayNode) astArray.get(1), (ArrayNode) astArray.get(2), context);
             case AstNodeType.AND:
-                return markBinaryOperation(AstNodeType.AND, (ArrayNode)astArray.get(1), (ArrayNode)astArray.get(2), context);
+                return markBinaryOperation(AstNodeType.AND, (ArrayNode) astArray.get(1), (ArrayNode) astArray.get(2), context);
             case AstNodeType.NOT:
-                return markUnaryOperation(AstNodeType.NOT, (ArrayNode)astArray.get(1), context);
+                return markUnaryOperation(AstNodeType.NOT, (ArrayNode) astArray.get(1), context);
 
             case AstNodeType.EQUAL:
-                return markBinaryOperation(AstNodeType.EQUAL, (ArrayNode)astArray.get(1), (ArrayNode)astArray.get(2), context);
+                return markBinaryOperation(AstNodeType.EQUAL, (ArrayNode) astArray.get(1), (ArrayNode) astArray.get(2), context);
             case AstNodeType.NOT_EQUAL:
-                return markBinaryOperation(AstNodeType.NOT_EQUAL, (ArrayNode)astArray.get(1), (ArrayNode)astArray.get(2), context);
+                return markBinaryOperation(AstNodeType.NOT_EQUAL, (ArrayNode) astArray.get(1), (ArrayNode) astArray.get(2), context);
 
             case AstNodeType.LESS_OR_EQUAL:
-                return markBinaryOperation(AstNodeType.LESS_OR_EQUAL, (ArrayNode)astArray.get(1), (ArrayNode)astArray.get(2), context);
+                return markBinaryOperation(AstNodeType.LESS_OR_EQUAL, (ArrayNode) astArray.get(1), (ArrayNode) astArray.get(2), context);
             case AstNodeType.LESS_THAN:
-                return markBinaryOperation(AstNodeType.LESS_THAN, (ArrayNode)astArray.get(1), (ArrayNode)astArray.get(2), context);
+                return markBinaryOperation(AstNodeType.LESS_THAN, (ArrayNode) astArray.get(1), (ArrayNode) astArray.get(2), context);
             case AstNodeType.GREATER_OR_EQUAL:
-                return markBinaryOperation(AstNodeType.GREATER_OR_EQUAL, (ArrayNode)astArray.get(1), (ArrayNode)astArray.get(2), context);
+                return markBinaryOperation(AstNodeType.GREATER_OR_EQUAL, (ArrayNode) astArray.get(1), (ArrayNode) astArray.get(2), context);
             case AstNodeType.GREATER_THAN:
-                return markBinaryOperation(AstNodeType.GREATER_THAN, (ArrayNode)astArray.get(1), (ArrayNode)astArray.get(2), context);
+                return markBinaryOperation(AstNodeType.GREATER_THAN, (ArrayNode) astArray.get(1), (ArrayNode) astArray.get(2), context);
             case AstNodeType.TERNARY:
-                return markTernary((ArrayNode)astArray.get(1), (ArrayNode)astArray.get(2), (astArray.size() > 3) ? (ArrayNode)astArray.get(3) : null, context);
+                return markTernary((ArrayNode) astArray.get(1), (ArrayNode) astArray.get(2), (astArray.size() > 3) ? (ArrayNode) astArray.get(3) : null, context);
+
             case AstNodeType.IF:
-                return markIf((ArrayNode)astArray.get(1), context);
+                return markIf((ArrayNode) astArray.get(1), context);
+
             case AstNodeType.FOR:
-                return markFor((ArrayNode)astArray.get(1), (ArrayNode)astArray.get(2), (ArrayNode)astArray.get(3), context);
+                return markFor((ArrayNode) astArray.get(1), (ArrayNode) astArray.get(2), (ArrayNode) astArray.get(3), context);
 
             case AstNodeType.STATEMENTS:
-                return markStatements((ArrayNode)astArray.get(1), context);
+                return markStatements((ArrayNode) astArray.get(1), context);
 
             case AstNodeType.VAR:
-                return markVar((ArrayNode)astArray.get(1), (ArrayNode)astArray.get(2), context);
+                return markVar(astArray.get(1), (ArrayNode) astArray.get(2), context);
 
             case AstNodeType.SELECTOR:
-                return markSelector((ArrayNode)astArray.get(1), context);
+                return markSelector((ArrayNode) astArray.get(1), context);
 
             case AstNodeType.CALL:
-                return markCall((ArrayNode)astArray.get(1), (ArrayNode)astArray.get(2), (ArrayNode)astArray.get(3), context);
+                return markCall(astArray.get(1), astArray.get(2), astArray.get(3), context);
 
-//            case AstNodeType.IMPORT:
-//                return markImport((ArrayNode)astArray.get(1), context);
-//
             case AstNodeType.MACRO:
-                return markMacro((ArrayNode)astArray.get(1), (ArrayNode)astArray.get(2), (ArrayNode)astArray.get(3), context);
+                return markMacro(astArray.get(1), (ArrayNode) astArray.get(2), (ArrayNode) astArray.get(3), context);
 
             default:
                 Histone.runtime_log_error("Unknown node type '{}', marking is skipped.", null, nodeType);
@@ -155,6 +158,9 @@ public class AstMarker {
         }
     }
 
+    /**
+     * Statements are safe, if all of them are safe.
+     */
     private JsonNode markStatements(ArrayNode ast, OptimizerContext context) throws HistoneException {
         ArrayNode markedStatements = markInternal(ast, context);
         boolean isSafe = true;
@@ -166,8 +172,10 @@ public class AstMarker {
         return nodeFactory.jsonArray(isSafe ? AstNodeType.STATEMENTS : -AstNodeType.STATEMENTS, markedStatements);
     }
 
-    private JsonNode markVar(ArrayNode name, ArrayNode expr, OptimizerContext context) throws HistoneException {
-        String varName = name.asText();
+    /**
+     * Var is safe, if its expression is safe.
+     */
+    private JsonNode markVar(JsonNode name, ArrayNode expr, OptimizerContext context) throws HistoneException {
         ArrayNode exprMarked = (ArrayNode) markNode(expr, context);
 
         ArrayNode result = nodeFactory.jsonArray(AstNodeType.VAR, name, exprMarked);
@@ -179,7 +187,9 @@ public class AstMarker {
         }
     }
 
-
+    /**
+     * Macros is safe if it uses only its parameters and all of statements are safe.
+     */
     private JsonNode markMacro(JsonNode ident, ArrayNode args, ArrayNode statements, OptimizerContext context) throws HistoneException {
         ArrayNode result = nodeFactory.jsonArray(AstNodeType.MACRO, ident, args, statements);
 
@@ -212,6 +222,13 @@ public class AstMarker {
         }
     }
 
+    /**
+     * CALL is safe if:
+     * 1. It's macro call, not function of type call (so target block is null).
+     * 2. Macro name is string (what else can it bee?
+     * 3. Macros is safe in context.
+     * 4. All args are safe.
+     */
     private ArrayNode markCall(JsonNode target, JsonNode name, JsonNode args, OptimizerContext context) throws HistoneException {
         if (!target.isNull() || !isString(name)) {
             return makeElementUnsafe(nodeFactory.jsonArray(AstNodeType.CALL, target, name, args));
@@ -247,10 +264,10 @@ public class AstMarker {
                 if (getNodeType(argMarked) < 0) {
                     isSafe = false;
                 }
-                ((ArrayNode)argsMarked).add(argMarked);
+                ((ArrayNode) argsMarked).add(argMarked);
             }
         } else {
-            argsMarked =  nodeFactory.jsonNull();
+            argsMarked = nodeFactory.jsonNull();
         }
 
         ArrayNode result = nodeFactory.jsonArray(AstNodeType.CALL, target, name, argsMarked);
@@ -262,15 +279,16 @@ public class AstMarker {
         }
     }
 
+    /**
+     * Selector is safe if variable is safe or all children elements are safe.
+     */
     private JsonNode markSelector(ArrayNode selector, OptimizerContext context) throws HistoneException {
         boolean isSafe = false;
-//        boolean isForInline = false;
 
         JsonNode varElement = selector.get(0);
         if (varElement.isTextual()) {
             String varName = varElement.asText();
             isSafe = context.isVarSafe(varName) || "global".equals(varName) || "this".equals(varName) || "self".equals(varName);
-//            isForInline = "global".equals(varName);
         } else {
             ArrayNode varElemMarked = (ArrayNode) markNode(varElement, context);
             isSafe = getNodeType(varElemMarked) > 0;
@@ -279,17 +297,15 @@ public class AstMarker {
         ArrayNode result = nodeFactory.jsonArray(AstNodeType.SELECTOR, selector);
 
         if (isSafe) {
-//            if (isForInline) {
-//                return nodeFactory.jsonArray(AstNodeType.INLINE, result);
-//            } else {
-//                return result;
-//            }
             return result;
         } else {
             return makeElementUnsafe(result);
         }
     }
 
+    /**
+     * FOR is safe if all its statements are safe and collection, for iterarated over, is safe also.
+     */
     private JsonNode markFor(ArrayNode vars, ArrayNode collection, ArrayNode statements, OptimizerContext context) throws HistoneException {
         ArrayNode collectionOpt = (ArrayNode) markNode(collection, context);
 
@@ -329,6 +345,9 @@ public class AstMarker {
 
     }
 
+    /**
+     * If is safe if for all conditions both expression and statements are safe.
+     */
     private JsonNode markIf(ArrayNode conditions, OptimizerContext context) throws HistoneException {
         boolean isSafe = true;
         ArrayNode conditionsOut = nodeFactory.jsonArray();
@@ -339,8 +358,8 @@ public class AstMarker {
             if (getNodeType((ArrayNode) expressionAst) < 0) {
                 isSafe = false;
             }
-            ArrayNode statementsAst = markInternal((ArrayNode) condition.get(1), context);
 
+            ArrayNode statementsAst = markInternal((ArrayNode) condition.get(1), context);
             for (JsonNode st : statementsAst) {
                 if (st.isArray() && getNodeType((ArrayNode) st) < 0) {
                     isSafe = false;
@@ -363,54 +382,9 @@ public class AstMarker {
         }
     }
 
-    private JsonNode markArray(ArrayNode elements, OptimizerContext context) throws HistoneException {
-        boolean isSafe = true;
-        ArrayNode elementsMarked = nodeFactory.jsonArray();
-        for (JsonNode element : elements) {
-            element = markNode(element, context);
-            if (getNodeType((ArrayNode) element) < 0) {
-                isSafe = false;
-            }
-            elementsMarked.add(element);
-        }
-
-        //TODO: check array->map
-        ArrayNode result = nodeFactory.jsonArray(AstNodeType.MAP, elementsMarked);
-
-        if (isSafe) {
-            return result;
-        } else {
-            return makeElementUnsafe(result);
-        }
-    }
-
-    private JsonNode markObject(ArrayNode elements, OptimizerContext context) throws HistoneException {
-        boolean isSafe = true;
-
-        ArrayNode elementsMarked = nodeFactory.jsonArray();
-        for (JsonNode element : elements) {
-            JsonNode elementKey = element.get(0);
-            JsonNode elementVal = markNode(element.get(1), context);
-            if (getNodeType((ArrayNode) elementVal) < 0) {
-                isSafe = false;
-            }
-
-            ArrayNode elementOut = nodeFactory.jsonArray();
-            elementOut.add(elementKey);
-            elementOut.add(elementVal);
-            elementsMarked.add(elementOut);
-        }
-
-        //TODO: check array->map
-        ArrayNode result = nodeFactory.jsonArray(AstNodeType.MAP, elementsMarked);
-
-        if (isSafe) {
-            return result;
-        } else {
-            return makeElementUnsafe(result);
-        }
-    }
-
+    /**
+     * Unary operation is safe, if its operand is safe.
+     */
     private JsonNode markUnaryOperation(int type, ArrayNode arg, OptimizerContext context) throws HistoneException {
         ArrayNode argOpt = (ArrayNode) markNode(arg, context);
 
@@ -425,6 +399,10 @@ public class AstMarker {
         }
     }
 
+    /**
+     * Binary operation is safe only if both operands are safe.
+     * =
+     */
     private JsonNode markBinaryOperation(int type, ArrayNode left, ArrayNode right, OptimizerContext context) throws HistoneException {
         ArrayNode leftOpt = (ArrayNode) markNode(left, context);
         ArrayNode rightOpt = (ArrayNode) markNode(right, context);
@@ -434,13 +412,16 @@ public class AstMarker {
 
         ArrayNode result = nodeFactory.jsonArray(type, leftOpt, rightOpt);
 
-        if (leftType < 0 || rightType < 0) {
-            return makeElementUnsafe(result);
-        } else {
+        if (leftType > 0 && rightType > 0) {
             return result;
+        } else {
+            return makeElementUnsafe(result);
         }
     }
 
+    /**
+     * Ternary operation is safe (you'll never guess), only if all arguments are safe.
+     */
     private JsonNode markTernary(ArrayNode expr, ArrayNode trueAst, ArrayNode falseAst, OptimizerContext context) throws HistoneException {
         ArrayNode exprMarked = (ArrayNode) markNode(expr, context);
         ArrayNode trueMarked = (ArrayNode) markNode(trueAst, context);
@@ -452,27 +433,34 @@ public class AstMarker {
 
         ArrayNode result = nodeFactory.jsonArray(AstNodeType.TERNARY, exprMarked, trueMarked, falseAst != null ? falseMarked : null);
 
-        if (exprType < 0 || trueType < 0 || falseType < 0) {
-            return makeElementUnsafe(result);
-        } else {
+        if (exprType > 0 && trueType > 0 && falseType > 0) {
             return result;
+        } else {
+            return makeElementUnsafe(result);
         }
     }
 
 
     private ArrayNode makeElementUnsafe(ArrayNode element) {
-        boolean typeUpdated = false;
-        ArrayNode result = nodeFactory.jsonArray();
-        for (JsonNode item : element) {
-            if (typeUpdated) {
-                result.add(item);
-            } else {
-                int nodeType = item.asInt();
-                result.add(nodeFactory.jsonArray(nodeType > 0 ? -nodeType : nodeType));
-                typeUpdated = true;
-            }
-        }
-        return result;
+//        boolean typeUpdated = false;
+//        ArrayNode result = nodeFactory.jsonArray();
+//        for (JsonNode item : element) {
+//            if (typeUpdated) {
+//                result.add(item);
+//            } else {
+//                int nodeType = item.asInt();
+//                result.add(nodeFactory.jsonArray(nodeType > 0 ? -nodeType : nodeType));
+//                typeUpdated = true;
+//            }
+//        }
+//
+//        return result;
+
+        // Alternative implementation
+        int nodeType = element.get(0).asInt();
+        if (nodeType > 0) nodeType = -nodeType;
+        element.set(0, IntNode.valueOf(nodeType));
+        return element;
     }
 
     private boolean isString(JsonNode element) {
@@ -481,5 +469,9 @@ public class AstMarker {
 
     private int getNodeType(ArrayNode astArray) {
         return astArray.get(0).asInt();
+    }
+
+    public void setNodeFactory(NodeFactory nodeFactory) {
+        this.nodeFactory = nodeFactory;
     }
 }

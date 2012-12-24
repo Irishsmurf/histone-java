@@ -91,7 +91,7 @@ public class Histone {
     public ArrayNode optimizeAST(ArrayNode templateAST) throws HistoneException {
 //        ArrayNode importsResolved = astImportResolver.resolve(templateAST);
 //
-//        ArrayNode markedAst = astMarker.mark(importsResolved);
+        ArrayNode markedAst = astMarker.mark(templateAST);
 //
 //        ArrayNode inlinedAst = astInlineOptimizer.inline(markedAst);
 //
@@ -99,7 +99,7 @@ public class Histone {
 //
 //        return optimizedAst;
 
-        throw new RuntimeException("Not implemented yet");//TODO
+        return markedAst;
     }
 
     public String evaluateAST(ArrayNode templateAST) throws HistoneException {
