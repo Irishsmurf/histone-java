@@ -192,6 +192,18 @@ public class Histone {
     }
 
     /**
+     * Logs histone syntax error to special logger
+     *
+     * @param msg  message
+     * @param e    exception
+     * @param args arguments values that should be replaced in message
+     */
+    public static void runtime_log_error(String msg, Throwable e, Object... args) {
+        RUNTIME_LOG.error(msg, args);
+        RUNTIME_LOG.error(msg, e);
+    }
+
+    /**
      * Logs histone syntax info to special logger
      *
      * @param msg  message
@@ -222,7 +234,6 @@ public class Histone {
 
     public static void runtime_log_warn_e(String msg, Throwable e, Object... args) {
         RUNTIME_LOG.warn(msg, args);
-        RUNTIME_LOG.warn(msg, e);
     }
 
 }
