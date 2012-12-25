@@ -340,8 +340,11 @@ public class HistoneBuilder {
         Evaluator evaluator = new Evaluator(evaluatorBootstrap);
 
         AstImportResolver astImportResolver = new AstImportResolver(parser, resourceLoader);
+        astImportResolver.setNodeFactory(nodeFactory);
+
         AstOptimizer astOptimizer = new AstOptimizer(evaluator);
-        AstMarker astMarker = new AstMarker(astOptimizer);
+        AstMarker astMarker = new AstMarker();
+        astMarker.setNodeFactory(nodeFactory);
         AstInlineOptimizer astInlineOptimizer = new AstInlineOptimizer();
 
         HistoneBootstrap histoneBootstrap = new HistoneBootstrap();

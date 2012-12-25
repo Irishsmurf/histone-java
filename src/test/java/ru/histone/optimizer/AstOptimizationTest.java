@@ -30,6 +30,7 @@ import java.io.*;
 import java.net.URISyntaxException;
 import java.net.URL;
 
+import static junit.framework.Assert.assertEquals;
 
 public class AstOptimizationTest {
     private Histone histone;
@@ -43,39 +44,41 @@ public class AstOptimizationTest {
     
 
     @Test
-
     public void testImports() throws IOException, HistoneException, URISyntaxException {
         URL url = getClass().getClassLoader().getResource("optimizer/import.tpl");
         String baseUri = "file:/" + new File(url.toURI()).getParent() + "/";
         FileInputStream fis = new FileInputStream(url.getPath());
         String input = IOUtils.toString(fis);
 
-        System.out.println("Input");
-        System.out.println(input);
-
         ArrayNode normalAst = histone.parseTemplateToAST(new StringReader(input));
-        System.out.println("\n\nNormal AST");
-        System.out.println(normalAst.toString());
+        System.out.println("\nNormal AST");
+        System.out.println(normalAst);
 
         String normalResult = histone.evaluateAST(baseUri, normalAst, NullNode.instance);
         System.out.println("\nNormal Result");
         System.out.println(normalResult);
 
+        
         ArrayNode importsAst = histone.optimizeAST(baseUri, normalAst);
-        System.out.println("\n\nImports AST");
+        System.out.println("\n\nImport AST");
         System.out.println(importsAst.toString());
 
+        String importResult = histone.evaluateAST(importsAst);
+        System.out.println("\n\nImport Result");
+        System.out.println(importResult);
+
+        assertEquals(normalResult, importResult);
     }
     
 
     @Test
     public void test() throws HistoneException, IOException {
 
-
+      /*
         URL url = getClass().getClassLoader().getResource("optimizer/import.tpl");
         FileInputStream fis = new FileInputStream(url.getPath());
         String input = IOUtils.toString(fis);
-//        input="{{var extName = requestParams.ext}}";
+        input="{{var extName = requestParams.ext}}";
 
         System.out.println("Input");
         System.out.println(input);
@@ -84,10 +87,10 @@ public class AstOptimizationTest {
         System.out.println("\n\nNormal AST");
         System.out.println(normalAst.toString());
 
-//        String normalResult = histone.evaluateAST(normalAst);
-//        System.out.println("\nNormal Result");
-//        System.out.println(normalResult);
+        String normalResult = histone.evaluateAST(normalAst);
+        System.out.println("\nNormal Result");
 
+        System.out.println(normalResult);
         ArrayNode importsAst = histone.optimizeAST(normalAst);
         System.out.println("\n\nImports AST");
         System.out.println(importsAst.toString());
@@ -123,5 +126,7 @@ public class AstOptimizationTest {
 //        System.out.println(optimizedResult);
 
 //        assertEquals(normalResult, optimizedResult);
+
+    */
     }
 }

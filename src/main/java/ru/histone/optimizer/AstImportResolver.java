@@ -16,7 +16,6 @@
 package ru.histone.optimizer;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,7 +39,7 @@ public class AstImportResolver {
     
     private static final String HISTONE = "HISTONE";
     private static final Logger log = LoggerFactory.getLogger(AstImportResolver.class);
-    private NodeFactory nodeFactory = new NodeFactory(new ObjectMapper());
+    private NodeFactory nodeFactory;
 
     private ResourceLoader resourceLoader;
     private Parser parser;
@@ -64,10 +63,12 @@ public class AstImportResolver {
 
 
     private ArrayNode resolveInternal(ArrayNode ast, ImportResolverContext context) throws HistoneException {
-        ArrayNode result = nodeFactory.jsonArray();
+        ArrayNode finalResult = nodeFactory.jsonArray();
 
-        result.add(getHistonHeader(ast));
+        finalResult.add(getHistonHeader(ast));
+
         ast = getHistoneContent(ast);
+        ArrayNode result = nodeFactory.jsonArray();
 
         for (JsonNode element : ast) {
             JsonNode node = scanInstructions(element, context);
@@ -78,6 +79,7 @@ public class AstImportResolver {
             }
         }
 
+        finalResult.add(result);
         return result;
     }
 
@@ -222,4 +224,7 @@ public class AstImportResolver {
         return ast;
     }
 
+    public void setNodeFactory(NodeFactory nodeFactory) {
+        this.nodeFactory = nodeFactory;
+    }
 }
