@@ -32,10 +32,7 @@ import ru.histone.evaluator.functions.node.NodeFunctionsManager;
 import ru.histone.evaluator.nodes.GlobalObjectNode;
 import ru.histone.evaluator.nodes.Node;
 import ru.histone.evaluator.nodes.NodeFactory;
-import ru.histone.optimizer.AstImportResolver;
-import ru.histone.optimizer.AstInlineOptimizer;
-import ru.histone.optimizer.AstMarker;
-import ru.histone.optimizer.AstOptimizer;
+import ru.histone.optimizer.*;
 import ru.histone.parser.Parser;
 import ru.histone.resourceloaders.DefaultResourceLoader;
 import ru.histone.resourceloaders.ResourceLoader;
@@ -341,9 +338,14 @@ public class HistoneBuilder {
 
         AstImportResolver astImportResolver = new AstImportResolver(parser, resourceLoader);
         AstOptimizer astOptimizer = new AstOptimizer(evaluator);
+
         AstMarker astMarker = new AstMarker();
         astMarker.setNodeFactory(nodeFactory);
+
         AstInlineOptimizer astInlineOptimizer = new AstInlineOptimizer();
+        astInlineOptimizer.setNodeFactory(nodeFactory);
+
+        ConstantFoldingOptimizer constantFoldingOptimizer = new ConstantFoldingOptimizer(nodeFactory, evaluator);
 
         HistoneBootstrap histoneBootstrap = new HistoneBootstrap();
         histoneBootstrap.setNodeFactory(nodeFactory);
@@ -354,6 +356,7 @@ public class HistoneBuilder {
         histoneBootstrap.setAstInlineOptimizer(astInlineOptimizer);
         histoneBootstrap.setAstAstOptimizer(astOptimizer);
         histoneBootstrap.setResourceLoader(new DefaultResourceLoader());
+        histoneBootstrap.setConstantFoldingOptimizer(constantFoldingOptimizer);
 
         return new Histone(histoneBootstrap);
     }

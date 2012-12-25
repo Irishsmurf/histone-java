@@ -23,6 +23,9 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * @author sazonovkirill@gmail.com
+ */
 public class InlineOptimizerContext {
     private Deque<Map<String, ArrayNode>> stacksVar;
     private Deque<Map<String, MacroFunc>> stacksMacro;
@@ -32,6 +35,7 @@ public class InlineOptimizerContext {
         this.stacksVar = new ArrayDeque<Map<String, ArrayNode>>();
         saveState();
     }
+
 
     public void saveState() {
         stacksMacro.push(new HashMap<String, MacroFunc>());
@@ -63,6 +67,7 @@ public class InlineOptimizerContext {
     public void putMacro(String name, MacroFunc macro) {
         stacksMacro.getFirst().put(name, macro);
     }
+
 
     public ArrayNode getVar(String name) {
         for (Map<String, ArrayNode> stack : stacksVar) {

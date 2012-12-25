@@ -37,37 +37,37 @@ public abstract class Node {
     }
 
     // Methods for type checking
-	public boolean isBoolean() {
+    public boolean isBoolean() {
         return this instanceof BooleanHistoneNode;
-	}
+    }
 
-	public boolean isNumber() {
+    public boolean isNumber() {
         return !(this instanceof UndefinedNumberHistoneNode) && (this instanceof NumberHistoneNode);
-	}
+    }
 
-	public boolean isFloat() {
-        return isNumber() && (this.getAsNumber().isFloat());
-	}
+    public boolean isFloat() {
+        return isNumber() && (this.getAsNumber().getValue().stripTrailingZeros().scale() > 0);
+    }
 
-	public boolean isInteger() {
+    public boolean isInteger() {
         return isNumber() && (this.getAsNumber().getValue().stripTrailingZeros().scale() <= 0);
-	}
+    }
 
-	public boolean isString() {
+    public boolean isString() {
         return this instanceof StringHistoneNode;
-	}
+    }
 
-	public boolean isNull() {
+    public boolean isNull() {
         return this instanceof NullHistoneNode;
-	}
+    }
 
-	public boolean isUndefined() {
-		return (this instanceof  UndefinedNode) || (this instanceof UndefinedNumberHistoneNode);
-	}
+    public boolean isUndefined() {
+        return (this instanceof UndefinedNode) || (this instanceof UndefinedNumberHistoneNode);
+    }
 
-	public boolean isObject() {
+    public boolean isObject() {
         return this instanceof ObjectHistoneNode;
-	}
+    }
 
     public boolean isAst() {
         return this instanceof AstNode;
@@ -75,69 +75,69 @@ public abstract class Node {
 
     public abstract BooleanHistoneNode getAsBoolean();
 
-	public abstract NumberHistoneNode getAsNumber();
+    public abstract NumberHistoneNode getAsNumber();
 
-	public abstract StringHistoneNode getAsString();
+    public abstract StringHistoneNode getAsString();
 
-	public abstract ObjectHistoneNode getAsObject();
+    public abstract ObjectHistoneNode getAsObject();
 
-	public abstract Node oper_add(Node right);
+    public abstract Node oper_add(Node right);
 
-	public abstract Node oper_mul(Node right);
+    public abstract Node oper_mul(Node right);
 
-	public abstract Node oper_div(Node right);
+    public abstract Node oper_div(Node right);
 
-	public abstract Node oper_mod(Node right);
+    public abstract Node oper_mod(Node right);
 
-	public abstract Node oper_negate();
+    public abstract Node oper_negate();
 
-	public abstract Node oper_sub(Node right);
+    public abstract Node oper_sub(Node right);
 
-	public abstract Node oper_not();
+    public abstract Node oper_not();
 
-	public final Node oper_and(Node right) {
-		if (!this.getAsBoolean().getValue()) {
-			return this;
-		} else {
-			return right;
-		}
-	}
+    public final Node oper_and(Node right) {
+        if (!this.getAsBoolean().getValue()) {
+            return this;
+        } else {
+            return right;
+        }
+    }
 
-	public final Node oper_or(Node right) {
-		if (this.getAsBoolean().getValue()) {
-			return this;
-		} else {
-			return right;
-		}
-	}
+    public final Node oper_or(Node right) {
+        if (this.getAsBoolean().getValue()) {
+            return this;
+        } else {
+            return right;
+        }
+    }
 
-	public final Node oper_notEqual(Node right) {
+    public final Node oper_notEqual(Node right) {
         return oper_equal(right).getAsBoolean().getValue() ? nodeFactory.FALSE : nodeFactory.TRUE;
-	}
+    }
 
-	public abstract Node oper_equal(Node right);
+    public abstract Node oper_equal(Node right);
 
-	public boolean equals() {
-		throw new RuntimeException("!!!!");
-	}
+    public boolean equals() {
+        throw new RuntimeException("!!!!");
+    }
 
-	public abstract Node oper_greaterThan(Node right);
+    public abstract Node oper_greaterThan(Node right);
 
-	public abstract Node oper_greaterOrEqual(Node right);
+    public abstract Node oper_greaterOrEqual(Node right);
 
-	public abstract Node oper_lessThan(Node right);
+    public abstract Node oper_lessThan(Node right);
 
-	public abstract Node oper_lessOrEqual(Node right);
+    public abstract Node oper_lessOrEqual(Node right);
 
     public boolean hasProp(String name) {
-		Histone.runtime_log_warn("Object '{}' doesn't have property '{}'", toString(), name);
-		return false;
-	}
+        Histone.runtime_log_warn("Object '{}' doesn't have property '{}'", toString(), name);
+        return false;
+    }
 
-	public Node getProp(String name) {
-		Histone.runtime_log_warn("Object '{}' doesn't have property '{}', returning 'undefined()'", toString(), name);
-		return nodeFactory.UNDEFINED;
-	}
+    public Node getProp(String name) {
+        Histone.runtime_log_warn("Object '{}' doesn't have property '{}', returning 'undefined()'", toString(), name);
+        return nodeFactory.UNDEFINED;
+    }
 
-	public abstract JsonNode getAsJsonNode();
+    public abstract JsonNode getAsJsonNode();
 }

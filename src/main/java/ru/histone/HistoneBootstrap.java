@@ -17,10 +17,7 @@ package ru.histone;
 
 import ru.histone.evaluator.Evaluator;
 import ru.histone.evaluator.nodes.NodeFactory;
-import ru.histone.optimizer.AstImportResolver;
-import ru.histone.optimizer.AstInlineOptimizer;
-import ru.histone.optimizer.AstMarker;
-import ru.histone.optimizer.AstOptimizer;
+import ru.histone.optimizer.*;
 import ru.histone.parser.Parser;
 import ru.histone.resourceloaders.ResourceLoader;
 
@@ -32,6 +29,7 @@ public class HistoneBootstrap {
     private AstImportResolver astImportResolver;
     private AstMarker astMarker;
     private AstInlineOptimizer astInlineOptimizer;
+    private ConstantFoldingOptimizer constantFoldingOptimizer;
     private ResourceLoader resourceLoader;
 
     public Parser getParser() {
@@ -97,4 +95,14 @@ public class HistoneBootstrap {
     public void setResourceLoader(ResourceLoader resourceLoader) {
         this.resourceLoader = resourceLoader;
     }
+
+    public ConstantFoldingOptimizer getConstantFoldingOptimizer() {
+        return constantFoldingOptimizer;
+    }
+
+    public void setConstantFoldingOptimizer(ConstantFoldingOptimizer constantFoldingOptimizer) {
+        this.constantFoldingOptimizer = constantFoldingOptimizer;
+    }
 }
+
+

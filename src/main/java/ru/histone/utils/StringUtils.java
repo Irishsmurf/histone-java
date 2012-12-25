@@ -24,6 +24,7 @@ import java.util.Random;
  */
 public final class StringUtils {
     public static final String EMPTY = "";
+
     private StringUtils() {
     }
 
@@ -37,13 +38,13 @@ public final class StringUtils {
 
     /**
      * <p>Strips any of a set of characters from the start of a String.</p>
-     *
+     * <p/>
      * <p>A <code>null</code> input String returns <code>null</code>.
      * An empty string ("") input returns the empty string.</p>
-     *
+     * <p/>
      * <p>If the stripChars String is <code>null</code>, whitespace is
      * stripped as defined by {@link Character#isWhitespace(char)}.</p>
-     *
+     * <p/>
      * <pre>
      * StringUtils.stripStart(null, *)          = null
      * StringUtils.stripStart("", *)            = ""
@@ -55,8 +56,8 @@ public final class StringUtils {
      * StringUtils.stripStart("yxabc  ", "xyz") = "abc  "
      * </pre>
      *
-     * @param str  the String to remove characters from, may be null
-     * @param stripChars  the characters to remove, null treated as whitespace
+     * @param str        the String to remove characters from, may be null
+     * @param stripChars the characters to remove, null treated as whitespace
      * @return the stripped String, <code>null</code> if null String input
      */
     public static String stripStart(String str, String stripChars) {
@@ -81,13 +82,13 @@ public final class StringUtils {
 
     /**
      * <p>Strips any of a set of characters from the end of a String.</p>
-     *
+     * <p/>
      * <p>A <code>null</code> input String returns <code>null</code>.
      * An empty string ("") input returns the empty string.</p>
-     *
+     * <p/>
      * <p>If the stripChars String is <code>null</code>, whitespace is
      * stripped as defined by {@link Character#isWhitespace(char)}.</p>
-     *
+     * <p/>
      * <pre>
      * StringUtils.stripEnd(null, *)          = null
      * StringUtils.stripEnd("", *)            = ""
@@ -99,8 +100,8 @@ public final class StringUtils {
      * StringUtils.stripEnd("  abcyx", "xyz") = "  abc"
      * </pre>
      *
-     * @param str  the String to remove characters from, may be null
-     * @param stripChars  the characters to remove, null treated as whitespace
+     * @param str        the String to remove characters from, may be null
+     * @param stripChars the characters to remove, null treated as whitespace
      * @return the stripped String, <code>null</code> if null String input
      */
     public static String stripEnd(String str, String stripChars) {
@@ -122,7 +123,7 @@ public final class StringUtils {
         }
         return str.substring(0, end);
     }
-    
+
     public static String stripSuroundings(String str, String stripChars) {
         return stripEnd(stripStart(str, stripChars), stripChars);
     }
@@ -130,11 +131,11 @@ public final class StringUtils {
     /**
      * <p>Gets the substring before the first occurrence of a separator.
      * The separator is not returned.</p>
-     *
+     * <p/>
      * <p>A <code>null</code> string input will return <code>null</code>.
      * An empty ("") string input will return the empty string.
      * A <code>null</code> separator will return the input string.</p>
-     *
+     * <p/>
      * <pre>
      * StringUtils.substringBefore(null, *)      = null
      * StringUtils.substringBefore("", *)        = ""
@@ -146,10 +147,10 @@ public final class StringUtils {
      * StringUtils.substringBefore("abc", null)  = "abc"
      * </pre>
      *
-     * @param str  the String to get a substring from, may be null
-     * @param separator  the String to search for, may be null
+     * @param str       the String to get a substring from, may be null
+     * @param separator the String to search for, may be null
      * @return the substring before the first occurrence of the separator,
-     *  <code>null</code> if null String input
+     *         <code>null</code> if null String input
      * @since 2.0
      */
     public static String substringBefore(String str, String separator) {
@@ -169,12 +170,12 @@ public final class StringUtils {
     /**
      * <p>Gets the substring after the first occurrence of a separator.
      * The separator is not returned.</p>
-     *
+     * <p/>
      * <p>A <code>null</code> string input will return <code>null</code>.
      * An empty ("") string input will return the empty string.
      * A <code>null</code> separator will return the empty string if the
      * input string is not <code>null</code>.</p>
-     *
+     * <p/>
      * <pre>
      * StringUtils.substringAfter(null, *)      = null
      * StringUtils.substringAfter("", *)        = ""
@@ -186,10 +187,10 @@ public final class StringUtils {
      * StringUtils.substringAfter("abc", "")    = "abc"
      * </pre>
      *
-     * @param str  the String to get a substring from, may be null
-     * @param separator  the String to search for, may be null
+     * @param str       the String to get a substring from, may be null
+     * @param separator the String to search for, may be null
      * @return the substring after the first occurrence of the separator,
-     *  <code>null</code> if null String input
+     *         <code>null</code> if null String input
      * @since 2.0
      */
     public static String substringAfter(String str, String separator) {
@@ -225,11 +226,11 @@ public final class StringUtils {
         }
         return sb.toString();
     }
-    
+
     public static String randomString(int length) {
-        char[] alphabet = { 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V',
+        char[] alphabet = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V',
                 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't',
-                'u', 'v', 'w', 'x', 'y', 'z' };
+                'u', 'v', 'w', 'x', 'y', 'z'};
         Random rnd = new Random();
         StringBuilder buf = new StringBuilder();
         for (int i = 0; i < length; i++) {
@@ -239,5 +240,7 @@ public final class StringUtils {
         return buf.toString();
     }
 
-
+    public static boolean isBlank(String s) {
+        return s != null && "".equals(s.trim());
+    }
 }

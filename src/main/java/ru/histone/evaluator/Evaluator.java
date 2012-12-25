@@ -237,6 +237,11 @@ public class Evaluator {
         return processInternal(ast, context);
     }
 
+    public Node evaluate(JsonNode ast) throws EvaluatorException {
+        EvaluatorContext context = EvaluatorContext.createFromJson(nodeFactory, global, nodeFactory.jsonObject());
+        return processNode(ast, context);
+    }
+
     private String processInternal(JsonNode jsonElement, EvaluatorContext context) throws EvaluatorException {
         return processInternal((ArrayNode) jsonElement, context);
     }

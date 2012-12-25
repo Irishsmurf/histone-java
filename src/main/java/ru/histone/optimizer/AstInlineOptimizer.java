@@ -16,7 +16,6 @@
 package ru.histone.optimizer;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import ru.histone.HistoneException;
 import ru.histone.evaluator.EvaluatorException;
@@ -26,9 +25,15 @@ import ru.histone.parser.AstNodeType;
 
 import java.util.Iterator;
 
+/**
+ * Inlines safe expressions.
+ * Meaningful functions are inlineCall and inlineSelector (because they perform actual inlining).
+ * Other function just call 'inlining' for their children nodes.
+ *
+ * @author sazonovkirill@gmail.com
+ */
 public class AstInlineOptimizer {
-
-    private NodeFactory nodeFactory = new NodeFactory(new ObjectMapper());
+    private NodeFactory nodeFactory;
 
     public ArrayNode inline(ArrayNode ast) throws HistoneException {
         InlineOptimizerContext context = new InlineOptimizerContext();
@@ -60,6 +65,9 @@ public class AstInlineOptimizer {
     private ArrayNode inlineNode(ArrayNode node, InlineOptimizerContext context) throws HistoneException {
         int nodeType = getNodeType(node);
         switch (Math.abs(nodeType)) {
+            //
+            //  No sense of inlining for constants
+            //
             case AstNodeType.TRUE:
             case AstNodeType.FALSE:
             case AstNodeType.NULL:
@@ -68,15 +76,9 @@ public class AstInlineOptimizer {
             case AstNodeType.STRING:
                 return node;
 
-//            case AstNodeType.MAP:
-            //TODO: check array->map
-//                return inlineMap(nodeType, (ArrayNode)node.get(1), context);
-//            case AstNodeType.ARRAY:
-//                return inlineArray(nodeType, (ArrayNode)node.get(1), context);
-//
-//            case AstNodeType.OBJECT:
-//                return inlineObject(nodeType, (ArrayNode)node.get(1), context);
-
+            //
+            //  Recusive inlining for binray operations
+            //
             case AstNodeType.ADD:
             case AstNodeType.SUB:
             case AstNodeType.MUL:
@@ -90,48 +92,59 @@ public class AstInlineOptimizer {
             case AstNodeType.LESS_THAN:
             case AstNodeType.GREATER_OR_EQUAL:
             case AstNodeType.GREATER_THAN:
-                return inlineBinaryOperation(nodeType, (ArrayNode)node.get(1), (ArrayNode)node.get(2), context);
+                return inlineBinaryOperation(nodeType, (ArrayNode) node.get(1), (ArrayNode) node.get(2), context);
 
+            //
+            //  Recusive inlining for unary operations
+            //
             case AstNodeType.NEGATE:
             case AstNodeType.NOT:
-                return inlineUnaryOperation(nodeType, (ArrayNode)node.get(1), context);
+                return inlineUnaryOperation(nodeType, (ArrayNode) node.get(1), context);
 
 
             case AstNodeType.IF:
-                return inlineIf(nodeType, (ArrayNode)node.get(1), context);
+                return inlineIf(nodeType, (ArrayNode) node.get(1), context);
 
             case AstNodeType.FOR:
-                return inlineFor(nodeType, (ArrayNode)node.get(1), (ArrayNode)node.get(2), (ArrayNode)node.get(3), context);
+                return inlineFor(nodeType, (ArrayNode) node.get(1), (ArrayNode) node.get(2), (ArrayNode) node.get(3), context);
 
             case AstNodeType.CALL:
-                return inlineCall(nodeType, (ArrayNode)node.get(1), (ArrayNode)node.get(2), (ArrayNode)node.get(3), context);
+                return inlineCall(nodeType, node.get(1), node.get(2), node.get(3), context);
 
             case AstNodeType.MACRO:
-                return inlineMacro(nodeType, (ArrayNode)node.get(1), (ArrayNode)node.get(2), (ArrayNode)node.get(3), context);
+                return inlineMacro(nodeType, node.get(1), (ArrayNode) node.get(2), (ArrayNode) node.get(3), context);
 
+            //
+            //  Actual inlining for selector
+            //
             case AstNodeType.SELECTOR:
-                return inlineSelector(nodeType, (ArrayNode)node.get(1), context);
-
-//            case AstNodeType.IMPORT:
-//            case -AstNodeType.IMPORT:
-//                return inlineImport(nodeType, (ArrayNode)node.get(1).getAsJsonPrimitive(), context);
+                return inlineSelector(nodeType, (ArrayNode) node.get(1), context);
 
             default:
                 return node;
         }
     }
 
+    /**
+     * Inlines both left and right args.
+     */
     private ArrayNode inlineBinaryOperation(int nodeType, ArrayNode leftAst, ArrayNode rightAst, InlineOptimizerContext context) throws HistoneException {
         leftAst = inlineNode(leftAst, context);
         rightAst = inlineNode(rightAst, context);
         return nodeFactory.jsonArray(nodeType, leftAst, rightAst);
     }
 
+    /**
+     * Inlines its arg.
+     */
     private ArrayNode inlineUnaryOperation(int nodeType, ArrayNode ast, InlineOptimizerContext context) throws HistoneException {
         ast = inlineNode(ast, context);
         return nodeFactory.jsonArray(nodeType, ast);
     }
 
+    /**
+     * Inlines items of an array.
+     */
     private ArrayNode inlineArray(int nodeType, ArrayNode elements, InlineOptimizerContext context) throws HistoneException {
         ArrayNode result = nodeFactory.jsonArray();
 
@@ -143,25 +156,9 @@ public class AstInlineOptimizer {
         return nodeFactory.jsonArray(nodeType, result);
     }
 
-    private ArrayNode inlineObject(int nodeType, ArrayNode elements, InlineOptimizerContext context) throws HistoneException {
-        ArrayNode result = nodeFactory.jsonArray();
-
-        for (JsonNode elem : elements) {
-            ArrayNode objElem = nodeFactory.jsonArray();
-
-            JsonNode key = elem.get(0);
-            ArrayNode val = (ArrayNode) elem.get(1);
-
-            val = inlineNode(val, context);
-
-            objElem.add(key);
-            objElem.add(val);
-            result.add(objElem);
-        }
-
-        return nodeFactory.jsonArray(nodeType, result);
-    }
-
+    /**
+     * Inlines variable value instead of variable (selector) if context contains it. Else no changes.
+     */
     private ArrayNode inlineSelector(int nodeType, ArrayNode selector, InlineOptimizerContext context) {
         JsonNode varElem = selector.get(0);
 
@@ -189,10 +186,9 @@ public class AstInlineOptimizer {
         }
     }
 
-//    private ArrayNode inlineImport(JsonNode uri, InlineOptimizerContext context) {
-//        return null;  //To change body of created methods use File | Settings | File Templates.
-//    }
-
+    /**
+     * Inlines child conditions' expressions and statements.
+     */
     private ArrayNode inlineIf(int nodeType, ArrayNode conditions, InlineOptimizerContext context) throws HistoneException {
         ArrayNode conditionsOut = nodeFactory.jsonArray();
 
@@ -214,6 +210,9 @@ public class AstInlineOptimizer {
         return nodeFactory.jsonArray(nodeType, conditionsOut);
     }
 
+    /**
+     * Inlines collection and statements.
+     */
     private ArrayNode inlineFor(int nodeType, ArrayNode iterator, ArrayNode collection, ArrayNode statements, InlineOptimizerContext context) throws HistoneException {
         ArrayNode statementsForAst = (ArrayNode) statements.get(0);
         ArrayNode statementsElseAst = statements.size() > 1 ? (ArrayNode) statements.get(1) : null;
@@ -252,7 +251,7 @@ public class AstInlineOptimizer {
 
         // prepare inline vars for defined macro argument
         for (int i = 0; i < macroArgsAst.size(); i++) {
-            context.putVar(macroArgsAst.get(i).asText(), (ArrayNode)args.get(i));
+            context.putVar(macroArgsAst.get(i).asText(), (ArrayNode) args.get(i));
         }
 
         // prepare inline vars for 'self' reserved word
@@ -271,49 +270,35 @@ public class AstInlineOptimizer {
         return macroBodyAst;
     }
 
-    private ArrayNode inlineMacro(int nodeType, JsonNode ident, ArrayNode args, ArrayNode statements, InlineOptimizerContext context) throws EvaluatorException {
-        String name = ident.asText();
+    /**
+     * If macros is safe, this function puts is to context and replaces by empty String[] array. Otherwise no changes.
+     */
+    private ArrayNode inlineMacro(int nodeType, JsonNode identifier, ArrayNode args, ArrayNode statements, InlineOptimizerContext context) throws EvaluatorException {
+        String name = identifier.asText();
 
-        MacroFunc func = new MacroFunc();
-        func.setArgs(args);
-        func.setStatements(statements);
-        context.putMacro(name, func);
+        MacroFunc macroFunc = new MacroFunc();
+        macroFunc.setArgs(args);
+        macroFunc.setStatements(statements);
+        context.putMacro(name, macroFunc);
 
         if (nodeType > 0) {
+            // if macro is safe, replace it by empty String[] array
             return nodeFactory.jsonArray(AstNodeType.STRING);
         } else {
-            return nodeFactory.jsonArray(nodeType, ident, args, statements);
-
+            // Otherwise no changes
+            return nodeFactory.jsonArray(nodeType, identifier, args, statements);
         }
     }
-
-//    private ArrayNode inlineImport(int nodeType, JsonPrimitive ident, InlineOptimizerContext context) throws EvaluatorException {
-//        String uri = ident.asText();
-//
-//        resourceLoaderManager.
-//
-//        return nodeFactory.jsonArray(nodeType, ident);
-//    }
 
     private boolean isString(JsonNode element) {
         return element.isTextual();
     }
+
     private int getNodeType(ArrayNode astArray) {
         return astArray.get(0).asInt();
     }
 
-    private ArrayNode makeElementUnsafe(ArrayNode element) {
-        boolean typeUpdated = false;
-        ArrayNode result = nodeFactory.jsonArray();
-        for (JsonNode item : element) {
-            if (typeUpdated) {
-                result.add(item);
-            } else {
-                result.add(nodeFactory.jsonArray(-item.asInt()));
-                typeUpdated = true;
-            }
-        }
-        return result;
+    public void setNodeFactory(NodeFactory nodeFactory) {
+        this.nodeFactory = nodeFactory;
     }
-                 
 }

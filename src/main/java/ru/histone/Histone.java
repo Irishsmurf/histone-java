@@ -22,10 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.histone.evaluator.Evaluator;
 import ru.histone.evaluator.nodes.NodeFactory;
-import ru.histone.optimizer.AstImportResolver;
-import ru.histone.optimizer.AstInlineOptimizer;
-import ru.histone.optimizer.AstMarker;
-import ru.histone.optimizer.AstOptimizer;
+import ru.histone.optimizer.*;
 import ru.histone.parser.Parser;
 import ru.histone.resourceloaders.ContentType;
 import ru.histone.resourceloaders.Resource;
@@ -59,7 +56,9 @@ public class Histone {
     private AstImportResolver astImportResolver;
     private AstMarker astMarker;
     private AstInlineOptimizer astInlineOptimizer;
+    private ConstantFoldingOptimizer constantFoldingOptimizer;
     private ResourceLoader resourceLoader;
+
 
     public Histone(HistoneBootstrap bootstrap) {
         this.parser = bootstrap.getParser();
@@ -70,6 +69,7 @@ public class Histone {
         this.astInlineOptimizer = bootstrap.getAstInlineOptimizer();
         this.astAstOptimizer = bootstrap.getAstAstOptimizer();
         this.resourceLoader = bootstrap.getResourceLoader();
+        this.constantFoldingOptimizer = bootstrap.getConstantFoldingOptimizer();
     }
 
     public ArrayNode parseTemplateToAST(Reader templateReader) throws HistoneException {
@@ -87,18 +87,20 @@ public class Histone {
         return parser.parse(templateString);
     }
 
+    public ArrayNode optimizeConstantFolding(ArrayNode source) throws HistoneException {
+        return constantFoldingOptimizer.foldConstants(source);
+    }
+
     public ArrayNode optimizeAST(ArrayNode templateAST) throws HistoneException {
 //        ArrayNode importsResolved = astImportResolver.resolve(templateAST);
-//
-        ArrayNode markedAst = astMarker.mark(templateAST);
-//
-//        ArrayNode inlinedAst = astInlineOptimizer.inline(markedAst);
-//
-//        ArrayNode optimizedAst = astAstOptimizer.optimize(inlinedAst);
-//
-//        return optimizedAst;
 
-        return markedAst;
+        ArrayNode markedAst = astMarker.mark(templateAST);
+
+        ArrayNode inlinedAst = astInlineOptimizer.inline(markedAst);
+
+//        ArrayNode optimizedAst = astAstOptimizer.optimize(inlinedAst);
+
+        return inlinedAst;
     }
 
     public String evaluateAST(ArrayNode templateAST) throws HistoneException {

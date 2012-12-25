@@ -195,7 +195,7 @@ public class AstMarkerTest {
 
     private String input(String filename) throws IOException {
         StringWriter sw = new StringWriter();
-        InputStream is = getClass().getClassLoader().getResourceAsStream("optimizer/" + filename);
+        InputStream is = getClass().getClassLoader().getResourceAsStream("optimizer/marker/" + filename);
         IOUtils.copy(is, sw);
         return sw.toString();
     }
