@@ -765,16 +765,16 @@ public class Evaluator {
             context.setBaseURI(currentBaseURI);
             return result;
         } catch (ResourceLoadException e) {
-            Histone.runtime_log_warn_e("Resource include failed! Unresolvable resource. BaseURI: {}, ResourceURI: {}", e, currentBaseURI, path);
+            Histone.runtime_log_warn_e("Resource include failed! Unresolvable resource.", e);
             return nodeFactory.UNDEFINED;
         } catch (IOException e) {
-            Histone.runtime_log_warn_e("Resource include failed! Resource reading error. BaseURI: {}, ResourceURI: {}", e, currentBaseURI, path);
+            Histone.runtime_log_warn_e("Resource include failed! Resource reading error.", e);
             return nodeFactory.UNDEFINED;
         } catch (ParserException e) {
-            Histone.runtime_log_warn_e("Resource include failed! Resource parsing error. BaseURI: {}, ResourceURI: {}", e, currentBaseURI, path);
+            Histone.runtime_log_warn_e("Resource include failed! Resource parsing error.", e);
             return nodeFactory.UNDEFINED;
         } catch (EvaluatorException e) {
-            Histone.runtime_log_warn_e("Resource include failed! Resource evaluation error. BaseURI: {}, ResourceURI: {}", e, currentBaseURI, path);
+            Histone.runtime_log_warn_e("Resource include failed! Resource evaluation error.", e);
             return nodeFactory.UNDEFINED;
         } finally {
             IOUtils.closeQuietly(resourceStream, log);

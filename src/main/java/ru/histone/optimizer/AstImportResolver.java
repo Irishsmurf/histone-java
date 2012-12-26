@@ -16,7 +16,6 @@
 package ru.histone.optimizer;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +25,7 @@ import ru.histone.evaluator.nodes.NodeFactory;
 import ru.histone.parser.AstNodeType;
 import ru.histone.parser.Parser;
 import ru.histone.parser.ParserException;
+import ru.histone.resourceloaders.ContentType;
 import ru.histone.resourceloaders.Resource;
 import ru.histone.resourceloaders.ResourceLoadException;
 import ru.histone.resourceloaders.ResourceLoader;
@@ -36,8 +36,10 @@ import java.io.InputStream;
 import java.net.URI;
 
 public class AstImportResolver {
+    
+    private static final String HISTONE = "HISTONE";
     private static final Logger log = LoggerFactory.getLogger(AstImportResolver.class);
-    private NodeFactory nodeFactory = new NodeFactory(new ObjectMapper());
+    private NodeFactory nodeFactory;
 
     private ResourceLoader resourceLoader;
     private Parser parser;
@@ -47,12 +49,25 @@ public class AstImportResolver {
         this.resourceLoader = resourceLoader;
     }
 
+
     public ArrayNode resolve(ArrayNode ast) throws HistoneException {
         ImportResolverContext context = new ImportResolverContext();
         return resolveInternal(ast, context);
     }
 
+    public ArrayNode resolve(String baseUrl, ArrayNode ast) throws HistoneException {
+        ImportResolverContext context = new ImportResolverContext();
+        context.setBaseURI(baseUrl);
+        return resolveInternal(ast, context);
+    }
+
+
     private ArrayNode resolveInternal(ArrayNode ast, ImportResolverContext context) throws HistoneException {
+        ArrayNode finalResult = nodeFactory.jsonArray();
+
+        finalResult.add(getHistonHeader(ast));
+
+        ast = getHistoneContent(ast);
         ArrayNode result = nodeFactory.jsonArray();
 
         for (JsonNode element : ast) {
@@ -64,6 +79,7 @@ public class AstImportResolver {
             }
         }
 
+        finalResult.add(result);
         return result;
     }
 
@@ -81,10 +97,8 @@ public class AstImportResolver {
 
         int nodeType = getNodeType(astArray);
         switch (nodeType) {
-
             case AstNodeType.IMPORT:
                 return resolveImport(astArray.get(1), context);
-
             default:
                 return astArray;
         }
@@ -105,7 +119,6 @@ public class AstImportResolver {
 
             if (context.hasImportedResource(resourceFullPath)) {
                 Histone.runtime_log_info("Resource already imported.");
-                //return AstNodeFactory.createNode(AstNodeType.STRING, "");
                 return nodeFactory.jsonArray(AstNodeType.STRING);
             } else {
                 if (currentBaseURI == null) {
@@ -119,7 +132,7 @@ public class AstImportResolver {
 //                        return AstNodeFactory.createNode(AstNodeType.IMPORT, fullPath);
 //                    }
                 }
-                resource = resourceLoader.load(path, currentBaseURI, null);
+                resource = resourceLoader.load(path, currentBaseURI, new String[]{ContentType.TEXT});
 
                 if (resource == null) {
                     Histone.runtime_log_warn("Can't import resource by path = '{}'. Resource was not found.", path);
@@ -129,11 +142,9 @@ public class AstImportResolver {
                 resourceStream = resource.getInputStream();
                 if (resourceStream == null) {
                     Histone.runtime_log_warn("Can't import resource by path = '{}'. Resource is unreadable", path);
-                    //return AstNodeFactory.createNode(AstNodeType.STRING, "");
                     return nodeFactory.jsonArray(AstNodeType.STRING);
                 }
                 String templateContent = IOUtils.toString(resourceStream); //yeah... full file reading, because of our tokenizer is regexp-based :(
-
                 // Add this resource full path to context
                 context.addImportedResource(resourceFullPath);
 
@@ -143,9 +154,8 @@ public class AstImportResolver {
                     context.setBaseURI(resourceURI.resolve("").toString());
                 }
 
-
                 ArrayNode result =  nodeFactory.jsonArray();
-                for (JsonNode elem : parseResult) {
+                for (JsonNode elem : getHistoneContent(parseResult)) {
                     if (elem.isArray()) {
                         int nodeType = getNodeType((ArrayNode) elem);
                         switch (nodeType) {
@@ -163,25 +173,20 @@ public class AstImportResolver {
                             default:
                                 //do nothing
                         }
-
                     }
                 }
 
                 context.setBaseURI(currentBaseURI == null ? null : currentBaseURI);
-
                 return result;
             }
         } catch (ResourceLoadException e) {
             Histone.runtime_log_warn_e("Resource import failed! Unresolvable resource.", e);
-            //return AstNodeFactory.createNode(AstNodeType.STRING, "");
             return nodeFactory.jsonArray(AstNodeType.STRING);
         } catch (IOException e) {
             Histone.runtime_log_warn_e("Resource import failed! Resource reading error.", e);
-            //return AstNodeFactory.createNode(AstNodeType.STRING, "");
             return nodeFactory.jsonArray(AstNodeType.STRING);
         } catch (ParserException e) {
             Histone.runtime_log_warn_e("Resource import failed! Resource parsing error.", e);
-            //return AstNodeFactory.createNode(AstNodeType.STRING, "");
             return nodeFactory.jsonArray(AstNodeType.STRING);
         } finally {
             IOUtils.closeQuietly(resourceStream, log);
@@ -204,5 +209,22 @@ public class AstImportResolver {
         }
         return value;
     }
+    
+    private ArrayNode getHistoneContent(ArrayNode ast){
+        if (ast.path(0) != null && HISTONE.equals(ast.path(0).path(0).asText())) {
+            return (ArrayNode) ast.path(1);
+        }
+        return ast;
+    }
 
+    private ArrayNode getHistonHeader(ArrayNode ast){
+        if (ast.path(0) != null && HISTONE.equals(ast.path(0).path(0).asText())) {
+            return (ArrayNode) ast.path(0);
+        }
+        return ast;
+    }
+
+    public void setNodeFactory(NodeFactory nodeFactory) {
+        this.nodeFactory = nodeFactory;
+    }
 }

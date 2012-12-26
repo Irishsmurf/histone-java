@@ -22,7 +22,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.histone.evaluator.Evaluator;
 import ru.histone.evaluator.nodes.NodeFactory;
-import ru.histone.optimizer.*;
+import ru.histone.optimizer.AstImportResolver;
+import ru.histone.optimizer.AstInlineOptimizer;
+import ru.histone.optimizer.AstMarker;
+import ru.histone.optimizer.AstOptimizer;
 import ru.histone.parser.Parser;
 import ru.histone.resourceloaders.ContentType;
 import ru.histone.resourceloaders.Resource;
@@ -49,6 +52,11 @@ public class Histone {
      */
     private static final Logger RUNTIME_LOG = LoggerFactory.getLogger(Histone.class.getName() + ".RUNTIME_LOG");
 
+    /**
+     * @deprecated (should be moved to GlobalProperties)
+     */
+    private static boolean devMode = false;
+
     private Parser parser;
     private Evaluator evaluator;
     private NodeFactory nodeFactory;
@@ -56,9 +64,7 @@ public class Histone {
     private AstImportResolver astImportResolver;
     private AstMarker astMarker;
     private AstInlineOptimizer astInlineOptimizer;
-    private ConstantFoldingOptimizer constantFoldingOptimizer;
     private ResourceLoader resourceLoader;
-
 
     public Histone(HistoneBootstrap bootstrap) {
         this.parser = bootstrap.getParser();
@@ -69,7 +75,6 @@ public class Histone {
         this.astInlineOptimizer = bootstrap.getAstInlineOptimizer();
         this.astAstOptimizer = bootstrap.getAstAstOptimizer();
         this.resourceLoader = bootstrap.getResourceLoader();
-        this.constantFoldingOptimizer = bootstrap.getConstantFoldingOptimizer();
     }
 
     public ArrayNode parseTemplateToAST(Reader templateReader) throws HistoneException {
@@ -83,24 +88,40 @@ public class Histone {
         return parser.parse(inputString);
     }
 
-    public ArrayNode parseTemplateToAST(String templateString) throws HistoneException {
-        return parser.parse(templateString);
-    }
+    public ArrayNode optimizeAST(String baseUri, ArrayNode templateAST) throws HistoneException {
 
-    public ArrayNode optimizeConstantFolding(ArrayNode source) throws HistoneException {
-        return constantFoldingOptimizer.foldConstants(source);
+
+        ArrayNode importsResolved = astImportResolver.resolve(baseUri, templateAST);
+//
+        //ArrayNode markedAst = astMarker.mark(importsResolved);
+//
+//        ArrayNode inlinedAst = astInlineOptimizer.inline(markedAst);
+//
+//        ArrayNode optimizedAst = astAstOptimizer.optimize(inlinedAst);
+//
+//        return optimizedAst;
+
+        return importsResolved;
+
+        //throw new RuntimeException("Not implemented yet");//TODO
     }
 
     public ArrayNode optimizeAST(ArrayNode templateAST) throws HistoneException {
-//        ArrayNode importsResolved = astImportResolver.resolve(templateAST);
-
-        ArrayNode markedAst = astMarker.mark(templateAST);
-
-        ArrayNode inlinedAst = astInlineOptimizer.inline(markedAst);
-
+        
+        
+        ArrayNode importsResolved = astImportResolver.resolve(templateAST);
+//
+        //ArrayNode markedAst = astMarker.mark(importsResolved);
+//
+//        ArrayNode inlinedAst = astInlineOptimizer.inline(markedAst);
+//
 //        ArrayNode optimizedAst = astAstOptimizer.optimize(inlinedAst);
+//
+//        return optimizedAst;
 
-        return inlinedAst;
+        return importsResolved;
+
+        //throw new RuntimeException("Not implemented yet");//TODO
     }
 
     public String evaluateAST(ArrayNode templateAST) throws HistoneException {
@@ -202,7 +223,10 @@ public class Histone {
      */
     public static void runtime_log_error(String msg, Throwable e, Object... args) {
         RUNTIME_LOG.error(msg, args);
-        RUNTIME_LOG.error(msg, e);
+
+        StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
+        // throw new HistoneException();
+
     }
 
     /**
@@ -212,7 +236,11 @@ public class Histone {
      * @param args arguments values that should be replaced in message
      */
     public static void runtime_log_info(String msg, Object... args) {
-        RUNTIME_LOG.info(msg, args);
+        if (devMode) {
+            runtime_log_error(msg, null, args);
+        } else {
+            RUNTIME_LOG.info(msg, args);
+        }
     }
 
     /**
@@ -223,7 +251,11 @@ public class Histone {
      */
 
     public static void runtime_log_warn(String msg, Object... args) {
-        RUNTIME_LOG.warn(msg, args);
+        if (devMode) {
+            runtime_log_error(msg, null, args);
+        } else {
+            RUNTIME_LOG.warn(msg, args);
+        }
     }
 
     /**
@@ -235,7 +267,11 @@ public class Histone {
      */
 
     public static void runtime_log_warn_e(String msg, Throwable e, Object... args) {
-        RUNTIME_LOG.warn(msg, args);
+        if (devMode) {
+            runtime_log_error(msg, e, args);
+        } else {
+            RUNTIME_LOG.warn(msg, e, args);
+        }
     }
 
 }
