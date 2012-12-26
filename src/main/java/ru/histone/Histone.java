@@ -22,10 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.histone.evaluator.Evaluator;
 import ru.histone.evaluator.nodes.NodeFactory;
-import ru.histone.optimizer.AstImportResolver;
-import ru.histone.optimizer.AstInlineOptimizer;
-import ru.histone.optimizer.AstMarker;
-import ru.histone.optimizer.AstOptimizer;
+import ru.histone.optimizer.*;
 import ru.histone.parser.Parser;
 import ru.histone.resourceloaders.ContentType;
 import ru.histone.resourceloaders.Resource;
@@ -64,6 +61,7 @@ public class Histone {
     private AstImportResolver astImportResolver;
     private AstMarker astMarker;
     private AstInlineOptimizer astInlineOptimizer;
+    private ConstantFoldingOptimizer constantFoldingOptimizer;
     private ResourceLoader resourceLoader;
 
     public Histone(HistoneBootstrap bootstrap) {
@@ -75,6 +73,7 @@ public class Histone {
         this.astInlineOptimizer = bootstrap.getAstInlineOptimizer();
         this.astAstOptimizer = bootstrap.getAstAstOptimizer();
         this.resourceLoader = bootstrap.getResourceLoader();
+        this.constantFoldingOptimizer = bootstrap.getConstantFoldingOptimizer();
     }
 
     public ArrayNode parseTemplateToAST(Reader templateReader) throws HistoneException {
@@ -106,21 +105,20 @@ public class Histone {
         //throw new RuntimeException("Not implemented yet");//TODO
     }
 
+    public ArrayNode optimizeConstantFolding(ArrayNode ast) throws HistoneException {
+        return constantFoldingOptimizer.foldConstants(ast);
+    }
+
     public ArrayNode optimizeAST(ArrayNode templateAST) throws HistoneException {
-        
-        
         ArrayNode importsResolved = astImportResolver.resolve(templateAST);
-//
-        //ArrayNode markedAst = astMarker.mark(importsResolved);
+        ArrayNode markedAst = astMarker.mark(importsResolved);
+        return markedAst;
 //
 //        ArrayNode inlinedAst = astInlineOptimizer.inline(markedAst);
 //
 //        ArrayNode optimizedAst = astAstOptimizer.optimize(inlinedAst);
 //
 //        return optimizedAst;
-
-        return importsResolved;
-
         //throw new RuntimeException("Not implemented yet");//TODO
     }
 
@@ -273,5 +271,4 @@ public class Histone {
             RUNTIME_LOG.warn(msg, e, args);
         }
     }
-
 }
