@@ -144,7 +144,7 @@ public class PathUtils {
         return builder.toString();
     }
 
-    private static String resolvePath(String path) {
+    public static String resolvePath(String path) {
         Pattern parser = Pattern.compile(URL_DIRNAME_REGEXP);
         Matcher matcher = parser.matcher(path);
         if (matcher.find()) {
@@ -153,7 +153,7 @@ public class PathUtils {
         return EMPTY;
     }
 
-    private static URI parseURI(String uriString) {
+    public static URI parseURI(String uriString) {
         Pattern parser = Pattern.compile(URL_PARSER_REGEXP);
         Matcher matcher = parser.matcher(uriString);
         URI uri = new URI();
@@ -166,6 +166,14 @@ public class PathUtils {
             uri.setFragment(matcher.group(5));
         }
         return uri;
+    }
+    
+    public static String prepareWinPathForUri(String path){
+        String result = path.replace("\\", "/");
+        if (!result.startsWith(".") && !result.startsWith("/") && !result.startsWith("file:/")) {
+            result = "file:/" + result;
+        }
+        return result;
     }
 
 }
