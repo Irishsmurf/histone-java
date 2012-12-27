@@ -352,6 +352,10 @@ public class AcceptanceTestsRunner extends Runner {
                     return true;
                 }
             }
+        } else if (ignore.isTextual()) {
+            if ("java".equalsIgnoreCase(ignore.asText())) {
+                return true;
+            }
         }
         return false;
     }
