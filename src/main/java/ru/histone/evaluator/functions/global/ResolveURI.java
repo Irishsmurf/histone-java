@@ -35,7 +35,10 @@ public class ResolveURI extends GlobalFunction {
 
     @Override
     public Node execute(Node... args) throws GlobalFunctionExecutionException {
-        String result = PathUtils.resolveUrl(args[0].getAsString().getValue(), args[1].getAsString().getValue());
-        return getNodeFactory().string(result);
+        if (args != null && args.length > 1) {
+            String result = PathUtils.resolveUrl(args[0].getAsString().getValue(), args[1].getAsString().getValue());
+            return getNodeFactory().string(result);
+        }
+        return getNodeFactory().UNDEFINED;
     }
 }
