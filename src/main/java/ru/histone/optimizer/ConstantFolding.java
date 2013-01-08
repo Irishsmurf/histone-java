@@ -34,14 +34,13 @@ import java.util.*;
  * User: sazonovkirill@gmail.com
  * Date: 25.12.12
  */
-public class ConstantFoldingOptimizer {
-    private static final Logger logger = LoggerFactory.getLogger(ConstantFoldingOptimizer.class);
+public class ConstantFolding {
+    private static final Logger logger = LoggerFactory.getLogger(ConstantFolding.class);
 
-    private final Context context = new Context();
     private final NodeFactory nodeFactory;
     private final Evaluator evaluator;
 
-    public ConstantFoldingOptimizer(NodeFactory nodeFactory, Evaluator evaluator) {
+    public ConstantFolding(NodeFactory nodeFactory, Evaluator evaluator) {
         this.nodeFactory = nodeFactory;
         this.evaluator = evaluator;
     }
@@ -70,7 +69,9 @@ public class ConstantFoldingOptimizer {
             return node;
         }
 
-        Assert.isTrue(node.isArray());
+        if (!node.isArray()) {
+            return node;
+        }
         ArrayNode arr = (ArrayNode) node;
 
         int nodeType = getNodeType(arr);
@@ -282,10 +283,6 @@ public class ConstantFoldingOptimizer {
         }
 
         throw new IllegalStateException(String.format("Can't convert node %s to AST element", node));
-    }
-
-    static class Context {
-
     }
 
     private boolean isString(JsonNode element) {

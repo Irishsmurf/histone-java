@@ -29,7 +29,8 @@ public class HistoneBootstrap {
     private AstImportResolver astImportResolver;
     private AstMarker astMarker;
     private AstInlineOptimizer astInlineOptimizer;
-    private ConstantFoldingOptimizer constantFoldingOptimizer;
+    private ConstantFolding constantFolding;
+    private ConstantPropagation constantPropagation;
     private ResourceLoader resourceLoader;
 
     public Parser getParser() {
@@ -96,12 +97,20 @@ public class HistoneBootstrap {
         this.resourceLoader = resourceLoader;
     }
 
-    public ConstantFoldingOptimizer getConstantFoldingOptimizer() {
-        return constantFoldingOptimizer;
+    public ConstantFolding getConstantFolding() {
+        return constantFolding;
     }
 
-    public void setConstantFoldingOptimizer(ConstantFoldingOptimizer constantFoldingOptimizer) {
-        this.constantFoldingOptimizer = constantFoldingOptimizer;
+    public void setConstantFolding(ConstantFolding constantFolding) {
+        this.constantFolding = constantFolding;
+    }
+
+    public ConstantPropagation getConstantPropagation() {
+        return constantPropagation;
+    }
+
+    public void setConstantPropagation(ConstantPropagation constantPropagation) {
+        this.constantPropagation = constantPropagation;
     }
 }
 

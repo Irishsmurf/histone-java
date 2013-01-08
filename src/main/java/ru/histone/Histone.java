@@ -61,7 +61,8 @@ public class Histone {
     private AstImportResolver astImportResolver;
     private AstMarker astMarker;
     private AstInlineOptimizer astInlineOptimizer;
-    private ConstantFoldingOptimizer constantFoldingOptimizer;
+    private ConstantFolding constantFolding;
+    private ConstantPropagation constantPropagation;
     private ResourceLoader resourceLoader;
 
     public Histone(HistoneBootstrap bootstrap) {
@@ -73,7 +74,8 @@ public class Histone {
         this.astInlineOptimizer = bootstrap.getAstInlineOptimizer();
         this.astAstOptimizer = bootstrap.getAstAstOptimizer();
         this.resourceLoader = bootstrap.getResourceLoader();
-        this.constantFoldingOptimizer = bootstrap.getConstantFoldingOptimizer();
+        this.constantFolding = bootstrap.getConstantFolding();
+        this.constantPropagation = bootstrap.getConstantPropagation();
     }
 
     public ArrayNode parseTemplateToAST(Reader templateReader) throws HistoneException {
@@ -88,39 +90,51 @@ public class Histone {
     }
 
     public ArrayNode optimizeAST(String baseUri, ArrayNode templateAST) throws HistoneException {
-
-
         ArrayNode importsResolved = astImportResolver.resolve(baseUri, templateAST);
-//
-        //ArrayNode markedAst = astMarker.mark(importsResolved);
-//
-//        ArrayNode inlinedAst = astInlineOptimizer.inline(markedAst);
-//
-//        ArrayNode optimizedAst = astAstOptimizer.optimize(inlinedAst);
-//
-//        return optimizedAst;
-
-        return importsResolved;
-
-        //throw new RuntimeException("Not implemented yet");//TODO
+        ArrayNode constantsFolded = constantFolding.foldConstants(importsResolved);
+        return constantsFolded;
     }
 
     public ArrayNode optimizeConstantFolding(ArrayNode ast) throws HistoneException {
-        return constantFoldingOptimizer.foldConstants(ast);
+        return constantFolding.foldConstants(ast);
     }
 
     public ArrayNode optimizeAST(ArrayNode templateAST) throws HistoneException {
         ArrayNode importsResolved = astImportResolver.resolve(templateAST);
-        ArrayNode markedAst = astMarker.mark(importsResolved);
-        return markedAst;
-//
-//        ArrayNode inlinedAst = astInlineOptimizer.inline(markedAst);
-//
-//        ArrayNode optimizedAst = astAstOptimizer.optimize(inlinedAst);
-//
-//        return optimizedAst;
-        //throw new RuntimeException("Not implemented yet");//TODO
+
+        ArrayNode ast = importsResolved;
+
+        int lastH2 = 0;
+        int currentH2 = ast.hashCode();
+        while (lastH2 != currentH2) {
+            {
+                int lastH1 = 0;
+                int currentH1 = templateAST.hashCode();
+                while (lastH1 != currentH1) {
+                    ast = constantFolding.foldConstants(ast);
+
+                    lastH1 = currentH1;
+                    currentH1 = templateAST.hashCode();
+                }
+            }
+            {
+                int lastH1 = 0;
+                int currentH1 = templateAST.hashCode();
+                while (lastH1 != currentH1) {
+                    ast = constantPropagation.propagateConstants(ast);
+
+                    lastH1 = currentH1;
+                    currentH1 = templateAST.hashCode();
+                }
+            }
+
+            lastH2 = currentH2;
+            currentH2 = templateAST.hashCode();
+        }
+
+        return ast;
     }
+
 
     public String evaluateAST(ArrayNode templateAST) throws HistoneException {
         return evaluateAST(null, templateAST, NullNode.instance);
@@ -151,9 +165,13 @@ public class Histone {
         }
     }
 
+    /**
+     * Main function for Histone template evaluation.
+     */
     public String evaluate(String baseURI, String templateContent, JsonNode context) throws HistoneException {
         ArrayNode ast = parser.parse(templateContent);
-        return evaluator.process(baseURI, ast, context);
+        ArrayNode optimizedAst = optimizeAST(ast);
+        return evaluator.process(baseURI, optimizedAst, context);
     }
 
     public ArrayNode evaluateAsAST(String baseURI, String templateContent, JsonNode context) throws HistoneException {

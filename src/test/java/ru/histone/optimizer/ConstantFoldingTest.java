@@ -17,6 +17,7 @@ package ru.histone.optimizer;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import ru.histone.Histone;
 import ru.histone.HistoneBuilder;
@@ -24,10 +25,7 @@ import ru.histone.HistoneException;
 import ru.histone.parser.AstNodeType;
 import ru.histone.utils.IOUtils;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringReader;
-import java.io.StringWriter;
+import java.io.*;
 
 import static org.junit.Assert.assertTrue;
 
@@ -35,7 +33,7 @@ import static org.junit.Assert.assertTrue;
  * User: sazonovkirill@gmail.com
  * Date: 25.12.12
  */
-public class ConstantFoldingOptimizerTest {
+public class ConstantFoldingTest {
     private Histone histone;
 
     @Before
@@ -114,6 +112,21 @@ public class ConstantFoldingOptimizerTest {
         ArrayNode finalAst = histone.optimizeConstantFolding(ast);
 
         assertTrue(true);
+    }
+
+    @Ignore
+    @Test
+    public void performanceTest() throws IOException, HistoneException {
+        File f = new File("D:\\Megafon\\workspace\\portal-repository\\repository\\templates\\main\\index.tpl");
+        StringWriter sw = new StringWriter();
+        InputStream is = new FileInputStream(f);
+        IOUtils.copy(is, sw);
+        String input = sw.toString();
+
+        for (int i = 0; i < 10000; i++) {
+            ArrayNode ast = histone.parseTemplateToAST(new StringReader(input));
+            String result = histone.evaluateAST(ast);
+        }
     }
 
     private String input(String filename) throws IOException {
