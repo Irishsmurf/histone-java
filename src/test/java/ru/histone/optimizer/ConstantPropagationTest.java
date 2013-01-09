@@ -17,6 +17,7 @@ package ru.histone.optimizer;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import ru.histone.Histone;
 import ru.histone.HistoneBuilder;
@@ -46,6 +47,7 @@ public class ConstantPropagationTest {
     }
 
     @Test
+    @Ignore("Not implemented yet!")
     public void call() throws IOException, HistoneException {
         throw new RuntimeException("Not implemented yet");
     }
