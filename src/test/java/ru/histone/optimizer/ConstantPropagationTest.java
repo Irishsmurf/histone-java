@@ -21,6 +21,7 @@ import org.junit.Test;
 import ru.histone.Histone;
 import ru.histone.HistoneBuilder;
 import ru.histone.HistoneException;
+import ru.histone.parser.AstNodeType;
 import ru.histone.utils.IOUtils;
 
 import java.io.IOException;
@@ -28,6 +29,7 @@ import java.io.InputStream;
 import java.io.StringReader;
 import java.io.StringWriter;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -44,12 +46,101 @@ public class ConstantPropagationTest {
     }
 
     @Test
-    public void simplest() throws IOException, HistoneException {
+    public void call() throws IOException, HistoneException {
+        throw new RuntimeException("Not implemented yet");
+    }
+
+    @Test
+    public void for_() throws IOException, HistoneException {
+        /**
+         * Warning: variable content declaration is not implemented completely,
+         * so variables, declared in a such manner will not be propagated.
+         */
+
+        String input = input("for.tpl");
+
+        ArrayNode ast = histone.parseTemplateToAST(new StringReader(input));
+        ArrayNode finalAst = histone.optimizeAST(ast);
+
+        assertTrue(finalAst.get(2).get(3).get(0).get(3).get(1).asText().equals("Hello"));
+
+        // Assert that evaluation results are equal
+        String astS = histone.evaluateAST(ast);
+        String finalAstS = histone.evaluateAST(finalAst);
+        assertEquals(astS, finalAstS);
+    }
+
+    @Test
+    public void if_() throws IOException, HistoneException {
+        /**
+         * Warning: variable content declaration is not implemented completely,
+         * so variables, declared in a such manner will not be propagated.
+         */
+
+        String input = input("if.tpl");
+
+        ArrayNode ast = histone.parseTemplateToAST(new StringReader(input));
+        ArrayNode finalAst = histone.optimizeAST(ast);
+
+        assertTrue(finalAst.get(4).get(1).get(0).get(0).get(0).asInt() == AstNodeType.TRUE);
+        assertTrue(finalAst.get(4).get(1).get(0).get(1).get(3).get(2).get(1).get(1).get(1).asInt() == 1);
+        assertTrue(finalAst.get(4).get(1).get(0).get(1).get(3).get(2).get(1).get(2).get(1).asInt() == 1);
+
+        // Assert that evaluation results are equal
+        String astS = histone.evaluateAST(ast);
+        String finalAstS = histone.evaluateAST(finalAst);
+        assertEquals(astS, finalAstS);
+    }
+
+    @Test
+    public void macro() throws IOException, HistoneException {
+        String input = input("macro.tpl");
+
+        ArrayNode ast = histone.parseTemplateToAST(new StringReader(input));
+        ArrayNode finalAst = histone.optimizeAST(ast);
+
+        assertTrue(finalAst.get(2).get(3).get(3).get(1).asText().equals("Hello"));
+        assertTrue(finalAst.get(2).get(3).get(5).get(1).asText().equals("world"));
+
+        // Assert that evaluation results are equal
+        String astS = histone.evaluateAST(ast);
+        String finalAstS = histone.evaluateAST(finalAst);
+        assertEquals(astS, finalAstS);
+    }
+
+    @Test
+    public void map() throws IOException, HistoneException {
+        String input = input("map.tpl");
+
+        ArrayNode ast = histone.parseTemplateToAST(new StringReader(input));
+        ArrayNode finalAst = histone.optimizeAST(ast);
+
+        assertTrue(finalAst.get(2).get(2).get(1).get(0).get(1).get(1).asInt() == 3);
+
+        // Assert that evaluation results are equal
+        String astS = histone.evaluateAST(ast);
+        String finalAstS = histone.evaluateAST(finalAst);
+        assertEquals(astS, finalAstS);
+    }
+
+    @Test
+    public void var() throws IOException, HistoneException {
         String input = input("var.tpl");
 
         ArrayNode ast = histone.parseTemplateToAST(new StringReader(input));
         ArrayNode finalAst = histone.optimizeAST(ast);
-        assertTrue(true);
+
+        assertTrue(finalAst.get(0).get(2).get(1).asInt() == 5);
+        assertTrue(finalAst.get(2).get(2).get(1).asInt() == 5);
+        assertTrue(finalAst.get(4).get(1).asInt() == 5);
+        assertTrue(finalAst.get(6).get(2).get(1).asInt() == 5);
+        assertTrue(finalAst.get(8).get(1).asInt() == 5);
+        assertTrue(finalAst.get(10).get(2).get(1).get(1).get(1).asInt() == 5);
+
+        // Assert that evaluation results are equal
+        String astS = histone.evaluateAST(ast);
+        String finalAstS = histone.evaluateAST(finalAst);
+        assertEquals(astS, finalAstS);
     }
 
     private String input(String filename) throws IOException {

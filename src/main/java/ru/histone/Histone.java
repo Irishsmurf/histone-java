@@ -104,32 +104,32 @@ public class Histone {
 
         ArrayNode ast = importsResolved;
 
-        int lastH2 = 0;
-        int currentH2 = ast.hashCode();
+        long lastH2 = 0;
+        long currentH2 = BaseOptimization.hash(ast);
         while (lastH2 != currentH2) {
             {
-                int lastH1 = 0;
-                int currentH1 = templateAST.hashCode();
+                long lastH1 = 0;
+                long currentH1 = BaseOptimization.hash(templateAST);
                 while (lastH1 != currentH1) {
                     ast = constantFolding.foldConstants(ast);
 
                     lastH1 = currentH1;
-                    currentH1 = templateAST.hashCode();
+                    currentH1 = BaseOptimization.hash(ast);
                 }
             }
             {
-                int lastH1 = 0;
-                int currentH1 = templateAST.hashCode();
+                long lastH1 = 0;
+                long currentH1 = templateAST.hashCode();
                 while (lastH1 != currentH1) {
                     ast = constantPropagation.propagateConstants(ast);
 
                     lastH1 = currentH1;
-                    currentH1 = templateAST.hashCode();
+                    currentH1 = BaseOptimization.hash(ast);
                 }
             }
 
             lastH2 = currentH2;
-            currentH2 = templateAST.hashCode();
+            currentH2 = BaseOptimization.hash(ast);
         }
 
         return ast;

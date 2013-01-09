@@ -2,8 +2,6 @@ package ru.histone.optimizer;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import ru.histone.HistoneException;
 import ru.histone.evaluator.nodes.NodeFactory;
 import ru.histone.parser.AstNodeType;
@@ -15,18 +13,15 @@ import java.util.*;
  * User: sazonovkirill@gmail.com
  * Date: 07.01.13
  */
-public class ConstantPropagation {
-    private static final Logger logger = LoggerFactory.getLogger(ConstantPropagation.class);
-
-    private final NodeFactory nodeFactory;
+public class ConstantPropagation extends BaseOptimization {
+    private Context context;
 
     public ConstantPropagation(NodeFactory nodeFactory) {
-        this.nodeFactory = nodeFactory;
+        super(nodeFactory);
     }
 
     public ArrayNode propagateConstants(ArrayNode ast) throws HistoneException {
-        this.stackVars = new ArrayDeque<Map<String, Object>>();
-        pushContext();
+        context = new Context();
 
         ArrayNode result = nodeFactory.jsonArray();
 
@@ -45,6 +40,18 @@ public class ConstantPropagation {
         return result;
     }
 
+    public JsonNode processAsArray(JsonNode node) throws HistoneException {
+        if (node.isArray()) {
+            JsonNode[] result = new JsonNode[node.size()];
+            for (int i = 0; i < result.length; i++) {
+                result[i] = processNode(node.get(i));
+            }
+            return nodeFactory.jsonArray(result);
+        } else {
+            return processNode(node);
+        }
+    }
+
     public JsonNode processNode(JsonNode node) throws HistoneException {
         // All text nodes are returned 'as it'
         if (isString(node)) {
@@ -56,21 +63,96 @@ public class ConstantPropagation {
         }
         ArrayNode arr = (ArrayNode) node;
 
+        if (arr.size() == 0) {
+            return arr;
+        }
+
         int nodeType = getNodeType(arr);
+
+        if (getOperationsOverArguments().contains(nodeType)) {
+            return processOperationOverArguments(arr);
+        }
+
         switch (nodeType) {
             case AstNodeType.SELECTOR:
                 return processSelector(arr);
+            case AstNodeType.STATEMENTS:
+                return processStatements(arr);
+
             case AstNodeType.VAR:
                 return processVariable(arr);
-            case AstNodeType.MACRO:
-                return processMacro(arr);
             case AstNodeType.IF:
                 return processIf(arr);
             case AstNodeType.FOR:
                 return processFor(arr);
+
+            case AstNodeType.MACRO:
+                return processMacro(arr);
+            case AstNodeType.CALL:
+                return processCall(arr);
+            case AstNodeType.MAP:
+                return processMap(arr);
             default:
                 return node;
         }
+    }
+
+    private JsonNode processCall(ArrayNode call) throws HistoneException {
+        if (call.get(3).isArray()) {
+            ArrayNode arr = (ArrayNode) call.get(3);
+            return processNode(arr);
+        } else {
+            return call;
+        }
+    }
+
+    private JsonNode processMap(ArrayNode map) throws HistoneException {
+        ArrayNode items = (ArrayNode) map.get(1);
+        for (JsonNode item : items) {
+            if (item.isArray()) {
+                ArrayNode arr = (ArrayNode) item;
+                JsonNode key = arr.get(0);
+                JsonNode value = arr.get(1);
+
+                value = processNode(value);
+
+                arr.removeAll();
+                arr.add(key);
+                arr.add(value);
+            }
+        }
+
+        return map;
+    }
+
+    private JsonNode processOperationOverArguments(ArrayNode ast) throws HistoneException {
+        Assert.notNull(ast);
+        Assert.notNull(ast.size() > 1);
+        Assert.isTrue(ast.get(0).isNumber());
+        for (int i = 1; i < ast.size(); i++) Assert.isTrue(ast.get(i).isArray());
+        Assert.isTrue(getOperationsOverArguments().contains(ast.get(0).asInt()));
+
+        int operationType = ast.get(0).asInt();
+
+        final List<ArrayNode> processedArguments = new ArrayList<ArrayNode>();
+        for (int i = 1; i < ast.size(); i++) {
+            JsonNode processedArg = processNode(ast.get(i));
+            Assert.isTrue(processedArg.isArray());
+            processedArguments.add((ArrayNode) processedArg);
+        }
+
+        return ast(operationType, processedArguments);
+    }
+
+    private JsonNode processStatements(ArrayNode statements) throws HistoneException {
+        statements = (ArrayNode) statements.get(1);
+
+        JsonNode[] statementsOut = new JsonNode[statements.size()];
+        for (int i = 0; i < statements.size(); i++) {
+            statementsOut[i] = processNode(statements.get(i));
+        }
+
+        return ast(AstNodeType.STATEMENTS, nodeFactory.jsonArray(statementsOut));
     }
 
     public JsonNode processVariable(ArrayNode variable) throws HistoneException {
@@ -86,26 +168,26 @@ public class ConstantPropagation {
             if (var.isTextual() && isConstant(value)) {
                 String varName = var.asText();
 
-                if (!contextContainsVarDefinition(varName)) {
-                    putToContext(varName, value);
+                if (!context.hasVar(varName)) {
+                    context.putVar(varName, value);
                 }
             }
         }
 
-        return array(AstNodeType.VAR, var, valueNode);
+        return ast(AstNodeType.VAR, var, valueNode);
     }
 
     public JsonNode processMacro(ArrayNode macro) throws HistoneException {
-        JsonNode name = macro.get(0);
-        ArrayNode args = (ArrayNode) macro.get(1);
-        ArrayNode statements = (ArrayNode) macro.get(2);
+        JsonNode name = macro.get(1);
+        ArrayNode args = (ArrayNode) macro.get(2);
+        ArrayNode statements = (ArrayNode) macro.get(3);
 
-        pushContext();
+        context.push();
         args = (ArrayNode) processNode(args);
-        statements = (ArrayNode) processNode(statements);
-        popContext();
+        statements = (ArrayNode) processAsArray(statements);
+        context.pop();
 
-        return array(AstNodeType.MACRO, name, args, statements);
+        return ast(AstNodeType.MACRO, name, args, statements);
     }
 
     public JsonNode processIf(ArrayNode if_) throws HistoneException {
@@ -114,38 +196,47 @@ public class ConstantPropagation {
         ArrayNode conditionsOut = nodeFactory.jsonArray();
 
         for (JsonNode condition : conditions) {
-            JsonNode expression = conditions.get(0);
+            JsonNode expression = condition.get(0);
             JsonNode statements = condition.get(1);
 
             expression = processNode(expression);
-            pushContext();
-            statements = processNode(statements);
-            popContext();
+
+            context.push();
+            JsonNode[] statementsOut = new JsonNode[statements.size()];
+            for (int i = 0; i < statements.size(); i++) {
+                statementsOut[i] = processNode(statements.get(i));
+            }
+            context.pop();
 
             ArrayNode conditionOut = nodeFactory.jsonArray();
             conditionOut.add(expression);
-            conditionOut.add(statements);
+            conditionOut.add(nodeFactory.jsonArray(statementsOut));
             conditionsOut.add(conditionOut);
         }
 
-        return array(AstNodeType.IF, conditionsOut);
+        return ast(AstNodeType.IF, conditionsOut);
     }
 
     public JsonNode processFor(ArrayNode for_) throws HistoneException {
         ArrayNode var = (ArrayNode) for_.get(1);
         ArrayNode collection = (ArrayNode) for_.get(2);
-        ArrayNode statements = (ArrayNode) for_.get(3);
+        ArrayNode statements = (ArrayNode) for_.get(3).get(0);
 
         String iterVal = var.get(0).asText();
         String iterKey = (var.size() > 1) ? var.get(1).asText() : null;
 
         collection = (ArrayNode) processNode(collection);
 
-        pushContext();
-        statements = (ArrayNode) processNode(statements);
-        popContext();
+        context.push();
+        JsonNode[] statementsOut = new JsonNode[statements.size()];
+        for (int i = 0; i < statements.size(); i++) {
+            statementsOut[i] = processNode(statements.get(i));
+        }
+        // Very stange AST structure in case of FOR
+        ArrayNode statementsContainer = nodeFactory.jsonArray(nodeFactory.jsonArray(statementsOut));
+        context.pop();
 
-        return array(AstNodeType.FOR, var, collection, statements);
+        return ast(AstNodeType.FOR, var, collection, statementsContainer);
     }
 
     public JsonNode processSelector(ArrayNode selector) throws HistoneException {
@@ -154,76 +245,51 @@ public class ConstantPropagation {
         if (var.size() == 1) {
             var = var.get(0);
             String varName = var.asText();
-            if (contextContainsVarDefinition(varName)) {
-                return (JsonNode) getVarValue(varName);
+            if (context.hasVar(varName)) {
+                return context.getVarValue(varName);
             } else {
-                return var;
+                return selector;
             }
         } else {
             return processNode(var);
         }
     }
 
-    private Deque<Map<String, Object>> stackVars = new ArrayDeque<Map<String, Object>>();
+    static class Context {
+        private Deque<Map<String, ArrayNode>> stackVars = new ArrayDeque<Map<String, ArrayNode>>();
 
-    private void pushContext() {
-        stackVars.push(new HashMap<String, Object>());
-    }
-
-    private void popContext() {
-        stackVars.pollFirst();
-    }
-
-    private void putToContext(String varName, ArrayNode value) {
-        stackVars.getFirst().put(varName, value);
-    }
-
-    private Object getVarValue(String varName) {
-        for (Map<String, Object> frame : stackVars) {
-            if (frame.containsKey(varName)) {
-                return frame.get(varName);
-            }
+        public Context() {
+            push();
         }
-        return null;
-    }
 
-    private boolean contextContainsVarDefinition(String varName) {
-        for (Map<String, Object> frame : stackVars) {
-            if (frame.containsKey(varName)) {
-                return true;
-            }
+        public void push() {
+            stackVars.push(new HashMap<String, ArrayNode>());
         }
-        return false;
-    }
 
-    public ArrayNode array(int operationType, JsonNode... arguments) {
-        return nodeFactory.jsonArray(operationType, arguments);
-    }
-
-    private boolean isString(JsonNode element) {
-        return element.isTextual();
-    }
-
-    private boolean isConstant(ArrayNode astArray) {
-        int nodeType = getNodeType(astArray);
-        return nodeType == AstNodeType.TRUE ||
-                nodeType == AstNodeType.FALSE ||
-                nodeType == AstNodeType.NULL ||
-                nodeType == AstNodeType.INT ||
-                nodeType == AstNodeType.DOUBLE ||
-                nodeType == AstNodeType.STRING;
-    }
-
-    private boolean isConstants(Collection<? extends ArrayNode> astArrays) {
-        for (ArrayNode node : astArrays) {
-            if (!isConstant(node)) {
-                return false;
-            }
+        public void pop() {
+            stackVars.pollFirst();
         }
-        return true;
-    }
 
-    private int getNodeType(ArrayNode astArray) {
-        return astArray.get(0).asInt();
+        public void putVar(String varName, ArrayNode value) {
+            stackVars.getFirst().put(varName, value);
+        }
+
+        public ArrayNode getVarValue(String varName) {
+            for (Map<String, ArrayNode> frame : stackVars) {
+                if (frame.containsKey(varName)) {
+                    return frame.get(varName);
+                }
+            }
+            return null;
+        }
+
+        public boolean hasVar(String varName) {
+            for (Map<String, ArrayNode> frame : stackVars) {
+                if (frame.containsKey(varName)) {
+                    return true;
+                }
+            }
+            return false;
+        }
     }
 }
