@@ -18,7 +18,7 @@ import java.util.*;
 public abstract class BaseOptimization {
     protected final NodeFactory nodeFactory;
 
-    protected ArrayNode removeHistoneAstSignature(ArrayNode ast) {
+    protected static ArrayNode removeHistoneAstSignature(ArrayNode ast) {
         if (ast.size() == 2 &&
                 ast.get(0).isArray() &&
                 ast.get(1).isArray() &&

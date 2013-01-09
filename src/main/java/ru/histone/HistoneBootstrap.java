@@ -29,9 +29,13 @@ public class HistoneBootstrap {
     private AstImportResolver astImportResolver;
     private AstMarker astMarker;
     private AstInlineOptimizer astInlineOptimizer;
+    private ResourceLoader resourceLoader;
+
+    // Optimizers
     private ConstantFolding constantFolding;
     private ConstantPropagation constantPropagation;
-    private ResourceLoader resourceLoader;
+    private ConstantIfCases constantIfCases;
+    private UselessVariables uselessVariables;
 
     public Parser getParser() {
         return parser;
@@ -111,6 +115,22 @@ public class HistoneBootstrap {
 
     public void setConstantPropagation(ConstantPropagation constantPropagation) {
         this.constantPropagation = constantPropagation;
+    }
+
+    public ConstantIfCases getConstantIfCases() {
+        return constantIfCases;
+    }
+
+    public void setConstantIfCases(ConstantIfCases constantIfCases) {
+        this.constantIfCases = constantIfCases;
+    }
+
+    public UselessVariables getUselessVariables() {
+        return uselessVariables;
+    }
+
+    public void setUselessVariables(UselessVariables uselessVariables) {
+        this.uselessVariables = uselessVariables;
     }
 }
 

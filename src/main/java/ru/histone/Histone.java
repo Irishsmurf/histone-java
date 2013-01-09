@@ -61,9 +61,13 @@ public class Histone {
     private AstImportResolver astImportResolver;
     private AstMarker astMarker;
     private AstInlineOptimizer astInlineOptimizer;
+    private ResourceLoader resourceLoader;
+
+    // Optimizers
     private ConstantFolding constantFolding;
     private ConstantPropagation constantPropagation;
-    private ResourceLoader resourceLoader;
+    private ConstantIfCases constantIfCases;
+    private UselessVariables uselessVariables;
 
     public Histone(HistoneBootstrap bootstrap) {
         this.parser = bootstrap.getParser();
@@ -76,6 +80,8 @@ public class Histone {
         this.resourceLoader = bootstrap.getResourceLoader();
         this.constantFolding = bootstrap.getConstantFolding();
         this.constantPropagation = bootstrap.getConstantPropagation();
+        this.constantIfCases = bootstrap.getConstantIfCases();
+        this.uselessVariables = bootstrap.getUselessVariables();
     }
 
     public ArrayNode parseTemplateToAST(Reader templateReader) throws HistoneException {
@@ -122,6 +128,26 @@ public class Histone {
                 long currentH1 = templateAST.hashCode();
                 while (lastH1 != currentH1) {
                     ast = constantPropagation.propagateConstants(ast);
+
+                    lastH1 = currentH1;
+                    currentH1 = BaseOptimization.hash(ast);
+                }
+            }
+            {
+                long lastH1 = 0;
+                long currentH1 = templateAST.hashCode();
+                while (lastH1 != currentH1) {
+                    ast = constantIfCases.replaceConstantIfs(ast);
+
+                    lastH1 = currentH1;
+                    currentH1 = BaseOptimization.hash(ast);
+                }
+            }
+            {
+                long lastH1 = 0;
+                long currentH1 = templateAST.hashCode();
+                while (lastH1 != currentH1) {
+                    ast = uselessVariables.removeUselessVariables(ast);
 
                     lastH1 = currentH1;
                     currentH1 = BaseOptimization.hash(ast);

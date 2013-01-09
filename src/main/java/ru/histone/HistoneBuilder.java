@@ -356,8 +356,12 @@ public class HistoneBuilder {
         histoneBootstrap.setAstInlineOptimizer(astInlineOptimizer);
         histoneBootstrap.setAstAstOptimizer(astOptimizer);
         histoneBootstrap.setResourceLoader(new DefaultResourceLoader());
+
+        // Optimizers
         histoneBootstrap.setConstantFolding(new ConstantFolding(nodeFactory, evaluator));
         histoneBootstrap.setConstantPropagation(new ConstantPropagation(nodeFactory));
+        histoneBootstrap.setConstantIfCases(new ConstantIfCases(nodeFactory));
+        histoneBootstrap.setUselessVariables(new UselessVariables(nodeFactory));
 
         return new Histone(histoneBootstrap);
     }
