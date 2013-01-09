@@ -35,6 +35,7 @@ import static org.junit.Assert.assertTrue;
  * User: sazonovkirill@gmail.com
  * Date: 24.12.12
  */
+@Ignore
 public class AstMarkerTest {
     private Histone histone;
 
