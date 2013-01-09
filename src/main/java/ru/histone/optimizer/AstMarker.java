@@ -440,22 +440,7 @@ public class AstMarker {
         }
     }
 
-
     private ArrayNode makeElementUnsafe(ArrayNode element) {
-//        boolean typeUpdated = false;
-//        ArrayNode result = nodeFactory.jsonArray();
-//        for (JsonNode item : element) {
-//            if (typeUpdated) {
-//                result.add(item);
-//            } else {
-//                int nodeType = item.asInt();
-//                result.add(nodeFactory.jsonArray(nodeType > 0 ? -nodeType : nodeType));
-//                typeUpdated = true;
-//            }
-//        }
-//
-//        return result;
-
         // Alternative implementation
         int nodeType = element.get(0).asInt();
         if (nodeType > 0) nodeType = -nodeType;
