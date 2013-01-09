@@ -196,8 +196,8 @@ public class Histone {
      */
     public String evaluate(String baseURI, String templateContent, JsonNode context) throws HistoneException {
         ArrayNode ast = parser.parse(templateContent);
-        ArrayNode optimizedAst = optimizeAST(ast);
-        return evaluator.process(baseURI, optimizedAst, context);
+//        ArrayNode optimizedAst = optimizeAST(ast);
+        return evaluator.process(baseURI, ast, context);
     }
 
     public ArrayNode evaluateAsAST(String baseURI, String templateContent, JsonNode context) throws HistoneException {
