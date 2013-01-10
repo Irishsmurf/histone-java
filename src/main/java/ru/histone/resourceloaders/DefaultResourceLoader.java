@@ -94,14 +94,17 @@ public class DefaultResourceLoader implements ResourceLoader {
         log.debug("Trying to load resource from location={}, with baseLocation={}", new Object[]{location, baseLocation});
 
         String fullLocation = PathUtils.resolveUrl(location, baseLocation);
-        ru.histone.evaluator.functions.global.URI uri =PathUtils.parseURI(fullLocation);
+        ru.histone.evaluator.functions.global.URI uri = PathUtils.parseURI(fullLocation);
 
         Resource resource = null;
-        if (uri.getScheme().equals("file")) {
+        if (baseLocation == null && uri.getScheme() == null) {
+            throw new ResourceLoadException("Base HREF is empty and resource location is not absolute!");
+        }
+        if ("file".equals(uri.getScheme())) {
             resource = loadFileResource(makeFullLocation(location, baseLocation));
-        } else if (uri.getScheme().equals("http")) {
+        } else if ("http".equals(uri.getScheme())) {
             resource = loadHttpResource(makeFullLocation(location, baseLocation), args);
-        } else if (uri.getScheme().equals("data")) {
+        } else if ("data".equals(uri.getScheme())) {
             resource = loadDataResource(fullLocation);
         } else {
             throw new ResourceLoadException(String.format("Unsupported scheme for resource loading: '%s'", uri.getScheme()));

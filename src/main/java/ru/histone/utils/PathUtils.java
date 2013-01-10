@@ -145,6 +145,9 @@ public class PathUtils {
     }
 
     public static String resolvePath(String path) {
+        if(path == null){
+            return EMPTY;
+        }
         Pattern parser = Pattern.compile(URL_DIRNAME_REGEXP);
         Matcher matcher = parser.matcher(path);
         if (matcher.find()) {
@@ -154,6 +157,9 @@ public class PathUtils {
     }
 
     public static URI parseURI(String uriString) {
+        if(uriString == null){
+            return new URI();
+        }
         Pattern parser = Pattern.compile(URL_PARSER_REGEXP);
         Matcher matcher = parser.matcher(uriString);
         URI uri = new URI();
