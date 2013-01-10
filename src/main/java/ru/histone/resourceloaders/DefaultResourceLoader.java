@@ -95,12 +95,12 @@ public class DefaultResourceLoader implements ResourceLoader {
 
         String fullLocation = PathUtils.resolveUrl(location, baseLocation);
         ru.histone.evaluator.functions.global.URI uri =PathUtils.parseURI(fullLocation);
-        
+
         Resource resource = null;
         if (uri.getScheme().equals("file")) {
-            resource = loadFileResource(fullLocation);
+            resource = loadFileResource(makeFullLocation(location, baseLocation));
         } else if (uri.getScheme().equals("http")) {
-            resource = loadHttpResource(fullLocation, args);
+            resource = loadHttpResource(makeFullLocation(location, baseLocation), args);
         } else if (uri.getScheme().equals("data")) {
             resource = loadDataResource(fullLocation);
         } else {
@@ -126,7 +126,7 @@ public class DefaultResourceLoader implements ResourceLoader {
         }
     }
 
-    private Resource loadFileResource(String location) {
+    private Resource loadFileResource(URI location) {
         InputStream stream = null;
 
         File file = new File(location);
@@ -137,14 +137,14 @@ public class DefaultResourceLoader implements ResourceLoader {
                 throw new ResourceLoadException("File not found", e);
             }
         } else {
-            throw new ResourceLoadException(String.format("Can't read file '%s'", location));
+            throw new ResourceLoadException(String.format("Can't read file '%s'", location.toString()));
         }
 
-        return new StreamResource(stream, location, ContentType.TEXT);
+        return new StreamResource(stream, location.toString(), ContentType.TEXT);
     }
 
-    private Resource loadHttpResource(String location, Node[] args) {
-        URI newLocation = URI.create(location.replace("#fragment", ""));
+    private Resource loadHttpResource(URI location, Node[] args) {
+        URI newLocation = URI.create(location.toString().replace("#fragment", ""));
         final Map<Object, Node> requestMap = args != null && args.length != 0 && args[0] instanceof ObjectHistoneNode ? ((ObjectHistoneNode) args[0])
                 .getElements() : new HashMap<Object, Node>();
         Node methodNode = requestMap.get("method");
@@ -182,7 +182,7 @@ public class DefaultResourceLoader implements ResourceLoader {
         } else if ("HEAD".equalsIgnoreCase(method)) {
             request = new HttpHead(newLocation);
         } else if (method != null && !"GET".equalsIgnoreCase(method)) {
-            return new StreamResource(null, location, ContentType.TEXT);
+            return new StreamResource(null, location.toString(), ContentType.TEXT);
         }
 
         for (Map.Entry<String, String> en : filteredHeaders.entrySet()) {
@@ -220,10 +220,10 @@ public class DefaultResourceLoader implements ResourceLoader {
             HttpResponse response = client.execute(request);
             input = response.getEntity() == null ? null : response.getEntity().getContent();
         } catch (IOException e) {
-            throw new ResourceLoadException(String.format("Can't load resource '%s'", location));
+            throw new ResourceLoadException(String.format("Can't load resource '%s'", location.toString()));
         } finally {
         }
-        return new StreamResource(input, location, ContentType.TEXT);
+        return new StreamResource(input, location.toString(), ContentType.TEXT);
     }
     
     private Resource loadDataResource(String location){
@@ -246,7 +246,7 @@ public class DefaultResourceLoader implements ResourceLoader {
             input = new ByteArrayInputStream("".getBytes());
         }
 
-        return new StreamResource(input, location, ContentType.TEXT);
+        return new StreamResource(input, location.toString(), ContentType.TEXT);
     }
     
     
