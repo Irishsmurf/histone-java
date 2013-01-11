@@ -13,7 +13,7 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package ru.histone.acceptance.tests.general;
+package ru.histone.acceptance.tests.functions.global;
 
 import org.junit.runner.RunWith;
 import ru.histone.acceptance.support.AcceptanceTest;
@@ -25,6 +25,6 @@ public class RequireTest extends AcceptanceTest {
 
     @Override
     public String getFileName() {
-        return "/general/global.require.json";
+        return "/functions/global.require.json";
     }
 }
