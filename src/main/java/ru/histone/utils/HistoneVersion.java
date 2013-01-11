@@ -16,6 +16,10 @@
 
 package ru.histone.utils;
 
+import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.util.Properties;
 
@@ -23,6 +27,7 @@ import java.util.Properties;
  * @author sazonovkirill@gmail.com
  */
 public class HistoneVersion {
+    private static final Logger log = LoggerFactory.getLogger(HistoneVersion.class);
     public static String VERSION;
 
     private static final String VERSION_FILE_NAME = "version.properties";
@@ -33,7 +38,7 @@ public class HistoneVersion {
         try {
             props.load(HistoneVersion.class.getClassLoader().getResourceAsStream(VERSION_FILE_NAME));
         } catch (IOException e) {
-            System.out.println("File version.properties not found");
+            log.error("File version.properties not found");
         }
 
         VERSION = props.getProperty(VERSION_KEY);
