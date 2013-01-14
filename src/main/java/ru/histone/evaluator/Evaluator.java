@@ -572,6 +572,13 @@ public class Evaluator {
                     }
                     return runNodeFunc(targetNode, name, argsList);
                 }
+            //check for anonymous macros for prop elements
+            } else if(context.hasProp(name) && context.getProp(name).isNamespace()) {
+                NameSpaceNode  nameSpaceNode = (NameSpaceNode)  context.getProp(name);
+                if (nameSpaceNode.hasMacro("")) {
+                    return runNameSpaceMacro(nameSpaceNode.getMacro(""), argsList, context);
+                }
+
             }
 
             // next we will call macro if it exists

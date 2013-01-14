@@ -341,10 +341,13 @@ public class ParserImpl {
         Token blockToken = tokenizer.next(TokenType.EXPR_MACRO);
 
         Token nameToken = tokenizer.next(TokenType.EXPR_IDENT);
-        if (nameToken == null) {
-            throw expectedFound("identifier", tokenizer.next());
+        
+        String nameTokenContent="";
+        if (nameToken != null) {
+            //throw expectedFound("identifier", tokenizer.next());
+            nameTokenContent = nameToken.getContent();
         }
-        JsonNode name = nodeFactory.jsonString(nameToken.getContent());
+        JsonNode name = nodeFactory.jsonString(nameTokenContent);
 
         ArrayNode args = nodeFactory.jsonArray();
         if (tokenizer.next(TokenType.EXPR_LPAREN) != null) {
