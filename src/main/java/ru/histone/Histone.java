@@ -57,10 +57,9 @@ public class Histone {
     private Parser parser;
     private Evaluator evaluator;
     private NodeFactory nodeFactory;
-    private AstOptimizer astAstOptimizer;
+    private AstOptimizer astOptimizer;
     private AstImportResolver astImportResolver;
     private AstMarker astMarker;
-    private AstInlineOptimizer astInlineOptimizer;
     private ResourceLoader resourceLoader;
 
     // Optimizers
@@ -75,8 +74,7 @@ public class Histone {
         this.nodeFactory = bootstrap.getNodeFactory();
         this.astImportResolver = bootstrap.getAstImportResolver();
         this.astMarker = bootstrap.getAstMarker();
-        this.astInlineOptimizer = bootstrap.getAstInlineOptimizer();
-        this.astAstOptimizer = bootstrap.getAstAstOptimizer();
+        this.astOptimizer = bootstrap.getAstOptimizer();
         this.resourceLoader = bootstrap.getResourceLoader();
         this.constantFolding = bootstrap.getConstantFolding();
         this.constantPropagation = bootstrap.getConstantPropagation();
@@ -158,6 +156,8 @@ public class Histone {
             currentH2 = BaseOptimization.hash(ast);
         }
 
+        ast = astMarker.mark(ast);
+        ast = astOptimizer.optimize(ast);
         return ast;
     }
 

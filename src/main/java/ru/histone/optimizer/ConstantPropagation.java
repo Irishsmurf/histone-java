@@ -49,7 +49,7 @@ public class ConstantPropagation extends BaseOptimization {
         if (valueNode.isArray()) {
             ArrayNode value = (ArrayNode) valueNode;
 
-            if (var.isTextual() && isConstant(value)) {
+            if (var.isTextual() && (isConstant(value) || isStatements(value) || isMapOfConstants(value))) {
                 String varName = var.asText();
 
                 if (!context.hasVar(varName)) {
@@ -62,18 +62,71 @@ public class ConstantPropagation extends BaseOptimization {
     }
 
     protected JsonNode processSelector(ArrayNode selector) throws HistoneException {
-        JsonNode var = selector.get(1);
+        JsonNode fullVariable = selector.get(1);
 
-        if (var.size() == 1) {
-            var = var.get(0);
-            String varName = var.asText();
+        JsonNode token = fullVariable.get(0);
+        if (token.isTextual()) {
+            String varName = token.asText();
             if (context.hasVar(varName)) {
-                return context.getVarValue(varName);
+                ArrayNode value = context.getVarValue(varName);
+                for (int i = 1; i < fullVariable.size(); i++) {
+                    JsonNode t = fullVariable.get(i);
+                    if (t.isTextual()) {
+                        value = findValueInAstMap(value, t.asText());
+                    } else if (t.isArray() && t.size() == 2 && t.get(0).isInt() && t.get(0).asInt() == AstNodeType.STRING) {
+                        value = findValueInAstMap(value, t.get(1).asText());
+                    } else if (t.isArray() && t.size() == 2 && t.get(0).isInt() && t.get(0).asInt() == AstNodeType.INT) {
+                        value = findValueInAstMap(value, t.get(1).asInt());
+                    } else {
+                        return selector;
+                    }
+
+                    if (value == null) return selector;
+                }
+                return value;
             } else {
                 return selector;
             }
+        } else return processAstNode(token);
+    }
+
+    private ArrayNode findValueInAstMap(ArrayNode mapEntries, String key) {
+        mapEntries = (ArrayNode) mapEntries.get(1);
+        for (JsonNode jsonNode : mapEntries) {
+            ArrayNode mapEntry = (ArrayNode) jsonNode;
+            JsonNode entryKey = mapEntry.get(0);
+            ArrayNode entryValue = (ArrayNode) mapEntry.get(1);
+
+            if (entryKey.asText().equals(key)) {
+                return entryValue;
+            }
+        }
+        return null;
+    }
+
+    private ArrayNode findValueInAstMap(ArrayNode mapEntries, int index) {
+        mapEntries = (ArrayNode) mapEntries.get(1);
+        boolean isArray = true;
+        for (JsonNode mapEntry : mapEntries) {
+            JsonNode key = mapEntry.get(0);
+            isArray = isArray && key.isNull();
+        }
+        if (!isArray) {
+            for (JsonNode jsonNode : mapEntries) {
+                ArrayNode mapEntry = (ArrayNode) jsonNode;
+                JsonNode entryKey = mapEntry.get(0);
+                ArrayNode entryValue = (ArrayNode) mapEntry.get(1);
+
+                if (entryKey.asInt() == index) {
+                    return entryValue;
+                }
+            }
+        }
+
+        if (index < mapEntries.size()) {
+            return (ArrayNode) mapEntries.get(index).get(1);
         } else {
-            return processAstNode(var);
+            return null;
         }
     }
 

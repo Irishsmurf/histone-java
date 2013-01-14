@@ -25,10 +25,9 @@ public class HistoneBootstrap {
     private Parser parser;
     private Evaluator evaluator;
     private NodeFactory nodeFactory;
-    private AstOptimizer astAstOptimizer;
+    private AstOptimizer astOptimizer;
     private AstImportResolver astImportResolver;
     private AstMarker astMarker;
-    private AstInlineOptimizer astInlineOptimizer;
     private ResourceLoader resourceLoader;
 
     // Optimizers
@@ -61,12 +60,12 @@ public class HistoneBootstrap {
         this.nodeFactory = nodeFactory;
     }
 
-    public AstOptimizer getAstAstOptimizer() {
-        return astAstOptimizer;
+    public AstOptimizer getAstOptimizer() {
+        return astOptimizer;
     }
 
-    public void setAstAstOptimizer(AstOptimizer astAstOptimizer) {
-        this.astAstOptimizer = astAstOptimizer;
+    public void setAstOptimizer(AstOptimizer astOptimizer) {
+        this.astOptimizer = astOptimizer;
     }
 
     public AstImportResolver getAstImportResolver() {
@@ -83,14 +82,6 @@ public class HistoneBootstrap {
 
     public void setAstMarker(AstMarker astMarker) {
         this.astMarker = astMarker;
-    }
-
-    public AstInlineOptimizer getAstInlineOptimizer() {
-        return astInlineOptimizer;
-    }
-
-    public void setAstInlineOptimizer(AstInlineOptimizer astInlineOptimizer) {
-        this.astInlineOptimizer = astInlineOptimizer;
     }
 
     public ResourceLoader getResourceLoader() {

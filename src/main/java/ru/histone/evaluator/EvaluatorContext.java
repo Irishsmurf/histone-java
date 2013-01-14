@@ -17,20 +17,10 @@ package ru.histone.evaluator;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import ru.histone.GlobalProperty;
-import ru.histone.evaluator.nodes.ContextWrapperNode;
-import ru.histone.evaluator.nodes.GlobalObjectNode;
-import ru.histone.evaluator.nodes.Node;
-import ru.histone.evaluator.nodes.NodeFactory;
-import ru.histone.evaluator.nodes.ObjectHistoneNode;
+import ru.histone.evaluator.nodes.*;
 
-import java.util.ArrayDeque;
-import java.util.Deque;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 
 /**
  * Special object for storing evaluator context<br/>
@@ -107,7 +97,7 @@ public class EvaluatorContext {
             }
         }
 
-        if(name.equals("baseURI")){
+        if (name.equals("baseURI")) {
             return true;
         }
 
@@ -129,7 +119,7 @@ public class EvaluatorContext {
 
         if (initialContext.hasProp(name)) {
             return initialContext.getProp(name);
-        } else if ("baseURI".equals(name)){
+        } else if ("baseURI".equals(name)) {
             return nodeFactory.string(baseURI);
         } else {
             return nodeFactory.UNDEFINED;
@@ -187,7 +177,7 @@ public class EvaluatorContext {
     }
 
     // ----------------------------------------------------
-    // State save/restore methods -------------------------
+    // State save/pop methods -------------------------
 
     /**
      * Save current context state to stack

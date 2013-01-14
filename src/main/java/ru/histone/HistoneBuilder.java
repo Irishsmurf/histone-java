@@ -339,22 +339,11 @@ public class HistoneBuilder {
         AstImportResolver astImportResolver = new AstImportResolver(parser, resourceLoader);
         astImportResolver.setNodeFactory(nodeFactory);
 
-        AstOptimizer astOptimizer = new AstOptimizer(evaluator);
-
-        AstMarker astMarker = new AstMarker();
-        astMarker.setNodeFactory(nodeFactory);
-
-        AstInlineOptimizer astInlineOptimizer = new AstInlineOptimizer();
-        astInlineOptimizer.setNodeFactory(nodeFactory);
-
         HistoneBootstrap histoneBootstrap = new HistoneBootstrap();
         histoneBootstrap.setNodeFactory(nodeFactory);
         histoneBootstrap.setParser(parser);
         histoneBootstrap.setEvaluator(evaluator);
-        histoneBootstrap.setAstMarker(astMarker);
         histoneBootstrap.setAstImportResolver(astImportResolver);
-        histoneBootstrap.setAstInlineOptimizer(astInlineOptimizer);
-        histoneBootstrap.setAstAstOptimizer(astOptimizer);
         histoneBootstrap.setResourceLoader(new DefaultResourceLoader());
 
         // Optimizers
@@ -362,6 +351,8 @@ public class HistoneBuilder {
         histoneBootstrap.setConstantPropagation(new ConstantPropagation(nodeFactory));
         histoneBootstrap.setConstantIfCases(new ConstantIfCases(nodeFactory));
         histoneBootstrap.setUselessVariables(new UselessVariables(nodeFactory));
+        histoneBootstrap.setAstMarker(new AstMarker(nodeFactory));
+        histoneBootstrap.setAstOptimizer(new AstOptimizer(nodeFactory, evaluator));
 
         return new Histone(histoneBootstrap);
     }

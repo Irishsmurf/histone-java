@@ -31,16 +31,30 @@ public class UselessVariables extends BaseOptimization {
     }
 
     protected JsonNode processSelector(ArrayNode selector) throws HistoneException {
-        JsonNode var = selector.get(1);
+        JsonNode fullVariable = selector.get(1);
 
-        if (var.size() == 1) {
-            var = var.get(0);
-            String varName = var.asText();
+        JsonNode firstToken = fullVariable.get(0);
+        if (firstToken.isTextual()) {
+            String varName = firstToken.asText();
             selectors.add(varName);
-            return selector;
         } else {
-            return processAstNode(var);
+            processAstNode(firstToken);
         }
+
+        for (int i = 1; i < fullVariable.size(); i++) {
+            JsonNode t = fullVariable.get(i);
+            if (t.isTextual()) {
+                // nothing
+            } else if (t.isArray() && t.size() == 2 && t.get(0).isInt() && t.get(0).asInt() == AstNodeType.STRING) {
+                // nothing
+            } else if (t.isArray() && t.size() == 2 && t.get(0).isInt() && t.get(0).asInt() == AstNodeType.INT) {
+                // nothing
+            } else {
+                processAstNode(t);
+            }
+        }
+
+        return selector;
     }
 
     protected JsonNode processVariable(ArrayNode variable) throws HistoneException {
@@ -54,7 +68,7 @@ public class UselessVariables extends BaseOptimization {
         if (selectors.contains(varName)) {
             return ast(AstNodeType.VAR, var, processedValue);
         } else {
-            return ast(AstNodeType.NULL);
+            return nodeFactory.jsonString("");
         }
     }
 

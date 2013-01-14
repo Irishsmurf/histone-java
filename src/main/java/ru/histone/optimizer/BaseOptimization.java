@@ -67,7 +67,7 @@ public abstract class BaseOptimization {
             return arr;
         }
 
-        int nodeType = getNodeType(arr);
+        int nodeType = Math.abs(getNodeType(arr));
 
         if (getOperationsOverArguments().contains(nodeType)) {
             return processOperationOverArguments(arr);
@@ -102,12 +102,16 @@ public abstract class BaseOptimization {
     public abstract void popContext();
 
     protected JsonNode processCall(ArrayNode call) throws HistoneException {
-        if (call.get(3).isArray()) {
-            ArrayNode arr = (ArrayNode) call.get(3);
-            return processAstNode(arr);
-        } else {
-            return call;
+        JsonNode target = call.get(1);
+        JsonNode functionName = call.get(2);
+        JsonNode args = call.get(3);
+
+        target = processAstNode(target);
+        if (args.isArray() && args.size() > 0) {
+            args = processArrayOfAstNodes(args);
         }
+
+        return ast(AstNodeType.CALL, target, functionName, args);
     }
 
     protected JsonNode processMap(ArrayNode map) throws HistoneException {
@@ -232,14 +236,13 @@ public abstract class BaseOptimization {
     }
 
     protected JsonNode processSelector(ArrayNode selector) throws HistoneException {
-        JsonNode var = selector.get(1);
+        JsonNode fullVariable = selector.get(1);
 
-        if (var.size() == 1) {
-            var = var.get(0);
-            String varName = var.asText();
-            return selector;
+        JsonNode firstToken = fullVariable.get(0);
+        if (!firstToken.isTextual()) {
+            return processAstNode(firstToken);
         } else {
-            return processAstNode(var);
+            return selector;
         }
     }
 
@@ -298,18 +301,48 @@ public abstract class BaseOptimization {
         return result;
     }
 
-    protected boolean isString(JsonNode element) {
+    public static boolean isString(JsonNode element) {
         return element.isTextual();
     }
 
-    protected boolean isConstant(ArrayNode astArray) {
-        int nodeType = getNodeType(astArray);
+    public static boolean isStatements(ArrayNode arr) {
+        int nodeType = getNodeType(arr);
+        return nodeType == AstNodeType.STATEMENTS;
+    }
+
+    public static boolean isSelector(ArrayNode arr) {
+        int nodeType = getNodeType(arr);
+        return nodeType == AstNodeType.SELECTOR;
+    }
+
+    public static boolean isConstant(ArrayNode arr) {
+        int nodeType = getNodeType(arr);
         return nodeType == AstNodeType.TRUE ||
                 nodeType == AstNodeType.FALSE ||
                 nodeType == AstNodeType.NULL ||
                 nodeType == AstNodeType.INT ||
                 nodeType == AstNodeType.DOUBLE ||
                 nodeType == AstNodeType.STRING;
+    }
+
+    public static boolean isMap(ArrayNode arr) {
+        int nodeType = getNodeType(arr);
+        return nodeType == AstNodeType.MAP;
+    }
+
+    public static boolean isMapOfConstants(ArrayNode arr) {
+        int nodeType = getNodeType(arr);
+        if (nodeType != AstNodeType.MAP) return false;
+
+        boolean result = true;
+        ArrayNode mapEntries = (ArrayNode) arr.get(1);
+        for (JsonNode mapEntry : mapEntries) {
+            JsonNode entryKey = mapEntry.get(0);
+            ArrayNode entryValue = (ArrayNode) mapEntry.get(1);
+
+            result = result && (isConstant(entryValue) || isMapOfConstants(entryValue));
+        }
+        return result;
     }
 
     protected boolean isConstants(Collection<? extends ArrayNode> astArrays) {
@@ -321,7 +354,7 @@ public abstract class BaseOptimization {
         return true;
     }
 
-    protected int getNodeType(ArrayNode astArray) {
+    public static int getNodeType(ArrayNode astArray) {
         return astArray.get(0).asInt();
     }
 
@@ -376,4 +409,11 @@ public abstract class BaseOptimization {
 
         return result;
     }
+
+    public static final String KEYWORD_THIS = "this";
+    public static final String KEYWORD_SELF = "self";
+    public static final String KEYWORD_GLOBAL = "global";
+    public static final String KEYWORD_INDEX = "index";
+    public static final String KEYWORD_LAST = "last";
+    public static final String KEYWORD_ARGUMENTS = "arguments";
 }
