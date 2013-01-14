@@ -231,10 +231,18 @@ public class AstMarker extends BaseOptimization {
         ArrayNode collection = (ArrayNode) for_.get(2);
         ArrayNode statements = (ArrayNode) for_.get(3).get(0);
 
+        ArrayNode elseStatements = null;
+        if (for_.get(3).size() > 1) {
+            elseStatements = (ArrayNode) for_.get(3).get(1);
+        }
+
+        boolean isSafe = true;
+
         String iterVal = var.get(0).asText();
         String iterKey = (var.size() > 1) ? var.get(1).asText() : null;
 
         collection = (ArrayNode) processAstNode(collection);
+        isSafe = isSafe && safeAstNode(collection);
 
         pushContext();
         context.addSafeVar(iterVal);
@@ -243,11 +251,27 @@ public class AstMarker extends BaseOptimization {
         }
         context.addSafeVar("self.index");
         context.addSafeVar("self.last");
-        statements = (ArrayNode) processArrayOfAstNodes(statements);
-        boolean isSafe = safeArray(statements);
+        JsonNode[] statementsOut = new JsonNode[statements.size()];
+        for (int i = 0; i < statements.size(); i++) {
+            statementsOut[i] = processAstNode(statements.get(i));
+        }
+        isSafe = isSafe && safeArray(statementsOut);
         popContext();
 
-        return ast(isSafe, AstNodeType.FOR, var, collection, nodeFactory.jsonArray(statements));
+        JsonNode[] elseStatementsOut = null;
+        if (elseStatements != null) {
+            elseStatementsOut = new JsonNode[elseStatements.size()];
+            for (int i = 0; i < elseStatements.size(); i++) {
+                elseStatementsOut[i] = processAstNode(elseStatements.get(i));
+            }
+        }
+        isSafe = isSafe && safeArray(elseStatementsOut);
+
+        ArrayNode statementsContainer = elseStatementsOut == null ?
+                nodeFactory.jsonArray(nodeFactory.jsonArray(statementsOut)) :
+                nodeFactory.jsonArray(nodeFactory.jsonArray(statementsOut), nodeFactory.jsonArray(elseStatementsOut));
+
+        return ast(isSafe, AstNodeType.FOR, var, collection, statementsContainer);
     }
 
     /**

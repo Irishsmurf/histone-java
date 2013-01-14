@@ -1,3 +1,18 @@
+/**
+ *    Copyright 2012 MegaFon
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
 package ru.histone.optimizer;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -43,18 +58,16 @@ public class ConstantPropagation extends BaseOptimization {
         Assert.isTrue(variable.size() == 3);
 
         JsonNode var = variable.get(1);
+        String varName = var.asText();
+        context.removeVar(varName);
+
         JsonNode preValue = variable.get(2);
         JsonNode valueNode = processAstNode(preValue);
 
         if (valueNode.isArray()) {
             ArrayNode value = (ArrayNode) valueNode;
-
             if (var.isTextual() && (isConstant(value) || isStatements(value) || isMapOfConstants(value))) {
-                String varName = var.asText();
-
-                if (!context.hasVar(varName)) {
-                    context.putVar(varName, value);
-                }
+                context.putVar(varName, value);
             }
         }
 
@@ -64,7 +77,23 @@ public class ConstantPropagation extends BaseOptimization {
     protected JsonNode processSelector(ArrayNode selector) throws HistoneException {
         JsonNode fullVariable = selector.get(1);
 
-        JsonNode token = fullVariable.get(0);
+        boolean arrayTokenFound = false;
+        JsonNode[] processedTokens = new JsonNode[fullVariable.size()];
+        for (int i = 0; i < processedTokens.length; i++) {
+            JsonNode token = fullVariable.get(i);
+            if (token.isArray()) {
+                processedTokens[i] = processAstNode(token);
+                arrayTokenFound = true;
+            } else {
+                processedTokens[i] = token;
+            }
+        }
+
+        if (arrayTokenFound) {
+            return ast(AstNodeType.SELECTOR, nodeFactory.jsonArray(processedTokens));
+        }
+
+        JsonNode token = processedTokens[0];
         if (token.isTextual()) {
             String varName = token.asText();
             if (context.hasVar(varName)) {
@@ -78,16 +107,16 @@ public class ConstantPropagation extends BaseOptimization {
                     } else if (t.isArray() && t.size() == 2 && t.get(0).isInt() && t.get(0).asInt() == AstNodeType.INT) {
                         value = findValueInAstMap(value, t.get(1).asInt());
                     } else {
-                        return selector;
+                        break;
                     }
 
-                    if (value == null) return selector;
+                    if (value == null) break;
                 }
-                return value;
-            } else {
-                return selector;
+                if (value != null) return value;
             }
-        } else return processAstNode(token);
+        }
+
+        return ast(AstNodeType.SELECTOR, nodeFactory.jsonArray(processedTokens));
     }
 
     private ArrayNode findValueInAstMap(ArrayNode mapEntries, String key) {
@@ -147,6 +176,14 @@ public class ConstantPropagation extends BaseOptimization {
 
         public void putVar(String varName, ArrayNode value) {
             stackVars.getFirst().put(varName, value);
+        }
+
+        public void removeVar(String varName) {
+            for (Map<String, ArrayNode> frame : stackVars) {
+                if (frame.containsKey(varName)) {
+                    frame.remove(varName);
+                }
+            }
         }
 
         public ArrayNode getVarValue(String varName) {

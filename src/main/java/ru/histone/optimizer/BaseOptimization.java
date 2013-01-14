@@ -1,3 +1,18 @@
+/**
+ *    Copyright 2012 MegaFon
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
 package ru.histone.optimizer;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -138,7 +153,7 @@ public abstract class BaseOptimization {
         Assert.notNull(ast.size() > 1);
         Assert.isTrue(ast.get(0).isNumber());
         for (int i = 1; i < ast.size(); i++) Assert.isTrue(ast.get(i).isArray());
-        Assert.isTrue(getOperationsOverArguments().contains(ast.get(0).asInt()));
+        Assert.isTrue(getOperationsOverArguments().contains(Math.abs(ast.get(0).asInt())));
 
         int operationType = ast.get(0).asInt();
 
@@ -218,6 +233,11 @@ public abstract class BaseOptimization {
         ArrayNode collection = (ArrayNode) for_.get(2);
         ArrayNode statements = (ArrayNode) for_.get(3).get(0);
 
+        ArrayNode elseStatements = null;
+        if (for_.get(3).size() > 1) {
+            elseStatements = (ArrayNode) for_.get(3).get(1);
+        }
+
         String iterVal = var.get(0).asText();
         String iterKey = (var.size() > 1) ? var.get(1).asText() : null;
 
@@ -228,9 +248,19 @@ public abstract class BaseOptimization {
         for (int i = 0; i < statements.size(); i++) {
             statementsOut[i] = processAstNode(statements.get(i));
         }
-        // Very stange AST structure in case of FOR
-        ArrayNode statementsContainer = nodeFactory.jsonArray(nodeFactory.jsonArray(statementsOut));
         popContext();
+
+        JsonNode[] elseStatementsOut = null;
+        if (elseStatements != null) {
+            elseStatementsOut = new JsonNode[elseStatements.size()];
+            for (int i = 0; i < elseStatements.size(); i++) {
+                elseStatementsOut[i] = processAstNode(elseStatements.get(i));
+            }
+        }
+
+        ArrayNode statementsContainer = elseStatementsOut == null ?
+                nodeFactory.jsonArray(nodeFactory.jsonArray(statementsOut)) :
+                nodeFactory.jsonArray(nodeFactory.jsonArray(statementsOut), nodeFactory.jsonArray(elseStatementsOut));
 
         return ast(AstNodeType.FOR, var, collection, statementsContainer);
     }
@@ -238,12 +268,17 @@ public abstract class BaseOptimization {
     protected JsonNode processSelector(ArrayNode selector) throws HistoneException {
         JsonNode fullVariable = selector.get(1);
 
-        JsonNode firstToken = fullVariable.get(0);
-        if (!firstToken.isTextual()) {
-            return processAstNode(firstToken);
-        } else {
-            return selector;
+        JsonNode[] tokensOut = new JsonNode[fullVariable.size()];
+        for (int i = 0; i < fullVariable.size(); i++) {
+            JsonNode token = fullVariable.get(i);
+            if (token.isArray()) {
+                token = processAstNode(token);
+            }
+            tokensOut[i] = token;
         }
+
+        JsonNode result = ast(AstNodeType.SELECTOR, nodeFactory.jsonArray(tokensOut));
+        return result;
     }
 
     protected final static Set<Integer> CONSTANTS = new HashSet<Integer>(Arrays.asList(
@@ -385,6 +420,9 @@ public abstract class BaseOptimization {
             return nodeFactory.jsonArray(AstNodeType.STRING, nodeFactory.jsonString(node.getAsString().getValue()));
         } else if (node.isNull()) {
             return nodeFactory.jsonArray(AstNodeType.NULL);
+        } else if (node.isUndefined()) {
+            // EXPERIMENTAL: Not sure here
+            return nodeFactory.jsonString("");
         }
 
         throw new IllegalStateException(String.format("Can't convert node %s to AST element", node));
