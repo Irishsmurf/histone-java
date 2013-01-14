@@ -420,6 +420,33 @@ public class Evaluator {
         return result;
     }
 
+
+    private Node runNameSpaceMacro(MacroFunc macro, List<Node> args, EvaluatorContext context) throws EvaluatorException {
+       // MacroFunc macro = context.getMacro(name);
+        if (macro == null) {
+            Histone.runtime_log_warn("macro not found");
+            return nodeFactory.UNDEFINED;
+        }
+        ObjectHistoneNode self = nodeFactory.object();
+        ObjectHistoneNode argsNode = nodeFactory.object(args);
+        self.add("arguments", argsNode);
+        context.putProp("self", self);
+
+        Iterator<Node> argsItr = args.iterator();
+        for (JsonNode macroArg : macro.getArgs()) {
+            context.putProp(macroArg.asText(), (argsItr.hasNext() ? argsItr.next() : nodeFactory.UNDEFINED));
+        }
+        String currentBaseURI = getContextBaseURI(context);
+        String macroBaseURI = macro.getBaseURI();
+        if (macroBaseURI != null/* && macroBaseURI.isAbsolute() && !macroBaseURI.isOpaque()*/) {
+            context.setBaseURI(macroBaseURI);
+        }
+        StringHistoneNode result = nodeFactory.string(processInternal(macro.getStatements(), context));
+        context.setBaseURI(currentBaseURI);
+        return result;
+    }
+
+
     private Node processImport(JsonNode pathElement, EvaluatorContext context) throws EvaluatorException {
         if (!pathElement.isTextual()) {
             Histone.runtime_log_warn("Invalid path to imported template: '{}'", pathElement.toString());
@@ -534,6 +561,12 @@ public class Evaluator {
                 } else {
                     // if target wasn't global object, then we need to check if we have Node function
                     if (!nodeFunctionsManager.hasFunction(targetNode, name)) {
+                        if(targetNode.isNamespace()){
+                            NameSpaceNode  nameSpaceNode = (NameSpaceNode) targetNode;
+                            if (nameSpaceNode.hasMacro(name)) {
+                                return runNameSpaceMacro(nameSpaceNode.getMacro(name), argsList, context);
+                            }
+                        }
                         Histone.runtime_log_warn("'{}' is undefined function for type '{}'", name, targetNode.toString());
                         return nodeFactory.UNDEFINED;
                     }
@@ -566,7 +599,11 @@ public class Evaluator {
                 return processLoadText(argsList, context);
             }
             if ("require".equals(name)) {
-                return processRequire(argsList, context);
+                Node requireNode = processRequire(argsList, context);
+//                return processNode(requireNode, context);
+
+                return requireNode;
+
             }
 
             return nodeFactory.UNDEFINED;
