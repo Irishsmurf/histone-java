@@ -112,9 +112,9 @@ public class Histone {
     public ArrayNode optimizeAST(String baseUri, ArrayNode templateAST) throws HistoneException {
         ArrayNode importsResolved = null;
         if (baseUri != null) {
-            importsResolved = astImportResolver.resolve(templateAST);
-        } else {
             importsResolved = astImportResolver.resolve(baseUri, templateAST);
+        } else {
+            importsResolved = astImportResolver.resolve(templateAST);
         }
 
         ArrayNode ast = importsResolved;
