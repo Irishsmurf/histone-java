@@ -133,6 +133,8 @@ public abstract class BaseOptimization {
 
     protected JsonNode processMap(ArrayNode map) throws HistoneException {
         ArrayNode items = (ArrayNode) map.get(1);
+
+        ArrayNode processedItems = nodeFactory.jsonArray();
         for (JsonNode item : items) {
             if (item.isArray()) {
                 ArrayNode arr = (ArrayNode) item;
@@ -140,14 +142,11 @@ public abstract class BaseOptimization {
                 JsonNode value = arr.get(1);
 
                 value = processAstNode(value);
-
-                arr.removeAll();
-                arr.add(key);
-                arr.add(value);
+                processedItems.add(nodeFactory.jsonArray(key, value));
             }
         }
 
-        return map;
+        return ast(AstNodeType.MAP, processedItems);
     }
 
     protected JsonNode processOperationOverArguments(ArrayNode ast) throws HistoneException {

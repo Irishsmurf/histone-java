@@ -101,18 +101,21 @@ public class Histone {
         return parser.parse(templateString);
     }
 
-    public ArrayNode optimizeAST(String baseUri, ArrayNode templateAST) throws HistoneException {
-        ArrayNode importsResolved = astImportResolver.resolve(baseUri, templateAST);
-        ArrayNode constantsFolded = constantFolding.foldConstants(importsResolved);
-        return constantsFolded;
-    }
-
-    public ArrayNode optimizeConstantFolding(ArrayNode ast) throws HistoneException {
-        return constantFolding.foldConstants(ast);
-    }
-
     public ArrayNode optimizeAST(ArrayNode templateAST) throws HistoneException {
-        ArrayNode importsResolved = astImportResolver.resolve(templateAST);
+        return optimizeAST(null, templateAST);
+    }
+
+    public ArrayNode optimizeConstantFolding(ArrayNode templateAst) throws HistoneException {
+        return constantFolding.foldConstants(templateAst);
+    }
+
+    public ArrayNode optimizeAST(String baseUri, ArrayNode templateAST) throws HistoneException {
+        ArrayNode importsResolved = null;
+        if (baseUri != null) {
+            importsResolved = astImportResolver.resolve(templateAST);
+        } else {
+            importsResolved = astImportResolver.resolve(baseUri, templateAST);
+        }
 
         ArrayNode ast = importsResolved;
 

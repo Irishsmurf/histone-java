@@ -117,20 +117,21 @@ public class AstMarker extends BaseOptimization {
      */
     protected JsonNode processMap(ArrayNode map) throws HistoneException {
         ArrayNode items = (ArrayNode) map.get(1);
+
+        ArrayNode processedItems = nodeFactory.jsonArray();
         for (JsonNode item : items) {
             if (item.isArray()) {
                 ArrayNode arr = (ArrayNode) item;
                 JsonNode key = arr.get(0);
                 JsonNode value = arr.get(1);
 
-                arr.removeAll();
-                arr.add(key);
-                arr.add(value);
+                value = processAstNode(value);
+                processedItems.add(nodeFactory.jsonArray(key, value));
             }
         }
 
-        boolean isSafe = safeMapItems(items);
-        return ast(isSafe, AstNodeType.MAP, items);
+        boolean isSafe = safeMapItems(processedItems);
+        return ast(isSafe, AstNodeType.MAP, processedItems);
     }
 
     /**
