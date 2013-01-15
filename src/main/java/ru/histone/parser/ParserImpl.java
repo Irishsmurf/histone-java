@@ -219,8 +219,6 @@ public class ParserImpl {
             tree = parseFor();
         } else if (tokenizer.isNext(TokenType.EXPR_IF)) {
             tree = parseIf();
-        } else if (tokenizer.isNext(TokenType.EXPR_CALL)) {
-            tree = parseCall();
         } else if (tokenizer.isNext(TokenType.EXPRT_IMPORT)) {
             tree = parseImport();
         } else if (tokenizer.isNext(TokenType.EXPR_DIV)) {
@@ -246,52 +244,6 @@ public class ParserImpl {
         }
         String path = unescapeString(StringUtils.stripSuroundings(pathToken.getContent(), "'\""));
         return nodeFactory.jsonArray(AstNodeType.IMPORT, nodeFactory.jsonString(path));
-    }
-
-    private JsonNode parseCall() throws ParserException {
-        log.trace("parseCall(): >>>");
-        Token blockToken = tokenizer.next(TokenType.EXPR_CALL);
-
-        Token nameToken = tokenizer.next(TokenType.EXPR_IDENT);
-        if (nameToken == null) {
-            throw expectedFound("identifier", tokenizer.next());
-        }
-        JsonNode name = nodeFactory.jsonString(nameToken.getContent());
-
-        ArrayNode args = nodeFactory.jsonArray();
-        if (tokenizer.next(TokenType.EXPR_LPAREN) != null) {
-            if (tokenizer.next(TokenType.EXPR_RPAREN) == null) {
-                while (true) {
-                    JsonNode expr = parseExpression();
-                    if (expr != null) {
-                        args.add(expr);
-                    }
-                    if (tokenizer.next(TokenType.EXPR_COMMA) == null) {
-                        break;
-                    }
-                }
-                if (tokenizer.next(TokenType.EXPR_RPAREN) == null) {
-                    throw expectedFound(")", tokenizer.next());
-                }
-            }
-        }
-
-        if (tokenizer.next(TokenType.T_BLOCK_END) == null) {
-            throw expectedFound("}}", tokenizer.next());
-        }
-
-        JsonNode callBlock = nodeFactory.jsonArray(AstNodeType.STATEMENTS, parse(TokenType.EXPR_DIV));
-        args.add(callBlock);
-
-        if ((tokenizer.next(TokenType.EXPR_DIV) == null) || (tokenizer.next(TokenType.EXPR_CALL) == null) || (tokenizer.next(TokenType.T_BLOCK_END) == null)) {
-            throw expectedFound("{{/call}}", tokenizer.next());
-        }
-
-        JsonNode result = nodeFactory.jsonArray(AstNodeType.CALL, null, name, args);
-        // tree.setPos(blockToken.getPos());
-
-        log.trace("parseCall(): <<<");
-        return result;
     }
 
     private JsonNode parseVar() throws ParserException {

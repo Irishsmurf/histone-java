@@ -80,7 +80,6 @@ public final class HistoneTokensHolder {
             add(new TokenDef(TokenType.EXPR_IN, TokenKind.LITERAL, TokenContext.EXPRESSION, "in\\b"));
             add(new TokenDef(TokenType.EXPR_VAR, TokenKind.LITERAL, TokenContext.EXPRESSION, "var\\b"));
             add(new TokenDef(TokenType.EXPR_MACRO, TokenKind.LITERAL, TokenContext.EXPRESSION, "macro\\b"));
-            add(new TokenDef(TokenType.EXPR_CALL, TokenKind.LITERAL, TokenContext.EXPRESSION, "call\\b"));
             add(new TokenDef(TokenType.EXPRT_IMPORT, TokenKind.LITERAL, TokenContext.EXPRESSION, "import\\b"));
 
             add(new TokenDef(TokenType.EXPR_THIS, TokenKind.LITERAL, TokenContext.EXPRESSION, "this\\b"));
