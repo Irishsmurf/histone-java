@@ -34,11 +34,7 @@ import ru.histone.acceptance.websever.TestHandler;
 import ru.histone.evaluator.EvaluatorException;
 import ru.histone.evaluator.functions.global.GlobalFunction;
 import ru.histone.evaluator.functions.node.NodeFunction;
-import ru.histone.evaluator.nodes.BooleanHistoneNode;
-import ru.histone.evaluator.nodes.Node;
-import ru.histone.evaluator.nodes.NodeFactory;
-import ru.histone.evaluator.nodes.NumberHistoneNode;
-import ru.histone.evaluator.nodes.StringHistoneNode;
+import ru.histone.evaluator.nodes.*;
 import ru.histone.parser.ParserException;
 import ru.histone.utils.CollectionUtils;
 
@@ -64,6 +60,7 @@ public class AcceptanceTestsRunner extends Runner {
         instance = (AcceptanceTest) testClass.newInstance();
         description = instance.getDescription();
         jackson = new ObjectMapper();
+
         nodeFactory = new NodeFactory(jackson);
         log = LoggerFactory.getLogger(testClass);
     }
@@ -159,11 +156,21 @@ public class AcceptanceTestsRunner extends Runner {
                 // TEST FOR EXPECTED-AST
                 Reader input = new StringReader(testCase.getInput());
 
-                // HSTJ-7
-                ArrayNode rootAST = histone.parseTemplateToAST(input);
+                ArrayNode rootAST = histone.parseTemplateToAST(new StringReader(testCase.getInput()));
                 ArrayNode outputAST = (ArrayNode) rootAST.get(1);
+                ArrayNode optimizedAST = histone.optimizeAST(outputAST);
+                String outputAST_evaluated = histone.evaluateAST(outputAST);
+                String optimizedAST_evaluated = histone.evaluateAST(optimizedAST);
+                if (!outputAST_evaluated.equals(optimizedAST_evaluated)) {
+                    String msg = "For input='" + testCase.getInput() + "', " +
+                            "baseAST=" + outputAST + ", " +
+                            "optimizedAST=" + optimizedAST + ", " +
+                            "baseEvaluated='" + outputAST_evaluated + "', " +
+                            "optimizedEvaluated='" + optimizedAST_evaluated + "'";
+                    notifier.fireTestFailure(new Failure(testCaseDescription, new ComparisonFailure(msg, outputAST_evaluated, optimizedAST_evaluated)));
+                }
 
-                boolean result = expectedAST.toString().equals(nodeFactory.toJsonString(outputAST));
+                boolean result = nodeFactory.toJsonString(expectedAST).equals(nodeFactory.toJsonString(outputAST));
                 if (result) {
                     notifier.fireTestFinished(testCaseDescription);
                 } else {
@@ -213,8 +220,22 @@ public class AcceptanceTestsRunner extends Runner {
                 Reader input = new StringReader(testCase.getInput());
                 JsonNode context = (testCase.getContext() == null) ? jackson.getNodeFactory().nullNode() : jackson.readTree(testCase
                         .getContext());
-                String output = histone.evaluate(baseURI, input, context);
 
+                ArrayNode rootAST = histone.parseTemplateToAST(new StringReader(testCase.getInput()));
+                ArrayNode outputAST = (ArrayNode) rootAST.get(1);
+                ArrayNode optimizedAST = histone.optimizeAST(outputAST);
+                String outputAST_evaluated = histone.evaluateAST(null, outputAST, context);
+                String optimizedAST_evaluated = histone.evaluateAST(null, optimizedAST, context);
+                if (!outputAST_evaluated.equals(optimizedAST_evaluated)) {
+                    String msg = "For input='" + testCase.getInput() + "', " +
+                            "baseAST=" + outputAST + ", " +
+                            "optimizedAST=" + optimizedAST + ", " +
+                            "baseEvaluated='" + outputAST_evaluated + "', " +
+                            "optimizedEvaluated='" + optimizedAST_evaluated + "'";
+                    notifier.fireTestFailure(new Failure(testCaseDescription, new ComparisonFailure(msg, outputAST_evaluated, optimizedAST_evaluated)));
+                }
+
+                String output = histone.evaluate(baseURI, input, context);
                 boolean result = output.equals(expectedResult);
                 if (result) {
                     notifier.fireTestFinished(testCaseDescription);

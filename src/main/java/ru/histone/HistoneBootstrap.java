@@ -25,10 +25,9 @@ public class HistoneBootstrap {
     private Parser parser;
     private Evaluator evaluator;
     private NodeFactory nodeFactory;
-    private AstOptimizer astAstOptimizer;
+    private AstOptimizer astOptimizer;
     private AstImportResolver astImportResolver;
     private AstMarker astMarker;
-    private AstInlineOptimizer astInlineOptimizer;
     private ResourceLoader resourceLoader;
 
     // Optimizers
@@ -36,6 +35,7 @@ public class HistoneBootstrap {
     private ConstantPropagation constantPropagation;
     private ConstantIfCases constantIfCases;
     private UselessVariables uselessVariables;
+    private Simplifier simplifier;
 
     public Parser getParser() {
         return parser;
@@ -61,12 +61,12 @@ public class HistoneBootstrap {
         this.nodeFactory = nodeFactory;
     }
 
-    public AstOptimizer getAstAstOptimizer() {
-        return astAstOptimizer;
+    public AstOptimizer getAstOptimizer() {
+        return astOptimizer;
     }
 
-    public void setAstAstOptimizer(AstOptimizer astAstOptimizer) {
-        this.astAstOptimizer = astAstOptimizer;
+    public void setAstOptimizer(AstOptimizer astOptimizer) {
+        this.astOptimizer = astOptimizer;
     }
 
     public AstImportResolver getAstImportResolver() {
@@ -83,14 +83,6 @@ public class HistoneBootstrap {
 
     public void setAstMarker(AstMarker astMarker) {
         this.astMarker = astMarker;
-    }
-
-    public AstInlineOptimizer getAstInlineOptimizer() {
-        return astInlineOptimizer;
-    }
-
-    public void setAstInlineOptimizer(AstInlineOptimizer astInlineOptimizer) {
-        this.astInlineOptimizer = astInlineOptimizer;
     }
 
     public ResourceLoader getResourceLoader() {
@@ -131,6 +123,14 @@ public class HistoneBootstrap {
 
     public void setUselessVariables(UselessVariables uselessVariables) {
         this.uselessVariables = uselessVariables;
+    }
+
+    public Simplifier getSimplifier() {
+        return simplifier;
+    }
+
+    public void setSimplifier(Simplifier simplifier) {
+        this.simplifier = simplifier;
     }
 }
 

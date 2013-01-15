@@ -30,6 +30,8 @@ import ru.histone.resourceloaders.ResourceLoader;
 import ru.histone.utils.IOUtils;
 
 import java.io.*;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Main Histone engine class. Histone template parsing/evaluation is done here.<br/>
@@ -57,10 +59,9 @@ public class Histone {
     private Parser parser;
     private Evaluator evaluator;
     private NodeFactory nodeFactory;
-    private AstOptimizer astAstOptimizer;
+    private AstOptimizer astOptimizer;
     private AstImportResolver astImportResolver;
     private AstMarker astMarker;
-    private AstInlineOptimizer astInlineOptimizer;
     private ResourceLoader resourceLoader;
 
     // Optimizers
@@ -68,6 +69,7 @@ public class Histone {
     private ConstantPropagation constantPropagation;
     private ConstantIfCases constantIfCases;
     private UselessVariables uselessVariables;
+    private Simplifier simplifier;
 
     public Histone(HistoneBootstrap bootstrap) {
         this.parser = bootstrap.getParser();
@@ -75,13 +77,13 @@ public class Histone {
         this.nodeFactory = bootstrap.getNodeFactory();
         this.astImportResolver = bootstrap.getAstImportResolver();
         this.astMarker = bootstrap.getAstMarker();
-        this.astInlineOptimizer = bootstrap.getAstInlineOptimizer();
-        this.astAstOptimizer = bootstrap.getAstAstOptimizer();
+        this.astOptimizer = bootstrap.getAstOptimizer();
         this.resourceLoader = bootstrap.getResourceLoader();
         this.constantFolding = bootstrap.getConstantFolding();
         this.constantPropagation = bootstrap.getConstantPropagation();
         this.constantIfCases = bootstrap.getConstantIfCases();
         this.uselessVariables = bootstrap.getUselessVariables();
+        this.simplifier = bootstrap.getSimplifier();
     }
 
     public ArrayNode parseTemplateToAST(Reader templateReader) throws HistoneException {
@@ -162,7 +164,102 @@ public class Histone {
             currentH2 = BaseOptimization.hash(ast);
         }
 
+        ast = astMarker.mark(ast);
+        ast = astOptimizer.optimize(ast);
+        ast = simplifier.simplify(ast);
         return ast;
+    }
+
+    public ArrayNode optimizeAST_debug(ArrayNode templateAST, OptimizationStatistics stat) throws HistoneException {
+        stat.initialAstLength += BaseOptimization.countNodes(templateAST);
+        ArrayNode importsResolved = astImportResolver.resolve(templateAST);
+        stat.astLengthAfterImportsResolving += BaseOptimization.countNodes(importsResolved);
+
+        ArrayNode ast = importsResolved;
+
+        long lastH2 = 0;
+        long currentH2 = BaseOptimization.hash(ast);
+        while (lastH2 != currentH2) {
+            stat.circles += 1;
+            {
+                long lastH1 = 0;
+                long currentH1 = BaseOptimization.hash(templateAST);
+                while (lastH1 != currentH1) {
+                    ast = constantFolding.foldConstants(ast);
+                    stat.constantFoldingInvokes.add(BaseOptimization.countNodes(ast));
+
+                    lastH1 = currentH1;
+                    currentH1 = BaseOptimization.hash(ast);
+                }
+            }
+            {
+                long lastH1 = 0;
+                long currentH1 = templateAST.hashCode();
+                while (lastH1 != currentH1) {
+                    ast = constantPropagation.propagateConstants(ast);
+                    stat.constantPropagationInvokes.add(BaseOptimization.countNodes(ast));
+
+                    lastH1 = currentH1;
+                    currentH1 = BaseOptimization.hash(ast);
+                }
+            }
+            {
+                long lastH1 = 0;
+                long currentH1 = templateAST.hashCode();
+                while (lastH1 != currentH1) {
+                    ast = constantIfCases.replaceConstantIfs(ast);
+                    stat.constantIfCasesInvokes.add(BaseOptimization.countNodes(ast));
+
+                    lastH1 = currentH1;
+                    currentH1 = BaseOptimization.hash(ast);
+                }
+            }
+            {
+                long lastH1 = 0;
+                long currentH1 = templateAST.hashCode();
+                while (lastH1 != currentH1) {
+                    ast = uselessVariables.removeUselessVariables(ast);
+                    stat.uselessVariablesInvokes.add(BaseOptimization.countNodes(ast));
+
+                    lastH1 = currentH1;
+                    currentH1 = BaseOptimization.hash(ast);
+                }
+            }
+
+            lastH2 = currentH2;
+            currentH2 = BaseOptimization.hash(ast);
+        }
+
+        ast = astMarker.mark(ast);
+
+        stat.astLegthBeforeEvaluator += BaseOptimization.countNodes(ast);
+        ast = astOptimizer.optimize(ast);
+        stat.astLegthAfterEvaluator += BaseOptimization.countNodes(ast);
+
+        stat.beforeSimplifier += BaseOptimization.countNodes(ast);
+        ast = simplifier.simplify(ast);
+        stat.afterSimplifier += BaseOptimization.countNodes(ast);
+
+        stat.finalAstLength += BaseOptimization.countNodes(ast);
+        return ast;
+    }
+
+    public static class OptimizationStatistics {
+        long initialAstLength = 0;
+        long astLengthAfterImportsResolving = 0;
+        final Set<Long> constantFoldingInvokes = new HashSet<Long>();
+        final Set<Long> constantPropagationInvokes = new HashSet<Long>();
+        final Set<Long> constantIfCasesInvokes = new HashSet<Long>();
+        final Set<Long> uselessVariablesInvokes = new HashSet<Long>();
+
+        long astLegthBeforeEvaluator = 0;
+        long astLegthAfterEvaluator = 0;
+
+        long circles = 0;
+        long finalAstLength = 0;
+
+        long beforeSimplifier = 0;
+        long afterSimplifier = 0;
     }
 
 

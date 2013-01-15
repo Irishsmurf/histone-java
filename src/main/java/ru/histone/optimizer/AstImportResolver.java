@@ -36,7 +36,7 @@ import java.io.InputStream;
 import java.net.URI;
 
 public class AstImportResolver {
-    
+
     private static final String HISTONE = "HISTONE";
     private static final Logger log = LoggerFactory.getLogger(AstImportResolver.class);
     private NodeFactory nodeFactory;
@@ -73,7 +73,7 @@ public class AstImportResolver {
         for (JsonNode element : ast) {
             JsonNode node = scanInstructions(element, context);
             if (node.isArray() && node.get(0).isArray()) {
-                result.addAll((ArrayNode)node);
+                result.addAll((ArrayNode) node);
             } else {
                 result.add(node);
             }
@@ -154,7 +154,7 @@ public class AstImportResolver {
                     context.setBaseURI(resourceURI.resolve("").toString());
                 }
 
-                ArrayNode result =  nodeFactory.jsonArray();
+                ArrayNode result = nodeFactory.jsonArray();
                 for (JsonNode elem : getHistoneContent(parseResult)) {
                     if (elem.isArray()) {
                         int nodeType = getNodeType((ArrayNode) elem);
@@ -181,13 +181,13 @@ public class AstImportResolver {
             }
         } catch (ResourceLoadException e) {
             Histone.runtime_log_warn_e("Resource import failed! Unresolvable resource.", e);
-            return nodeFactory.jsonArray(AstNodeType.STRING);
+            return nodeFactory.jsonArray(AstNodeType.STRING, nodeFactory.jsonString(""));
         } catch (IOException e) {
             Histone.runtime_log_warn_e("Resource import failed! Resource reading error.", e);
-            return nodeFactory.jsonArray(AstNodeType.STRING);
+            return nodeFactory.jsonArray(AstNodeType.STRING, nodeFactory.jsonString(""));
         } catch (ParserException e) {
             Histone.runtime_log_warn_e("Resource import failed! Resource parsing error.", e);
-            return nodeFactory.jsonArray(AstNodeType.STRING);
+            return nodeFactory.jsonArray(AstNodeType.STRING, nodeFactory.jsonString(""));
         } finally {
             IOUtils.closeQuietly(resourceStream, log);
             IOUtils.closeQuietly(resource, log);
@@ -209,15 +209,15 @@ public class AstImportResolver {
         }
         return value;
     }
-    
-    private ArrayNode getHistoneContent(ArrayNode ast){
+
+    private ArrayNode getHistoneContent(ArrayNode ast) {
         if (ast.path(0) != null && HISTONE.equals(ast.path(0).path(0).asText())) {
             return (ArrayNode) ast.path(1);
         }
         return ast;
     }
 
-    private ArrayNode getHistonHeader(ArrayNode ast){
+    private ArrayNode getHistonHeader(ArrayNode ast) {
         if (ast.path(0) != null && HISTONE.equals(ast.path(0).path(0).asText())) {
             return (ArrayNode) ast.path(0);
         }

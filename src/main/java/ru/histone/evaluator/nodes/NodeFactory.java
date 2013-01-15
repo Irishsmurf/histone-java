@@ -173,58 +173,58 @@ public class NodeFactory {
         return jackson.getNodeFactory().arrayNode();
     }
 
-	public String toJsonString(JsonNode jsonNode) {
-		if (jsonNode.isBigDecimal()) {
-			BigDecimal number = ((DecimalNode) jsonNode).decimalValue();
-			return number.toPlainString();
-		} else if (jsonNode.isArray()) {
-			ArrayNode node = (ArrayNode) jsonNode;
-			StringBuilder sb = new StringBuilder();
-			sb.append('[');
-			if (node.size() != 0) {
-				Iterator<JsonNode> it = node.elements();
-				int count = 0;
-				for (; it.hasNext();) {
-					JsonNode en = it.next();
-					if (count > 0) {
-						sb.append(',');
-					}
-					++count;
-					sb.append(toJsonString(en));
-				}
-			}
-			sb.append(']');
-			return sb.toString();
-		} else if (jsonNode.isObject()) {
-			ObjectNode objNode = (ObjectNode) jsonNode;
-			StringBuilder sb = new StringBuilder();
-			sb.append("{");
-			if (objNode.size() != 0) {
-				Iterator<Map.Entry<String, JsonNode>> it = ((ObjectNode) jsonNode).fields();
-				int count = 0;
-				for (; it.hasNext();) {
-					Map.Entry<String, JsonNode> en = it.next();
-					//don't show entry with only undefined node
-					if (en.getValue().isObject() && ((ObjectNode) en.getValue()).size() == 0) {
-						continue;
-					}
-					if (count > 0) {
-						sb.append(",");
-					}
-					++count;
+    public String toJsonString(JsonNode jsonNode) {
+        if (jsonNode.isBigDecimal()) {
+            BigDecimal number = ((DecimalNode) jsonNode).decimalValue();
+            return number.toPlainString();
+        } else if (jsonNode.isArray()) {
+            ArrayNode node = (ArrayNode) jsonNode;
+            StringBuilder sb = new StringBuilder();
+            sb.append('[');
+            if (node.size() != 0) {
+                Iterator<JsonNode> it = node.elements();
+                int count = 0;
+                for (; it.hasNext(); ) {
+                    JsonNode en = it.next();
+                    if (count > 0) {
+                        sb.append(',');
+                    }
+                    ++count;
+                    sb.append(toJsonString(en));
+                }
+            }
+            sb.append(']');
+            return sb.toString();
+        } else if (jsonNode.isObject()) {
+            ObjectNode objNode = (ObjectNode) jsonNode;
+            StringBuilder sb = new StringBuilder();
+            sb.append("{");
+            if (objNode.size() != 0) {
+                Iterator<Map.Entry<String, JsonNode>> it = ((ObjectNode) jsonNode).fields();
+                int count = 0;
+                for (; it.hasNext(); ) {
+                    Map.Entry<String, JsonNode> en = it.next();
+                    //don't show entry with only undefined node
+                    if (en.getValue().isObject() && ((ObjectNode) en.getValue()).size() == 0) {
+                        continue;
+                    }
+                    if (count > 0) {
+                        sb.append(",");
+                    }
+                    ++count;
 
-					sb.append('"');
-					CharTypes.appendQuoted(sb, en.getKey());
-					sb.append('"');
-					sb.append(':');
-					sb.append(toJsonString(en.getValue()));
-				}
-			}
-			sb.append("}");
-			return sb.toString();
-		}
-		return jsonNode.toString();
-	}
+                    sb.append('"');
+                    CharTypes.appendQuoted(sb, en.getKey());
+                    sb.append('"');
+                    sb.append(':');
+                    sb.append(toJsonString(en.getValue()));
+                }
+            }
+            sb.append("}");
+            return sb.toString();
+        }
+        return jsonNode.toString();
+    }
 
     public StringHistoneNode string(JsonNode value) {
         return new StringHistoneNode(this, value.asText());
@@ -270,7 +270,8 @@ public class NodeFactory {
     }
 
     public JsonNode jsonNumber(BigDecimal value) {
-        return jackson.getNodeFactory().numberNode(value);
+        JsonNode result = jackson.getNodeFactory().numberNode(value);
+        return result;
     }
 
     public JsonNode jsonNumber(BigInteger val) {

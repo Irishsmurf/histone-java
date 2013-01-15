@@ -1,3 +1,18 @@
+/**
+ *    Copyright 2012 MegaFon
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
 package ru.histone.optimizer;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -67,7 +82,7 @@ public abstract class BaseOptimization {
             return arr;
         }
 
-        int nodeType = getNodeType(arr);
+        int nodeType = Math.abs(getNodeType(arr));
 
         if (getOperationsOverArguments().contains(nodeType)) {
             return processOperationOverArguments(arr);
@@ -78,6 +93,8 @@ public abstract class BaseOptimization {
                 return processSelector(arr);
             case AstNodeType.STATEMENTS:
                 return processStatements(arr);
+            case AstNodeType.IMPORT:
+                return processImport(arr);
 
             case AstNodeType.VAR:
                 return processVariable(arr);
@@ -102,12 +119,16 @@ public abstract class BaseOptimization {
     public abstract void popContext();
 
     protected JsonNode processCall(ArrayNode call) throws HistoneException {
-        if (call.get(3).isArray()) {
-            ArrayNode arr = (ArrayNode) call.get(3);
-            return processAstNode(arr);
-        } else {
-            return call;
+        JsonNode target = call.get(1);
+        JsonNode functionName = call.get(2);
+        JsonNode args = call.get(3);
+
+        target = processAstNode(target);
+        if (args.isArray() && args.size() > 0) {
+            args = processArrayOfAstNodes(args);
         }
+
+        return ast(AstNodeType.CALL, target, functionName, args);
     }
 
     protected JsonNode processMap(ArrayNode map) throws HistoneException {
@@ -134,7 +155,7 @@ public abstract class BaseOptimization {
         Assert.notNull(ast.size() > 1);
         Assert.isTrue(ast.get(0).isNumber());
         for (int i = 1; i < ast.size(); i++) Assert.isTrue(ast.get(i).isArray());
-        Assert.isTrue(getOperationsOverArguments().contains(ast.get(0).asInt()));
+        Assert.isTrue(getOperationsOverArguments().contains(Math.abs(ast.get(0).asInt())));
 
         int operationType = ast.get(0).asInt();
 
@@ -157,6 +178,11 @@ public abstract class BaseOptimization {
         }
 
         return ast(AstNodeType.STATEMENTS, nodeFactory.jsonArray(statementsOut));
+    }
+
+    protected JsonNode processImport(ArrayNode import_) throws HistoneException {
+        String resource = import_.get(1).asText();
+        return import_;
     }
 
     protected JsonNode processVariable(ArrayNode variable) throws HistoneException {
@@ -214,6 +240,11 @@ public abstract class BaseOptimization {
         ArrayNode collection = (ArrayNode) for_.get(2);
         ArrayNode statements = (ArrayNode) for_.get(3).get(0);
 
+        ArrayNode elseStatements = null;
+        if (for_.get(3).size() > 1) {
+            elseStatements = (ArrayNode) for_.get(3).get(1);
+        }
+
         String iterVal = var.get(0).asText();
         String iterKey = (var.size() > 1) ? var.get(1).asText() : null;
 
@@ -224,23 +255,37 @@ public abstract class BaseOptimization {
         for (int i = 0; i < statements.size(); i++) {
             statementsOut[i] = processAstNode(statements.get(i));
         }
-        // Very stange AST structure in case of FOR
-        ArrayNode statementsContainer = nodeFactory.jsonArray(nodeFactory.jsonArray(statementsOut));
         popContext();
+
+        JsonNode[] elseStatementsOut = null;
+        if (elseStatements != null) {
+            elseStatementsOut = new JsonNode[elseStatements.size()];
+            for (int i = 0; i < elseStatements.size(); i++) {
+                elseStatementsOut[i] = processAstNode(elseStatements.get(i));
+            }
+        }
+
+        ArrayNode statementsContainer = elseStatementsOut == null ?
+                nodeFactory.jsonArray(nodeFactory.jsonArray(statementsOut)) :
+                nodeFactory.jsonArray(nodeFactory.jsonArray(statementsOut), nodeFactory.jsonArray(elseStatementsOut));
 
         return ast(AstNodeType.FOR, var, collection, statementsContainer);
     }
 
     protected JsonNode processSelector(ArrayNode selector) throws HistoneException {
-        JsonNode var = selector.get(1);
+        JsonNode fullVariable = selector.get(1);
 
-        if (var.size() == 1) {
-            var = var.get(0);
-            String varName = var.asText();
-            return selector;
-        } else {
-            return processAstNode(var);
+        JsonNode[] tokensOut = new JsonNode[fullVariable.size()];
+        for (int i = 0; i < fullVariable.size(); i++) {
+            JsonNode token = fullVariable.get(i);
+            if (token.isArray()) {
+                token = processAstNode(token);
+            }
+            tokensOut[i] = token;
         }
+
+        JsonNode result = ast(AstNodeType.SELECTOR, nodeFactory.jsonArray(tokensOut));
+        return result;
     }
 
     protected final static Set<Integer> CONSTANTS = new HashSet<Integer>(Arrays.asList(
@@ -298,18 +343,48 @@ public abstract class BaseOptimization {
         return result;
     }
 
-    protected boolean isString(JsonNode element) {
+    public static boolean isString(JsonNode element) {
         return element.isTextual();
     }
 
-    protected boolean isConstant(ArrayNode astArray) {
-        int nodeType = getNodeType(astArray);
+    public static boolean isStatements(ArrayNode arr) {
+        int nodeType = getNodeType(arr);
+        return nodeType == AstNodeType.STATEMENTS;
+    }
+
+    public static boolean isSelector(ArrayNode arr) {
+        int nodeType = getNodeType(arr);
+        return nodeType == AstNodeType.SELECTOR;
+    }
+
+    public static boolean isConstant(ArrayNode arr) {
+        int nodeType = getNodeType(arr);
         return nodeType == AstNodeType.TRUE ||
                 nodeType == AstNodeType.FALSE ||
                 nodeType == AstNodeType.NULL ||
                 nodeType == AstNodeType.INT ||
                 nodeType == AstNodeType.DOUBLE ||
                 nodeType == AstNodeType.STRING;
+    }
+
+    public static boolean isMap(ArrayNode arr) {
+        int nodeType = getNodeType(arr);
+        return nodeType == AstNodeType.MAP;
+    }
+
+    public static boolean isMapOfConstants(ArrayNode arr) {
+        int nodeType = getNodeType(arr);
+        if (nodeType != AstNodeType.MAP) return false;
+
+        boolean result = true;
+        ArrayNode mapEntries = (ArrayNode) arr.get(1);
+        for (JsonNode mapEntry : mapEntries) {
+            JsonNode entryKey = mapEntry.get(0);
+            ArrayNode entryValue = (ArrayNode) mapEntry.get(1);
+
+            result = result && (isConstant(entryValue) || isMapOfConstants(entryValue));
+        }
+        return result;
     }
 
     protected boolean isConstants(Collection<? extends ArrayNode> astArrays) {
@@ -321,7 +396,7 @@ public abstract class BaseOptimization {
         return true;
     }
 
-    protected int getNodeType(ArrayNode astArray) {
+    public static int getNodeType(ArrayNode astArray) {
         return astArray.get(0).asInt();
     }
 
@@ -352,6 +427,9 @@ public abstract class BaseOptimization {
             return nodeFactory.jsonArray(AstNodeType.STRING, nodeFactory.jsonString(node.getAsString().getValue()));
         } else if (node.isNull()) {
             return nodeFactory.jsonArray(AstNodeType.NULL);
+        } else if (node.isUndefined()) {
+            // EXPERIMENTAL: Not sure here
+            return nodeFactory.jsonString("");
         }
 
         throw new IllegalStateException(String.format("Can't convert node %s to AST element", node));
@@ -376,4 +454,27 @@ public abstract class BaseOptimization {
 
         return result;
     }
+
+    public static long countNodes(JsonNode arr) {
+        long result = 0;
+
+        if (arr.isContainerNode()) {
+            for (JsonNode node : arr) {
+                result += countNodes(node) + 1;
+            }
+        }
+
+        if (arr.isValueNode()) {
+            result += 1;
+        }
+
+        return result;
+    }
+
+    public static final String KEYWORD_THIS = "this";
+    public static final String KEYWORD_SELF = "self";
+    public static final String KEYWORD_GLOBAL = "global";
+    public static final String KEYWORD_INDEX = "index";
+    public static final String KEYWORD_LAST = "last";
+    public static final String KEYWORD_ARGUMENTS = "arguments";
 }
