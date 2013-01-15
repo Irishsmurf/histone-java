@@ -353,6 +353,7 @@ public class HistoneBuilder {
         histoneBootstrap.setUselessVariables(new UselessVariables(nodeFactory));
         histoneBootstrap.setAstMarker(new AstMarker(nodeFactory));
         histoneBootstrap.setAstOptimizer(new AstOptimizer(nodeFactory, evaluator));
+        histoneBootstrap.setSimplifier(new Simplifier(nodeFactory));
 
         return new Histone(histoneBootstrap);
     }

@@ -69,6 +69,7 @@ public class Histone {
     private ConstantPropagation constantPropagation;
     private ConstantIfCases constantIfCases;
     private UselessVariables uselessVariables;
+    private Simplifier simplifier;
 
     public Histone(HistoneBootstrap bootstrap) {
         this.parser = bootstrap.getParser();
@@ -82,6 +83,7 @@ public class Histone {
         this.constantPropagation = bootstrap.getConstantPropagation();
         this.constantIfCases = bootstrap.getConstantIfCases();
         this.uselessVariables = bootstrap.getUselessVariables();
+        this.simplifier = bootstrap.getSimplifier();
     }
 
     public ArrayNode parseTemplateToAST(Reader templateReader) throws HistoneException {
@@ -160,6 +162,7 @@ public class Histone {
 
         ast = astMarker.mark(ast);
         ast = astOptimizer.optimize(ast);
+        ast = simplifier.simplify(ast);
         return ast;
     }
 
@@ -229,6 +232,10 @@ public class Histone {
         ast = astOptimizer.optimize(ast);
         stat.astLegthAfterEvaluator += BaseOptimization.countNodes(ast);
 
+        stat.beforeSimplifier += BaseOptimization.countNodes(ast);
+        ast = simplifier.simplify(ast);
+        stat.afterSimplifier += BaseOptimization.countNodes(ast);
+
         stat.finalAstLength += BaseOptimization.countNodes(ast);
         return ast;
     }
@@ -240,10 +247,15 @@ public class Histone {
         final Set<Long> constantPropagationInvokes = new HashSet<Long>();
         final Set<Long> constantIfCasesInvokes = new HashSet<Long>();
         final Set<Long> uselessVariablesInvokes = new HashSet<Long>();
+
         long astLegthBeforeEvaluator = 0;
         long astLegthAfterEvaluator = 0;
+
         long circles = 0;
         long finalAstLength = 0;
+
+        long beforeSimplifier = 0;
+        long afterSimplifier = 0;
     }
 
 

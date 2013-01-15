@@ -35,6 +35,7 @@ public class HistoneBootstrap {
     private ConstantPropagation constantPropagation;
     private ConstantIfCases constantIfCases;
     private UselessVariables uselessVariables;
+    private Simplifier simplifier;
 
     public Parser getParser() {
         return parser;
@@ -122,6 +123,14 @@ public class HistoneBootstrap {
 
     public void setUselessVariables(UselessVariables uselessVariables) {
         this.uselessVariables = uselessVariables;
+    }
+
+    public Simplifier getSimplifier() {
+        return simplifier;
+    }
+
+    public void setSimplifier(Simplifier simplifier) {
+        this.simplifier = simplifier;
     }
 }
 
