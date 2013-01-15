@@ -95,6 +95,10 @@ public class Histone {
         return parser.parse(inputString);
     }
 
+    public ArrayNode parseTemplateToAST(String templateString) throws HistoneException {
+        return parser.parse(templateString);
+    }
+
     public ArrayNode optimizeAST(String baseUri, ArrayNode templateAST) throws HistoneException {
         ArrayNode importsResolved = astImportResolver.resolve(baseUri, templateAST);
         ArrayNode constantsFolded = constantFolding.foldConstants(importsResolved);

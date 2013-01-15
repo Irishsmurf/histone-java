@@ -58,7 +58,7 @@ public class AcceptanceTestsRunner extends Runner {
     private NodeFactory nodeFactory;
     private int testIdx = 0;
     private AcceptanceTest instance;
-    private static final String MDC_TEST_NAME = "MDS_TEST_NAME";
+    private static final String MDC_TEST_NAME = "MDC_TEST_NAME";
 
     public AcceptanceTestsRunner(Class<?> testClass) throws IllegalAccessException, InstantiationException {
         instance = (AcceptanceTest) testClass.newInstance();
@@ -68,10 +68,6 @@ public class AcceptanceTestsRunner extends Runner {
         log = LoggerFactory.getLogger(testClass);
     }
 
-    private String formatTestName(String name) {
-        return name.replaceAll("\\.", "_");
-    }
-
     @Override
     public Description getDescription() {
         return description;
@@ -79,10 +75,9 @@ public class AcceptanceTestsRunner extends Runner {
 
     @Override
     public void run(RunNotifier notifier) {
-//        notifier.fireTestStarted(instance.getDescription());
-        Reader reader = new InputStreamReader(getClass().getResourceAsStream(instance.getFileName()));
         Description testCaseDescription = null;
         try {
+            Reader reader = new InputStreamReader(getClass().getResourceAsStream(instance.getFileName()));
             JsonNode testSuites = jackson.readTree(reader);
             if (instance.startTestWebServer()) {
                 startTestWebServer();
@@ -351,6 +346,10 @@ public class AcceptanceTestsRunner extends Runner {
                 if ("java".equalsIgnoreCase(ignoreImpl.asText())) {
                     return true;
                 }
+            }
+        } else if (ignore.isTextual()) {
+            if ("java".equalsIgnoreCase(ignore.asText())) {
+                return true;
             }
         }
         return false;

@@ -729,7 +729,7 @@ public class Evaluator {
             if (args.get(1).isObject()) {
                 requestMap = args.get(1).getAsObject();
             } else {
-                throw new GlobalFunctionExecutionException("Wrong argument type: " + args.get(1).getAsString().getValue());
+               // throw new GlobalFunctionExecutionException("Wrong argument type: " + args.get(1).getAsString().getValue());
             }
         }
 

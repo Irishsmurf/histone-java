@@ -16,11 +16,14 @@
 package ru.histone;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * Test correct work of Histone public methods
@@ -38,13 +41,16 @@ public class HistonePlaygroundTest {
 
     @Test
     public void test() throws Exception {
-        String baseURI = getClass().getResource("/logback-test.xml").toString();
-        String input = "a {{var x = [1, 2, 'a':'b', 3, 4]+[10,11]}}{{x.remove(1,2).size()}} b";
+        String baseURI = getClass().getClassLoader().getResource("markerFileForBaseURI").toString();
+        String input = "a {{1+3}} b";
         String context = "{}";
-        String expected = "a  b";
+        String expectedAST = "[[\"HISTONE\",{\"version\":\"${histone.version}\"}],[\"a \",[9,[101,1],[101,3]],\" b\"]]";
+        String expected = "a 4 b";
 
-        String source = "[[\"HISTONE\",{\"version\":\"1.0.6\"}],[\"a \",[1001,\"x\",[9,[107,[[null,[101,1]],[null,[101,2]],[\"a\",[103,\"b\"]],[null,[101,3]],[null,[101,4]]]],[107,[[null,[101,10]],[null,[101,11]]]]]],[106,[105,[[106,[105,[\"x\"]],\"remove\",[[101,1],[101,2]]]]],\"size\",null],\" b\"]]";
+        ArrayNode resultAST = histone.parseTemplateToAST(input);
+        String result = histone.evaluateAST(baseURI, resultAST, jackson.readTree(new StringReader(context)));
 
-        histone.evaluate(baseURI, source, jackson.readTree(new StringReader(context)));
+        assertEquals(expectedAST, resultAST.toString());
+        assertEquals(expected, result);
     }
 }
