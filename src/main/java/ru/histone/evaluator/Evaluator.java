@@ -420,6 +420,33 @@ public class Evaluator {
         return result;
     }
 
+
+    private Node runNameSpaceMacro(MacroFunc macro, List<Node> args, EvaluatorContext context) throws EvaluatorException {
+       // MacroFunc macro = context.getMacro(name);
+        if (macro == null) {
+            Histone.runtime_log_warn("macro not found");
+            return nodeFactory.UNDEFINED;
+        }
+        ObjectHistoneNode self = nodeFactory.object();
+        ObjectHistoneNode argsNode = nodeFactory.object(args);
+        self.add("arguments", argsNode);
+        context.putProp("self", self);
+
+        Iterator<Node> argsItr = args.iterator();
+        for (JsonNode macroArg : macro.getArgs()) {
+            context.putProp(macroArg.asText(), (argsItr.hasNext() ? argsItr.next() : nodeFactory.UNDEFINED));
+        }
+        String currentBaseURI = getContextBaseURI(context);
+        String macroBaseURI = macro.getBaseURI();
+        if (macroBaseURI != null/* && macroBaseURI.isAbsolute() && !macroBaseURI.isOpaque()*/) {
+            context.setBaseURI(macroBaseURI);
+        }
+        StringHistoneNode result = nodeFactory.string(processInternal(macro.getStatements(), context));
+        context.setBaseURI(currentBaseURI);
+        return result;
+    }
+
+
     private Node processImport(JsonNode pathElement, EvaluatorContext context) throws EvaluatorException {
         if (!pathElement.isTextual()) {
             Histone.runtime_log_warn("Invalid path to imported template: '{}'", pathElement.toString());
@@ -534,11 +561,24 @@ public class Evaluator {
                 } else {
                     // if target wasn't global object, then we need to check if we have Node function
                     if (!nodeFunctionsManager.hasFunction(targetNode, name)) {
+                        if(targetNode.isNamespace()){
+                            NameSpaceNode  nameSpaceNode = (NameSpaceNode) targetNode;
+                            if (nameSpaceNode.hasMacro(name)) {
+                                return runNameSpaceMacro(nameSpaceNode.getMacro(name), argsList, context);
+                            }
+                        }
                         Histone.runtime_log_warn("'{}' is undefined function for type '{}'", name, targetNode.toString());
                         return nodeFactory.UNDEFINED;
                     }
                     return runNodeFunc(targetNode, name, argsList);
                 }
+            //check for anonymous macros for prop elements
+            } else if(context.hasProp(name) && context.getProp(name).isNamespace()) {
+                NameSpaceNode  nameSpaceNode = (NameSpaceNode)  context.getProp(name);
+                if (nameSpaceNode.hasMacro("")) {
+                    return runNameSpaceMacro(nameSpaceNode.getMacro(""), argsList, context);
+                }
+
             }
 
             // next we will call macro if it exists
@@ -564,6 +604,13 @@ public class Evaluator {
                 // we need to be able to override loadText function via user GlobalFunction,
                 // that's why we need to check this here, after GlobalFunctionManager check
                 return processLoadText(argsList, context);
+            }
+            if ("require".equals(name)) {
+                Node requireNode = processRequire(argsList, context);
+//                return processNode(requireNode, context);
+
+                return requireNode;
+
             }
 
             return nodeFactory.UNDEFINED;
@@ -776,6 +823,71 @@ public class Evaluator {
         } catch (EvaluatorException e) {
             Histone.runtime_log_warn_e("Resource include failed! Resource evaluation error.", e);
             return nodeFactory.UNDEFINED;
+        } finally {
+            IOUtils.closeQuietly(resourceStream, log);
+            IOUtils.closeQuietly(resource, log);
+        }
+    }
+
+    private Node processRequire(List<Node> args, EvaluatorContext context) {
+        if (args.size() == 0) {
+            return nodeFactory.UNDEFINED;
+        }
+        if (!args.get(0).isString()) {
+            throw new GlobalFunctionExecutionException("Non-string path for JSON resource location: "
+                    + args.get(0).getAsString().getValue());
+        }
+        final String path = args.get(0).getAsString().getValue();
+        final String currentBaseURI = getContextBaseURI(context);
+
+        Resource resource = null;
+        InputStream resourceStream = null;
+        try {
+            resource = resourceLoader.load(path, currentBaseURI, new String[]{ContentType.TEXT});
+            if (resource == null) {
+                Histone.runtime_log_warn("Can't get required resource by path = '{}'. Resource was not found.", path);
+                return nodeFactory.UNDEFINED;
+            }
+            resourceStream = resource.getInputStream();
+            if (resourceStream == null) {
+                Histone.runtime_log_warn("Can't get required resource by path = '{}'. Resource is unreadable", path);
+                return nodeFactory.UNDEFINED;
+            }
+
+            String templateContent = IOUtils.toString(resourceStream); //yeah... full file reading, because of our tokenizer is regexp-based :(
+            ArrayNode parseResult = parser.parse(templateContent);
+
+            GlobalObjectNode globalCopy = new GlobalObjectNode(nodeFactory, global);
+            URI resourceUri = (resource.getBaseHref() != null) ? URI.create(resource.getBaseHref()) : null;
+            EvaluatorContext includeContext = EvaluatorContext.createEmpty(nodeFactory, globalCopy);
+            if (resourceUri != null && resourceUri.isAbsolute() && !resourceUri.isOpaque()) {
+                includeContext.setBaseURI(resourceUri.toString());
+            }
+            processInternal(parseResult, includeContext);
+            NameSpaceNode nameSpaceNode = nodeFactory.nameSpace();
+            Map<String, Node> props = includeContext.getProps();
+            for(String key: props.keySet()){
+               nameSpaceNode.add(key, props.get(key));
+            }
+
+            Map<String, MacroFunc> macros = includeContext.getMacros();
+            for(String key: macros.keySet()){
+                nameSpaceNode.addMacro(key, macros.get(key));
+            }
+
+            return nameSpaceNode;
+        } catch (ResourceLoadException e) {
+            Histone.runtime_log_warn_e("Required resource failed! Unresolvable resource.", e);
+            return nodeFactory.UNDEFINED;
+        } catch (IOException e) {
+            Histone.runtime_log_warn_e("Required resource failed! Resource reading error.", e);
+            return nodeFactory.UNDEFINED;
+        } catch (ParserException e) {
+            Histone.runtime_log_warn_e("Required resource failed! Resource parsing error.", e);
+            return nodeFactory.UNDEFINED;
+        } catch (EvaluatorException e) {
+                Histone.runtime_log_warn_e("Required resource failed! Resource evaluation error.", e);
+                return nodeFactory.UNDEFINED;
         } finally {
             IOUtils.closeQuietly(resourceStream, log);
             IOUtils.closeQuietly(resource, log);

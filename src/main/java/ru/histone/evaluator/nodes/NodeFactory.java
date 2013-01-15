@@ -55,6 +55,10 @@ public class NodeFactory {
         return new ObjectHistoneNode(this);
     }
 
+    public NameSpaceNode nameSpace() {
+        return new NameSpaceNode(this);
+    }
+
     public ObjectHistoneNode object(ObjectHistoneNode src) {
         ObjectHistoneNode node = src.isGlobalObject() ? new GlobalObjectNode(this) : object();
         for (Map.Entry<Object, Node> entry : src.getElements().entrySet()) {
