@@ -455,6 +455,22 @@ public abstract class BaseOptimization {
         return result;
     }
 
+    public static long countNodes(JsonNode arr) {
+        long result = 0;
+
+        if (arr.isContainerNode()) {
+            for (JsonNode node : arr) {
+                result += countNodes(node) + 1;
+            }
+        }
+
+        if (arr.isValueNode()) {
+            result += 1;
+        }
+
+        return result;
+    }
+
     public static final String KEYWORD_THIS = "this";
     public static final String KEYWORD_SELF = "self";
     public static final String KEYWORD_GLOBAL = "global";
