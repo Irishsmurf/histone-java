@@ -93,6 +93,8 @@ public abstract class BaseOptimization {
                 return processSelector(arr);
             case AstNodeType.STATEMENTS:
                 return processStatements(arr);
+            case AstNodeType.IMPORT:
+                return processImport(arr);
 
             case AstNodeType.VAR:
                 return processVariable(arr);
@@ -176,6 +178,11 @@ public abstract class BaseOptimization {
         }
 
         return ast(AstNodeType.STATEMENTS, nodeFactory.jsonArray(statementsOut));
+    }
+
+    protected JsonNode processImport(ArrayNode import_) throws HistoneException {
+        String resource = import_.get(1).asText();
+        return import_;
     }
 
     protected JsonNode processVariable(ArrayNode variable) throws HistoneException {

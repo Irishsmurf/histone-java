@@ -60,6 +60,7 @@ public class AcceptanceTestsRunner extends Runner {
         instance = (AcceptanceTest) testClass.newInstance();
         description = instance.getDescription();
         jackson = new ObjectMapper();
+
         nodeFactory = new NodeFactory(jackson);
         log = LoggerFactory.getLogger(testClass);
     }
@@ -174,7 +175,7 @@ public class AcceptanceTestsRunner extends Runner {
                     notifier.fireTestFailure(new Failure(testCaseDescription, new ComparisonFailure(msg, outputAST_evaluated, optimizedAST_evaluated)));
                 }
 
-                boolean result = expectedAST.toString().equals(nodeFactory.toJsonString(outputAST));
+                boolean result = nodeFactory.toJsonString(expectedAST).equals(nodeFactory.toJsonString(outputAST));
                 if (result) {
                     notifier.fireTestFinished(testCaseDescription);
                 } else {

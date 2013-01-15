@@ -162,6 +162,16 @@ public class AstMarker extends BaseOptimization {
         return ast(isSafe, AstNodeType.MACRO, name, args, statements);
     }
 
+    /**
+     * Imports are always not safe
+     */
+    @Override
+    protected JsonNode processImport(ArrayNode import_) throws HistoneException {
+        String resource = import_.get(1).asText();
+
+        return ast(false, AstNodeType.IMPORT, nodeFactory.jsonString(resource));
+    }
+
     @Override
     public void pushContext() {
         context.push();
@@ -264,8 +274,8 @@ public class AstMarker extends BaseOptimization {
             for (int i = 0; i < elseStatements.size(); i++) {
                 elseStatementsOut[i] = processAstNode(elseStatements.get(i));
             }
+            isSafe = isSafe && safeArray(elseStatementsOut);
         }
-        isSafe = isSafe && safeArray(elseStatementsOut);
 
         ArrayNode statementsContainer = elseStatementsOut == null ?
                 nodeFactory.jsonArray(nodeFactory.jsonArray(statementsOut)) :

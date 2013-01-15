@@ -23,8 +23,6 @@ import org.junit.Test;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 
-import static org.junit.Assert.assertEquals;
-
 /**
  * Test correct work of Histone public methods
  */
@@ -41,14 +39,9 @@ public class HistonePlaygroundTest {
 
     @Test
     public void test() throws Exception {
-        String input = "a {{var x = 10}}{{for r in range(1, 10)}}{{var x = x + 10}}{{x}} {{/for}} b";
+        String input = "{{import 'template.tpl'}}";
 
         ArrayNode ast = histone.parseTemplateToAST(new StringReader(input));
-        ArrayNode finalAst = histone.optimizeAST(ast);
-
-        // Assert that evaluation results are equal
-        String astS = histone.evaluateAST(ast);
-        String finalAstS = histone.evaluateAST(finalAst);
-        assertEquals(astS, finalAstS);
+        ArrayNode optimizedAst = histone.optimizeAST(ast);
     }
 }
