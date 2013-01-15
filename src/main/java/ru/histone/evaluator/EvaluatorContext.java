@@ -25,6 +25,7 @@ import ru.histone.evaluator.nodes.ObjectHistoneNode;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -134,6 +135,23 @@ public class EvaluatorContext {
         } else {
             return nodeFactory.UNDEFINED;
         }
+    }
+
+
+    public Map<String, Node> getProps(){
+        Map<String, Node> props = new HashMap<String, Node>();
+        for (Map<String, Node> stack : stacksProps) {
+            props.putAll(stack);
+        }
+        return props;
+    }
+
+    public Map<String, MacroFunc> getMacros(){
+        Map<String, MacroFunc> macros = new HashMap<String, MacroFunc>();
+        for (Map<String, MacroFunc> macro : stacksMacro) {
+            macros.putAll(macro);
+        }
+        return macros;
     }
 
     /**

@@ -69,6 +69,10 @@ public abstract class Node {
         return this instanceof ObjectHistoneNode;
     }
 
+    public boolean isNamespace() {
+        return this instanceof NameSpaceNode;
+    }
+
     public boolean isAst() {
         return this instanceof AstNode;
     }

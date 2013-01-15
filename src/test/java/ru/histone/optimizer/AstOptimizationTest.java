@@ -51,21 +51,10 @@ public class AstOptimizationTest {
         String input = IOUtils.toString(fis);
 
         ArrayNode normalAst = histone.parseTemplateToAST(new StringReader(input));
-        System.out.println("\nNormal AST");
-        System.out.println(normalAst);
-
         String normalResult = histone.evaluateAST(baseUri, normalAst, NullNode.instance);
-        System.out.println("\nNormal Result");
-        System.out.println(normalResult);
 
-        
         ArrayNode importsAst = histone.optimizeAST(baseUri, normalAst);
-        System.out.println("\n\nImport AST");
-        System.out.println(importsAst.toString());
-
         String importResult = histone.evaluateAST(importsAst);
-        System.out.println("\n\nImport Result");
-        System.out.println(importResult);
 
         assertEquals(normalResult, importResult);
     }
