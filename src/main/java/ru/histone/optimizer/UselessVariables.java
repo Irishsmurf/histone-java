@@ -81,7 +81,7 @@ public class UselessVariables extends BaseOptimization {
 
         String varName = var.asText();
         if (selectors.contains(varName)) {
-            return ast(AstNodeType.VAR, var, processedValue);
+            return nodeFactory.jsonArray(AstNodeType.VAR, var, processedValue);
         } else {
             return nodeFactory.jsonString("");
         }

@@ -72,7 +72,7 @@ public class AstMarker extends BaseOptimization {
     }
 
     public static boolean safeAstNode(JsonNode node) {
-        return (node.isArray() && getNodeType((ArrayNode) node) > 0) || isString(node);
+        return (node.isArray() && getNodeType((ArrayNode) node) > 0) || node.isTextual();
     }
 
     public static boolean unsafeAstNode(JsonNode node) {
@@ -195,7 +195,7 @@ public class AstMarker extends BaseOptimization {
         JsonNode name = call.get(2);
         JsonNode args = call.get(3);
 
-        if (!target.isNull() || !isString(name) || StringUtils.isBlank(name.asText())) {
+        if (!target.isNull() || !name.isTextual() || StringUtils.isBlank(name.asText())) {
             return ast(false, AstNodeType.CALL, target, name, args);
         }
 
@@ -338,7 +338,7 @@ public class AstMarker extends BaseOptimization {
     }
 
     protected ArrayNode ast(boolean isSafe, int operationType, JsonNode... arguments) {
-        return ast(isSafe ? operationType : -operationType, arguments);
+        return nodeFactory.jsonArray(isSafe ? operationType : -operationType, arguments);
     }
 
     protected ArrayNode ast(boolean isSafe, int operationType, Collection<? extends ArrayNode> arguments) {

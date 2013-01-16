@@ -91,7 +91,7 @@ public class Simplifier extends BaseOptimization {
     @Override
     protected JsonNode processStatements(ArrayNode statements) throws HistoneException {
         statements = (ArrayNode) statements.get(1);
-        return ast(AstNodeType.STATEMENTS, simplifyArrayNode(statements));
+        return nodeFactory.jsonArray(AstNodeType.STATEMENTS, simplifyArrayNode(statements));
     }
 
     @Override
@@ -126,7 +126,7 @@ public class Simplifier extends BaseOptimization {
                 nodeFactory.jsonArray(nodeFactory.jsonArray(simplifyArray(statementsOut))) :
                 nodeFactory.jsonArray(nodeFactory.jsonArray(simplifyArray(statementsOut)), nodeFactory.jsonArray(simplifyArray(elseStatementsOut)));
 
-        return ast(AstNodeType.FOR, var, collection, statementsContainer);
+        return nodeFactory.jsonArray(AstNodeType.FOR, var, collection, statementsContainer);
     }
 
     @Override
@@ -140,7 +140,7 @@ public class Simplifier extends BaseOptimization {
         statements = (ArrayNode) processArrayOfAstNodes(statements);
         popContext();
 
-        return ast(AstNodeType.MACRO, name, args, simplifyArrayNode(statements));
+        return nodeFactory.jsonArray(AstNodeType.MACRO, name, args, simplifyArrayNode(statements));
     }
 
     @Override
@@ -168,7 +168,7 @@ public class Simplifier extends BaseOptimization {
             conditionsOut.add(conditionOut);
         }
 
-        return ast(AstNodeType.IF, conditionsOut);
+        return nodeFactory.jsonArray(AstNodeType.IF, conditionsOut);
     }
 
 

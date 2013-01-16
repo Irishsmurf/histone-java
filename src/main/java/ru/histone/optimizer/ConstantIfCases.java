@@ -48,7 +48,7 @@ public class ConstantIfCases extends BaseOptimization {
             JsonNode statements = condition.get(1);
 
             if (expression.get(0).asInt() == AstNodeType.TRUE) {
-                return ast(AstNodeType.STATEMENTS, processArrayOfAstNodes(statements));
+                return nodeFactory.jsonArray(AstNodeType.STATEMENTS, processArrayOfAstNodes(statements));
             } else {
                 return nodeFactory.jsonString("");
             }
@@ -74,7 +74,7 @@ public class ConstantIfCases extends BaseOptimization {
                 conditionsOut.add(conditionOut);
             }
 
-            return ast(AstNodeType.IF, conditionsOut);
+            return nodeFactory.jsonArray(AstNodeType.IF, conditionsOut);
         }
     }
 
