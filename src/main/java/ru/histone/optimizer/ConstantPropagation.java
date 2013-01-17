@@ -28,6 +28,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * This optimization unit propagates folded constants.
+ * <p/>
  * User: sazonovkirill@gmail.com
  * Date: 07.01.13
  */

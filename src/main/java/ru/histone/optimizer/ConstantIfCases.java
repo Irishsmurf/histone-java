@@ -22,6 +22,9 @@ import ru.histone.evaluator.nodes.NodeFactory;
 import ru.histone.parser.AstNodeType;
 
 /**
+ * This optimization unit simplifies 'if' exporessions, if condition is constant (so it either removes the whole if block or
+ * leaves statements without 'if' condition.
+ * <p/>
  * User: sazonovkirill@gmail.com
  * Date: 09.01.13
  */

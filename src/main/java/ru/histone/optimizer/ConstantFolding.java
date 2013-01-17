@@ -27,6 +27,8 @@ import ru.histone.utils.Assert;
 import java.util.Arrays;
 
 /**
+ * This optimization unit folds expressions, that use only unary/binary/ternary operations (e.g. operations over arguments) and constants.
+ * <p/>
  * User: sazonovkirill@gmail.com
  * Date: 25.12.12
  */

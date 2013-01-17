@@ -27,7 +27,12 @@ import ru.histone.utils.StringUtils;
 import java.util.*;
 
 /**
+ * This optimizations unit marks 'constant' AST branches; 'constant' here means, that AST branch is constant, doesn't depend on
+ * context variables and doesn't contain any function calls. In this case we consider it to don't have side effects and can be
+ * evaluated only once and can be treated as string constant later.
+ *
  * @author sazonovkirill@gmail.com
+ * @see {@link AstOptimizer} evaluates constant AST branches
  */
 public class AstMarker extends BaseOptimization {
     private Context context;
