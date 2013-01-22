@@ -101,17 +101,22 @@ public class EvaluatorContext {
      * @return true if context has specified variable
      */
     public boolean hasProp(String name) {
+        return "baseURI".equals(name) || hasStackProp(name) || initialContext.hasProp(name);
+    }
+
+    /**
+     * Check if context has specified variable in stack
+     *
+     * @param name variable name
+     * @return true if context has specified variable
+     */
+    public boolean hasStackProp(String name){
         for (Map<String, Node> stack : stacksProps) {
             if (stack.containsKey(name)) {
                 return true;
             }
         }
-
-        if (name.equals("baseURI")) {
-            return true;
-        }
-
-        return initialContext.hasProp(name);
+        return false;
     }
 
     /**

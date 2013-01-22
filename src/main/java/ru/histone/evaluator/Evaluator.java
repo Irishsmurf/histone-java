@@ -1199,8 +1199,8 @@ public class Evaluator {
             ctx = context.getProp("self");
             startIdx++;
         } else {
-            if ("baseURI".equals(element.path(0).asText())) {
-                if (context.getGlobal().hasProp("baseURI")) {
+            if ("baseURI".equals(element.path(0).asText()) && !context.hasStackProp("baseURI")) {
+                if (context.getGlobal().hasProp("baseURI") ) {
                     ctx = context.getGlobal().getProp("baseURI");
                     startIdx = startIdx + 1;
                 } else {
