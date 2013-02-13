@@ -143,7 +143,7 @@ public class DefaultResourceLoader implements ResourceLoader {
             throw new ResourceLoadException(String.format("Can't read file '%s'", location.toString()));
         }
 
-        return new StreamResource(stream, location.toString(), ContentType.TEXT);
+        return new StreamResource(stream, location.toString(), ContentType.TEXT, file.lastModified());
     }
 
     private Resource loadHttpResource(URI location, Node[] args) {

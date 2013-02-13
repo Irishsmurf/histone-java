@@ -24,11 +24,19 @@ public class StreamResource implements Resource {
     private final InputStream stream;
     private final String baseHref;
     private final String contentType;
+    private long lastModified;
 
     public StreamResource(InputStream stream, String baseHref, String contentType) {
         this.stream = stream;
         this.baseHref = baseHref;
         this.contentType = contentType;
+    }
+
+    public StreamResource(InputStream stream, String baseHref, String contentType, long lastModified) {
+        this.stream = stream;
+        this.baseHref = baseHref;
+        this.contentType = contentType;
+        this.lastModified = lastModified;
     }
 
     @Override
@@ -49,5 +57,13 @@ public class StreamResource implements Resource {
     @Override
     public void close() throws IOException {
         IOUtils.closeQuietly(stream);
+    }
+
+    public long getLastModified() {
+        return lastModified;
+    }
+
+    public void setLastModified(long lastModified) {
+        this.lastModified = lastModified;
     }
 }
