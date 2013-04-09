@@ -941,7 +941,7 @@ public class Evaluator {
         context.putProp("self", self);
 
 
-        if (collectionNode.isObject()) {
+        if (collectionNode.isObject() && collectionNode.getAsObject().size() > 0) {
             int idx = 0;
             self.add("last", nodeFactory.number(collectionNode.getAsObject().size() - 1));
             Map<Object, Node> elements = collectionNode.getAsObject().getElements();
