@@ -95,7 +95,7 @@ public final class IOUtils {
      * @throws IOException if I/O error occurs
      */
     public static long copy(InputStream input, Writer output) throws IOException {
-        return copy(new InputStreamReader(input), output);
+        return copy(new InputStreamReader(input,"utf-8"), output);
     }
 
     /**

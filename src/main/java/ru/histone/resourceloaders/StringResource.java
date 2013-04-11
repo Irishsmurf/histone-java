@@ -20,6 +20,7 @@ import ru.histone.utils.IOUtils;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 
 /**
  * @author sazonovkirill@gmail.com
@@ -34,7 +35,11 @@ public class StringResource implements Resource {
         this.content = content;
         this.baseHref = baseHref;
         this.contentType = contentType;
-        this.inputStream = new ByteArrayInputStream(content.getBytes());
+        try {
+            this.inputStream = new ByteArrayInputStream(content.getBytes("utf-8"));
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException("Encoding error",e);
+        }
     }
 
     @Override
