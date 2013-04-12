@@ -41,7 +41,7 @@ public class Group extends NodeFunction<ObjectHistoneNode> {
         ObjectHistoneNode result = getNodeFactory().object();
         if (args.length > 0) {
             if (!args[0].isString()) {
-                return getNodeFactory().number(33);
+                return result;
             }
             String column = args[0].getAsString().getValue();
 
