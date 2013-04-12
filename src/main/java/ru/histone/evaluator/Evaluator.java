@@ -86,6 +86,7 @@ public class Evaluator {
         nodeFunctionsManager.registerBuiltInFunction(ObjectHistoneNode.class, new Slice(bootstrap.getNodeFactory()));
 
         nodeFunctionsManager.registerBuiltInFunction(ObjectHistoneNode.class, new HasKey(bootstrap.getNodeFactory()));
+        nodeFunctionsManager.registerBuiltInFunction(ObjectHistoneNode.class, new Group(bootstrap.getNodeFactory()));
         nodeFunctionsManager.registerBuiltInFunction(ObjectHistoneNode.class, new Keys(bootstrap.getNodeFactory()));
         nodeFunctionsManager.registerBuiltInFunction(ObjectHistoneNode.class, new Values(bootstrap.getNodeFactory()));
         nodeFunctionsManager.registerBuiltInFunction(ObjectHistoneNode.class, new Remove(bootstrap.getNodeFactory()));
