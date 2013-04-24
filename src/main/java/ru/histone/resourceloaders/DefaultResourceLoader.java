@@ -49,6 +49,7 @@ import ru.histone.evaluator.nodes.NodeFactory;
 import ru.histone.evaluator.nodes.ObjectHistoneNode;
 import ru.histone.parser.Parser;
 import ru.histone.tokenizer.TokenizerFactory;
+import ru.histone.utils.BOMInputStream;
 import ru.histone.utils.PathUtils;
 
 import java.io.ByteArrayInputStream;
@@ -143,7 +144,18 @@ public class DefaultResourceLoader implements ResourceLoader {
             throw new ResourceLoadException(String.format("Can't read file '%s'", location.toString()));
         }
 
-        return new StreamResource(stream, location.toString(), ContentType.TEXT, file.lastModified());
+        BOMInputStream bomStream = null;
+        try {
+            bomStream = new BOMInputStream(stream);
+            if (bomStream.getBOM() != BOMInputStream.BOM.NONE) {
+                bomStream.skipBOM();
+            }
+        } catch (IOException e) {
+            throw new ResourceLoadException(String.format("Error with BOMInputStream for file '%s'", location.toString()));
+        }
+
+
+        return new StreamResource(bomStream, location.toString(), ContentType.TEXT, file.lastModified());
     }
 
     private Resource loadHttpResource(URI location, Node[] args) {

@@ -39,6 +39,7 @@ import ru.histone.resourceloaders.Resource;
 import ru.histone.resourceloaders.ResourceLoadException;
 import ru.histone.resourceloaders.ResourceLoader;
 import ru.histone.utils.ArrayUtils;
+import ru.histone.utils.BOMInputStream;
 import ru.histone.utils.IOUtils;
 import ru.histone.utils.StringUtils;
 
@@ -56,6 +57,8 @@ import java.util.Map;
  */
 public class Evaluator {
     private static final Logger log = LoggerFactory.getLogger(Evaluator.class);
+
+    private static final String UTF8_BOM = "\uFEFF";
 
     private final Parser parser;
     private final NodeFactory nodeFactory;
@@ -679,7 +682,6 @@ public class Evaluator {
 
             //if server returned normal json, not jsonp we need to return it, regardless jsonp boolean flag
             try {
-
                 json = nodeFactory.jsonNode(new StringReader(s));
             } catch (JsonProcessingException e) {
                 // try isJsonp
