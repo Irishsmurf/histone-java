@@ -17,28 +17,24 @@ package ru.histone.evaluator.functions.global;
 
 import ru.histone.evaluator.nodes.Node;
 import ru.histone.evaluator.nodes.NodeFactory;
-import ru.histone.utils.PathUtils;
 
-/**
- * Returns the URI to be resolved against given URI <br/>
- */
-public class ResolveURI extends GlobalFunction {
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 
-    public ResolveURI(NodeFactory nodeFactory) {
+public class GetCurrentDate extends GlobalFunction {
+    private static final SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy");
+
+    protected GetCurrentDate(NodeFactory nodeFactory) {
         super(nodeFactory);
     }
 
     @Override
     public String getName() {
-        return "resolveURI";
+        return "getCurrentDate";
     }
 
     @Override
     public Node execute(Node... args) throws GlobalFunctionExecutionException {
-        if (args != null && args.length > 1) {
-            String result = PathUtils.resolveUrl(args[0].getAsString().getValue(), args[1].getAsString().getValue());
-            return getNodeFactory().string(result);
-        }
-        return getNodeFactory().UNDEFINED;
+        return getNodeFactory().string(sdf.format(Calendar.getInstance().getTime()));
     }
 }

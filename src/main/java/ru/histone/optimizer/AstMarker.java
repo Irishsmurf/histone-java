@@ -27,7 +27,12 @@ import ru.histone.utils.StringUtils;
 import java.util.*;
 
 /**
+ * This optimizations unit marks 'constant' AST branches; 'constant' here means, that AST branch is constant, doesn't depend on
+ * context variables and doesn't contain any function calls. In this case we consider it to don't have side effects and can be
+ * evaluated only once and can be treated as string constant later.
+ *
  * @author sazonovkirill@gmail.com
+ * @see {@link AstOptimizer} evaluates constant AST branches
  */
 public class AstMarker extends BaseOptimization {
     private Context context;
@@ -72,7 +77,7 @@ public class AstMarker extends BaseOptimization {
     }
 
     public static boolean safeAstNode(JsonNode node) {
-        return (node.isArray() && getNodeType((ArrayNode) node) > 0) || isString(node);
+        return (node.isArray() && getNodeType((ArrayNode) node) > 0) || node.isTextual();
     }
 
     public static boolean unsafeAstNode(JsonNode node) {
@@ -117,20 +122,21 @@ public class AstMarker extends BaseOptimization {
      */
     protected JsonNode processMap(ArrayNode map) throws HistoneException {
         ArrayNode items = (ArrayNode) map.get(1);
+
+        ArrayNode processedItems = nodeFactory.jsonArray();
         for (JsonNode item : items) {
             if (item.isArray()) {
                 ArrayNode arr = (ArrayNode) item;
                 JsonNode key = arr.get(0);
                 JsonNode value = arr.get(1);
 
-                arr.removeAll();
-                arr.add(key);
-                arr.add(value);
+                value = processAstNode(value);
+                processedItems.add(nodeFactory.jsonArray(key, value));
             }
         }
 
-        boolean isSafe = safeMapItems(items);
-        return ast(isSafe, AstNodeType.MAP, items);
+        boolean isSafe = safeMapItems(processedItems);
+        return ast(isSafe, AstNodeType.MAP, processedItems);
     }
 
     /**
@@ -194,7 +200,7 @@ public class AstMarker extends BaseOptimization {
         JsonNode name = call.get(2);
         JsonNode args = call.get(3);
 
-        if (!target.isNull() || !isString(name) || StringUtils.isBlank(name.asText())) {
+        if (!target.isNull() || !name.isTextual() || StringUtils.isBlank(name.asText())) {
             return ast(false, AstNodeType.CALL, target, name, args);
         }
 
@@ -337,7 +343,7 @@ public class AstMarker extends BaseOptimization {
     }
 
     protected ArrayNode ast(boolean isSafe, int operationType, JsonNode... arguments) {
-        return ast(isSafe ? operationType : -operationType, arguments);
+        return nodeFactory.jsonArray(isSafe ? operationType : -operationType, arguments);
     }
 
     protected ArrayNode ast(boolean isSafe, int operationType, Collection<? extends ArrayNode> arguments) {

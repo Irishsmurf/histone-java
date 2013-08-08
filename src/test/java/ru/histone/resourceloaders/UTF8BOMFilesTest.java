@@ -13,35 +13,42 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package ru.histone;
+package ru.histone.resourceloaders;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.junit.Before;
 import org.junit.Test;
+import ru.histone.Histone;
+import ru.histone.HistoneBuilder;
 
-import java.io.StringReader;
-import java.io.UnsupportedEncodingException;
+import java.io.File;
+import java.net.URL;
 
-/**
- * Test correct work of Histone public methods
- */
-public class HistonePlaygroundTest {
+import static org.junit.Assert.assertEquals;
+
+public class UTF8BOMFilesTest {
     private Histone histone;
     private ObjectMapper jackson;
+    private String baseHref;
 
     @Before
-    public void before() throws HistoneException, UnsupportedEncodingException {
+    public void before() throws Exception {
         HistoneBuilder builder = new HistoneBuilder();
+
+        URL url = getClass().getClassLoader().getResource("resourceloader/test.txt");
+        baseHref = new File(url.toURI()).getParent() + "/";
+
         histone = builder.build();
         jackson = new ObjectMapper();
     }
 
     @Test
     public void test() throws Exception {
-        String input = "{{var f = 'world'}}{{var numbers = [1,2,3,4,5]}}\n{{for i in numbers}}\n{{for x in numbers}}{{var a = 'Hello'}}{{a}},{{f}} [{{self.index}} : {{self.last}}] {{self.qwe}}{{/for}}\\n{{for y in [numbers]}}{{var a = 'Hello'}}{{a}},{{f}} [{{i}} : {{self.last}}] {{self.index[0]}}{{/for}}\n{{/for}}";
+        String input = "A{{loadJSON('encoding-correct.json').toJSON()}}B{{loadJSON('encoding-wrong.json').toJSON()}}C";
+        String expected = "A{\"text\":\"проверка кодировки\"}B{\"text\":\"проверка кодировки\"}C";
 
-        ArrayNode ast = histone.parseTemplateToAST(new StringReader(input));
-        String astS = histone.evaluateAST(ast);
+        String result = histone.evaluate("file:/" + baseHref, input, jackson.createObjectNode());
+
+        assertEquals(expected, result);
     }
 }

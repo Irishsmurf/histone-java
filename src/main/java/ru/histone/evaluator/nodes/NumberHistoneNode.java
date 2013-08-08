@@ -44,7 +44,11 @@ public class NumberHistoneNode extends Node implements Comparable<NumberHistoneN
     @Override
     public Node oper_add(Node right) {
         if (right.isNumber()) {
-            return getNodeFactory().number(this.value.add(right.getAsNumber().value));
+            try {
+                return getNodeFactory().number(value.add(right.getAsNumber().value));
+            } catch (Exception e) {
+                return getNodeFactory().UNDEFINED_NUMBER;
+            }
         } else if (right.isString()) {
             return this.getAsString().oper_add(right);
         } else {
@@ -62,13 +66,21 @@ public class NumberHistoneNode extends Node implements Comparable<NumberHistoneN
     @Override
     public Node oper_mul(Node right) {
         if (right.isNumber()) {
-            return getNodeFactory().number(value.multiply(right.getAsNumber().getValue()));
+            try {
+                return getNodeFactory().number(value.multiply(right.getAsNumber().getValue()));
+            } catch (Exception e) {
+                return getNodeFactory().UNDEFINED_NUMBER;
+            }
         } else if (right.isString()) {
             if (right.getAsNumber().isUndefined()) {
                 Histone.runtime_log_warn("Number: for operation '*' can't cast right '{}' to number", right);
                 return getNodeFactory().UNDEFINED;
             } else {
-                return getNodeFactory().number(value.multiply(right.getAsNumber().getValue()));
+                try {
+                    return getNodeFactory().number(value.multiply(right.getAsNumber().getValue()));
+                } catch (Exception e) {
+                    return getNodeFactory().UNDEFINED_NUMBER;
+                }
             }
         } else {
             return commonMulDivSubMod(right);
@@ -78,13 +90,21 @@ public class NumberHistoneNode extends Node implements Comparable<NumberHistoneN
     @Override
     public Node oper_div(Node right) {
         if (right.isNumber()) {
-            return getNodeFactory().number(value.divide(right.getAsNumber().getValue(), 2, RoundingMode.HALF_UP));
+            try {
+                return getNodeFactory().number(value.divide(right.getAsNumber().getValue(), 2, RoundingMode.HALF_UP));
+            } catch (Exception e) {
+                return getNodeFactory().UNDEFINED_NUMBER;
+            }
         } else if (right.isString()) {
             if (right.getAsNumber().isUndefined()) {
                 Histone.runtime_log_warn("Number: for operation '/' can't cast right '{}' to number", right);
                 return getNodeFactory().UNDEFINED;
             } else {
-                return getNodeFactory().number(value.divide(right.getAsNumber().getValue(), 2, RoundingMode.HALF_UP));
+                try {
+                    return getNodeFactory().number(value.divide(right.getAsNumber().getValue(), 2, RoundingMode.HALF_UP));
+                } catch (Exception e) {
+                    return getNodeFactory().UNDEFINED_NUMBER;
+                }
             }
         } else {
             return commonMulDivSubMod(right);
@@ -94,13 +114,21 @@ public class NumberHistoneNode extends Node implements Comparable<NumberHistoneN
     @Override
     public Node oper_mod(Node right) {
         if (right.isNumber()) {
-            return getNodeFactory().number(value.remainder(right.getAsNumber().getValue()));
+            try {
+                return getNodeFactory().number(value.remainder(right.getAsNumber().getValue()));
+            } catch (Exception e) {
+                return getNodeFactory().UNDEFINED_NUMBER;
+            }
         } else if (right.isString()) {
             if (right.getAsNumber().isUndefined()) {
                 Histone.runtime_log_warn("Number: for operation '%' can't cast right '{}' to number", right);
                 return getNodeFactory().UNDEFINED;
             } else {
-                return getNodeFactory().number(value.remainder(right.getAsNumber().getValue()));
+                try {
+                    return getNodeFactory().number(value.remainder(right.getAsNumber().getValue()));
+                } catch (Exception e) {
+                    return getNodeFactory().UNDEFINED_NUMBER;
+                }
             }
         } else {
             return commonMulDivSubMod(right);
@@ -115,13 +143,22 @@ public class NumberHistoneNode extends Node implements Comparable<NumberHistoneN
     @Override
     public Node oper_sub(Node right) {
         if (right.isNumber()) {
-            return getNodeFactory().number(value.subtract(right.getAsNumber().getValue()));
+            try {
+                return getNodeFactory().number(value.subtract(right.getAsNumber().getValue()));
+            } catch (Exception e) {
+                return getNodeFactory().UNDEFINED_NUMBER;
+            }
+
         } else if (right.isString()) {
             if (right.getAsNumber().isUndefined()) {
                 Histone.runtime_log_warn("Number: for operation '-' can't cast right '{}' to number", right);
                 return getNodeFactory().UNDEFINED;
             } else {
-                return getNodeFactory().number(value.subtract(right.getAsNumber().getValue()));
+                try {
+                    return getNodeFactory().number(value.subtract(right.getAsNumber().getValue()));
+                } catch (Exception e) {
+                    return getNodeFactory().UNDEFINED_NUMBER;
+                }
             }
         } else {
             return commonMulDivSubMod(right);
@@ -152,11 +189,19 @@ public class NumberHistoneNode extends Node implements Comparable<NumberHistoneN
     @Override
     public Node oper_greaterThan(Node right) {
         if (right.isNumber()) {
-            return value.compareTo(right.getAsNumber().getValue()) > 0 ? getNodeFactory().TRUE : getNodeFactory().FALSE;
+            try {
+                return value.compareTo(right.getAsNumber().getValue()) > 0 ? getNodeFactory().TRUE : getNodeFactory().FALSE;
+            } catch (Exception e) {
+                return getNodeFactory().UNDEFINED_NUMBER;
+            }
         } else if (right.isString()) {
             NumberHistoneNode rightNum = right.getAsNumber();
             if (rightNum.isNumber()) {
-                return value.compareTo(rightNum.getValue()) > 0 ? getNodeFactory().TRUE : getNodeFactory().FALSE;
+                try {
+                    return value.compareTo(rightNum.getValue()) > 0 ? getNodeFactory().TRUE : getNodeFactory().FALSE;
+                } catch (Exception e) {
+                    return getNodeFactory().UNDEFINED_NUMBER;
+                }
             } else {
                 return this.getAsString().oper_greaterThan(right);
             }
@@ -167,11 +212,19 @@ public class NumberHistoneNode extends Node implements Comparable<NumberHistoneN
     @Override
     public Node oper_greaterOrEqual(Node right) {
         if (right.isNumber()) {
-            return value.compareTo(right.getAsNumber().getValue()) >= 0 ? getNodeFactory().TRUE : getNodeFactory().FALSE;
+            try {
+                return value.compareTo(right.getAsNumber().getValue()) >= 0 ? getNodeFactory().TRUE : getNodeFactory().FALSE;
+            } catch (Exception e) {
+                return getNodeFactory().UNDEFINED_NUMBER;
+            }
         } else if (right.isString()) {
             NumberHistoneNode rightNum = right.getAsNumber();
             if (rightNum.isNumber()) {
-                return value.compareTo(rightNum.getValue()) >= 0 ? getNodeFactory().TRUE : getNodeFactory().FALSE;
+                try {
+                    return value.compareTo(rightNum.getValue()) >= 0 ? getNodeFactory().TRUE : getNodeFactory().FALSE;
+                } catch (Exception e) {
+                    return getNodeFactory().UNDEFINED_NUMBER;
+                }
             } else {
                 return this.getAsString().oper_greaterOrEqual(right);
             }
@@ -182,11 +235,19 @@ public class NumberHistoneNode extends Node implements Comparable<NumberHistoneN
     @Override
     public Node oper_lessThan(Node right) {
         if (right.isNumber()) {
-            return value.compareTo(right.getAsNumber().getValue()) < 0 ? getNodeFactory().TRUE : getNodeFactory().FALSE;
+            try {
+                return value.compareTo(right.getAsNumber().getValue()) < 0 ? getNodeFactory().TRUE : getNodeFactory().FALSE;
+            } catch (Exception e) {
+                return getNodeFactory().UNDEFINED_NUMBER;
+            }
         } else if (right.isString()) {
             NumberHistoneNode rightNum = right.getAsNumber();
             if (rightNum.isNumber()) {
-                return value.compareTo(rightNum.getValue()) < 0 ? getNodeFactory().TRUE : getNodeFactory().FALSE;
+                try {
+                    return value.compareTo(rightNum.getValue()) < 0 ? getNodeFactory().TRUE : getNodeFactory().FALSE;
+                } catch (Exception e) {
+                    return getNodeFactory().UNDEFINED_NUMBER;
+                }
             } else {
                 return this.getAsString().oper_lessThan(right);
             }
@@ -197,11 +258,19 @@ public class NumberHistoneNode extends Node implements Comparable<NumberHistoneN
     @Override
     public Node oper_lessOrEqual(Node right) {
         if (right.isNumber()) {
-            return value.compareTo(right.getAsNumber().getValue()) <= 0 ? getNodeFactory().TRUE : getNodeFactory().FALSE;
+            try {
+                return value.compareTo(right.getAsNumber().getValue()) <= 0 ? getNodeFactory().TRUE : getNodeFactory().FALSE;
+            } catch (Exception e) {
+                return getNodeFactory().UNDEFINED_NUMBER;
+            }
         } else if (right.isString()) {
             NumberHistoneNode rightNum = right.getAsNumber();
             if (rightNum.isNumber()) {
-                return value.compareTo(rightNum.getValue()) <= 0 ? getNodeFactory().TRUE : getNodeFactory().FALSE;
+                try {
+                    return value.compareTo(rightNum.getValue()) <= 0 ? getNodeFactory().TRUE : getNodeFactory().FALSE;
+                } catch (Exception e) {
+                    return getNodeFactory().UNDEFINED_NUMBER;
+                }
             } else {
                 return this.getAsString().oper_lessOrEqual(right);
             }

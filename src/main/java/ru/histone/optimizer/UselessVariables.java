@@ -26,10 +26,16 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
+ * This optimization unit removes useless variables from AST; The criteria is extremely simple: variable is useless if there
+ * is no selectors, using it.
+ * <p/>
  * User: sazonovkirill@gmail.com
  * Date: 09.01.13
  */
 public class UselessVariables extends BaseOptimization {
+    /**
+     * @see {@link Mode}
+     */
     private Mode mode;
     private Set<String> selectors;
 
@@ -45,13 +51,16 @@ public class UselessVariables extends BaseOptimization {
         return process(ast);
     }
 
+    @Override
     protected JsonNode processSelector(ArrayNode selector) throws HistoneException {
         JsonNode fullVariable = selector.get(1);
 
         JsonNode firstToken = fullVariable.get(0);
         if (firstToken.isTextual()) {
             String varName = firstToken.asText();
-            selectors.add(varName);
+            if (mode == Mode.COLLECT_SELECTORS) {
+                selectors.add(varName);
+            }
         } else {
             processAstNode(firstToken);
         }
@@ -72,6 +81,7 @@ public class UselessVariables extends BaseOptimization {
         return selector;
     }
 
+    @Override
     protected JsonNode processVariable(ArrayNode variable) throws HistoneException {
         Assert.isTrue(variable.size() == 3);
 
@@ -80,15 +90,25 @@ public class UselessVariables extends BaseOptimization {
         JsonNode processedValue = processAstNode(value);
 
         String varName = var.asText();
-        if (selectors.contains(varName)) {
-            return ast(AstNodeType.VAR, var, processedValue);
-        } else {
+        if (mode == Mode.REMOVE_VARIABLES && !selectors.contains(varName)) {
             return nodeFactory.jsonString("");
+        } else {
+            return nodeFactory.jsonArray(AstNodeType.VAR, var, processedValue);
         }
     }
 
+    /**
+     * Optimization unit traverses AST twice: first time for collecting selectors, second - for removing useless variables.
+     */
     enum Mode {
+        /**
+         * Collecting selectors
+         */
         COLLECT_SELECTORS,
+
+        /**
+         * Removing useless variables
+         */
         REMOVE_VARIABLES
     }
 

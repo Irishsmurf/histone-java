@@ -25,6 +25,14 @@ import ru.histone.evaluator.nodes.Node;
 import ru.histone.evaluator.nodes.NodeFactory;
 
 /**
+ * This optimization unit evaluates constant AST branches and replaces them by evaluation result (string constant AST node).
+ * Constant AST branches are those, that don't have 'side-effects'. These branches can be evaluated only once and later
+ * be treated as strings, because:
+ * <ul compact>
+ * <li>They don't depend on context variables</li>
+ * <li>They don't use any calls (functions)</li>
+ * </ul>
+ *
  * @author sazonovkirill@gmail.com
  */
 public class AstOptimizer extends BaseOptimization {

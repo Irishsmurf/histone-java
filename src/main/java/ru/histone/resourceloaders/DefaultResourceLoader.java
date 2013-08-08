@@ -16,12 +16,22 @@
 package ru.histone.resourceloaders;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.http.Header;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.ProtocolException;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.*;
+import org.apache.http.client.methods.HttpDelete;
+import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpHead;
+import org.apache.http.client.methods.HttpOptions;
+import org.apache.http.client.methods.HttpPatch;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.client.methods.HttpTrace;
 import org.apache.http.conn.ClientConnectionManager;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.AbstractHttpClient;
@@ -39,10 +49,22 @@ import ru.histone.evaluator.nodes.NodeFactory;
 import ru.histone.evaluator.nodes.ObjectHistoneNode;
 import ru.histone.parser.Parser;
 import ru.histone.tokenizer.TokenizerFactory;
+import ru.histone.utils.BOMInputStream;
+import ru.histone.utils.PathUtils;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Histone default resource loader<br/>
@@ -72,15 +94,21 @@ public class DefaultResourceLoader implements ResourceLoader {
     protected Resource load(String location, String baseLocation, Node... args) throws ResourceLoadException {
         log.debug("Trying to load resource from location={}, with baseLocation={}", new Object[]{location, baseLocation});
 
-        URI fullLocation = makeFullLocation(location, baseLocation);
+        String fullLocation = PathUtils.resolveUrl(location, baseLocation);
+        ru.histone.evaluator.functions.global.URI uri = PathUtils.parseURI(fullLocation);
 
         Resource resource = null;
-        if (fullLocation.getScheme().equals("file")) {
-            resource = loadFileResource(fullLocation);
-        } else if (fullLocation.getScheme().equals("http")) {
-            resource = loadHttpResource(fullLocation, args);
+        if (baseLocation == null && uri.getScheme() == null) {
+            throw new ResourceLoadException("Base HREF is empty and resource location is not absolute!");
+        }
+        if ("file".equals(uri.getScheme())) {
+            resource = loadFileResource(makeFullLocation(location, baseLocation));
+        } else if ("http".equals(uri.getScheme())) {
+            resource = loadHttpResource(makeFullLocation(location, baseLocation), args);
+        } else if ("data".equals(uri.getScheme())) {
+            resource = loadDataResource(fullLocation);
         } else {
-            throw new ResourceLoadException(String.format("Unsupported scheme for resource loading: '%s'", fullLocation.getScheme()));
+            throw new ResourceLoadException(String.format("Unsupported scheme for resource loading: '%s'", uri.getScheme()));
         }
 
 
@@ -116,7 +144,18 @@ public class DefaultResourceLoader implements ResourceLoader {
             throw new ResourceLoadException(String.format("Can't read file '%s'", location.toString()));
         }
 
-        return new StreamResource(stream, location.toString(), ContentType.TEXT);
+        BOMInputStream bomStream = null;
+        try {
+            bomStream = new BOMInputStream(stream);
+            if (bomStream.getBOM() != BOMInputStream.BOM.NONE) {
+                bomStream.skipBOM();
+            }
+        } catch (IOException e) {
+            throw new ResourceLoadException(String.format("Error with BOMInputStream for file '%s'", location.toString()));
+        }
+
+
+        return new StreamResource(bomStream, location.toString(), ContentType.TEXT, file.lastModified());
     }
 
     private Resource loadHttpResource(URI location, Node[] args) {
@@ -201,6 +240,31 @@ public class DefaultResourceLoader implements ResourceLoader {
         }
         return new StreamResource(input, location.toString(), ContentType.TEXT);
     }
+    
+    private Resource loadDataResource(String location){
+
+        InputStream input = null;
+        if(!location.matches("data:(.*);base64,(.*)")){
+            return null;
+        }
+        URI uri = makeFullLocation(location,"");
+        String[] stringUri = uri.getSchemeSpecificPart().split(",");
+
+        if(stringUri.length > 1){
+            String toEncode = stringUri[1];
+            if(stringUri[0].contains("base64") ){
+                input = new ByteArrayInputStream(Base64.decodeBase64(toEncode.getBytes()));
+            } else {
+                input = new ByteArrayInputStream(toEncode.getBytes());
+            }
+        } else {
+            input = new ByteArrayInputStream("".getBytes());
+        }
+
+        return new StreamResource(input, location.toString(), ContentType.TEXT);
+    }
+    
+    
 
     private Map<String, String> filterRequestHeaders(Map<String, String> requestHeaders) {
         String[] prohibited = {"accept-charset", "accept-encoding", "access-control-request-headers", "access-control-request-method",

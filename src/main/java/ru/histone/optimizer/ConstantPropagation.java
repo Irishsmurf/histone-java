@@ -28,6 +28,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * This optimization unit propagates folded constants.
+ * <p/>
  * User: sazonovkirill@gmail.com
  * Date: 07.01.13
  */
@@ -71,7 +73,7 @@ public class ConstantPropagation extends BaseOptimization {
             }
         }
 
-        return ast(AstNodeType.VAR, var, valueNode);
+        return nodeFactory.jsonArray(AstNodeType.VAR, var, valueNode);
     }
 
     protected JsonNode processSelector(ArrayNode selector) throws HistoneException {
@@ -90,7 +92,7 @@ public class ConstantPropagation extends BaseOptimization {
         }
 
         if (arrayTokenFound) {
-            return ast(AstNodeType.SELECTOR, nodeFactory.jsonArray(processedTokens));
+            return nodeFactory.jsonArray(AstNodeType.SELECTOR, nodeFactory.jsonArray(processedTokens));
         }
 
         JsonNode token = processedTokens[0];
@@ -116,7 +118,7 @@ public class ConstantPropagation extends BaseOptimization {
             }
         }
 
-        return ast(AstNodeType.SELECTOR, nodeFactory.jsonArray(processedTokens));
+        return nodeFactory.jsonArray(AstNodeType.SELECTOR, nodeFactory.jsonArray(processedTokens));
     }
 
     private ArrayNode findValueInAstMap(ArrayNode mapEntries, String key) {

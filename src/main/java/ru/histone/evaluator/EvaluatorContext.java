@@ -17,9 +17,19 @@ package ru.histone.evaluator;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import ru.histone.GlobalProperty;
+import ru.histone.evaluator.nodes.ContextWrapperNode;
+import ru.histone.evaluator.nodes.GlobalObjectNode;
+import ru.histone.evaluator.nodes.Node;
 import ru.histone.evaluator.nodes.*;
+import ru.histone.evaluator.nodes.ObjectHistoneNode;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.*;
+import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Map.Entry;
 
 /**
@@ -91,17 +101,22 @@ public class EvaluatorContext {
      * @return true if context has specified variable
      */
     public boolean hasProp(String name) {
+        return "baseURI".equals(name) || hasStackProp(name) || initialContext.hasProp(name);
+    }
+
+    /**
+     * Check if context has specified variable in stack
+     *
+     * @param name variable name
+     * @return true if context has specified variable
+     */
+    public boolean hasStackProp(String name){
         for (Map<String, Node> stack : stacksProps) {
             if (stack.containsKey(name)) {
                 return true;
             }
         }
-
-        if (name.equals("baseURI")) {
-            return true;
-        }
-
-        return initialContext.hasProp(name);
+        return false;
     }
 
     /**
@@ -119,11 +134,28 @@ public class EvaluatorContext {
 
         if (initialContext.hasProp(name)) {
             return initialContext.getProp(name);
-        } else if ("baseURI".equals(name)) {
+        } else if ("baseURI".equals(name)){
             return nodeFactory.string(baseURI);
         } else {
             return nodeFactory.UNDEFINED;
         }
+    }
+
+
+    public Map<String, Node> getProps(){
+        Map<String, Node> props = new HashMap<String, Node>();
+        for (Map<String, Node> stack : stacksProps) {
+            props.putAll(stack);
+        }
+        return props;
+    }
+
+    public Map<String, MacroFunc> getMacros(){
+        Map<String, MacroFunc> macros = new HashMap<String, MacroFunc>();
+        for (Map<String, MacroFunc> macro : stacksMacro) {
+            macros.putAll(macro);
+        }
+        return macros;
     }
 
     /**

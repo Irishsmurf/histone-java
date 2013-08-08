@@ -87,6 +87,14 @@ public class HistoneBuilder {
     }
 
     /**
+     * Set node factory
+     * @param nodeFactory
+     */
+    public void setNodeFactory(NodeFactory nodeFactory) {
+        this.nodeFactory = nodeFactory;
+    }
+
+    /**
      * Set custom resource loader
      *
      * @param resourceLoader custom resource loader to use

@@ -24,11 +24,11 @@ import ru.histone.evaluator.nodes.Node;
 import ru.histone.evaluator.nodes.NodeFactory;
 import ru.histone.utils.Assert;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.Arrays;
 
 /**
+ * This optimization unit folds expressions, that use only unary/binary/ternary operations (e.g. operations over arguments) and constants.
+ * <p/>
  * User: sazonovkirill@gmail.com
  * Date: 25.12.12
  */
@@ -63,26 +63,22 @@ public class ConstantFolding extends BaseOptimization {
 
         int operationType = ast.get(0).asInt();
 
-        final List<ArrayNode> processedArguments = new ArrayList<ArrayNode>();
+        ArrayNode[] processedArguments = new ArrayNode[ast.size() - 1];
         for (int i = 1; i < ast.size(); i++) {
             JsonNode processedArg = processAstNode(ast.get(i));
             Assert.isTrue(processedArg.isArray());
-            processedArguments.add((ArrayNode) processedArg);
+            processedArguments[i - 1] = (ArrayNode) processedArg;
         }
 
-        if (isConstants(processedArguments)) {
+        if (isConstants(Arrays.asList(processedArguments))) {
             Node node = evaluate(operationType, processedArguments);
             return node2Ast(node);
         } else {
-            return ast(operationType, processedArguments);
+            return nodeFactory.jsonArray(operationType, processedArguments);
         }
     }
 
-    private Node evaluate(int operationType, Collection<? extends ArrayNode> arguments) throws EvaluatorException {
-        return evaluator.evaluate(ast(operationType, arguments));
-    }
-
     private Node evaluate(int operationType, ArrayNode... arguments) throws EvaluatorException {
-        return evaluator.evaluate(ast(operationType, arguments));
+        return evaluator.evaluate(nodeFactory.jsonArray(operationType, arguments));
     }
 }

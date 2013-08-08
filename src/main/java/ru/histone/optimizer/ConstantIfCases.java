@@ -22,6 +22,9 @@ import ru.histone.evaluator.nodes.NodeFactory;
 import ru.histone.parser.AstNodeType;
 
 /**
+ * This optimization unit simplifies 'if' exporessions, if condition is constant (so it either removes the whole if block or
+ * leaves statements without 'if' condition.
+ * <p/>
  * User: sazonovkirill@gmail.com
  * Date: 09.01.13
  */
@@ -48,7 +51,7 @@ public class ConstantIfCases extends BaseOptimization {
             JsonNode statements = condition.get(1);
 
             if (expression.get(0).asInt() == AstNodeType.TRUE) {
-                return ast(AstNodeType.STATEMENTS, processArrayOfAstNodes(statements));
+                return nodeFactory.jsonArray(AstNodeType.STATEMENTS, processArrayOfAstNodes(statements));
             } else {
                 return nodeFactory.jsonString("");
             }
@@ -74,7 +77,7 @@ public class ConstantIfCases extends BaseOptimization {
                 conditionsOut.add(conditionOut);
             }
 
-            return ast(AstNodeType.IF, conditionsOut);
+            return nodeFactory.jsonArray(AstNodeType.IF, conditionsOut);
         }
     }
 
