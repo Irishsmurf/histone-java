@@ -25,8 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * User: sazonovkirill@gmail.com
- * Date: 09.01.13
+ * Упрощает AST дерево, объединяя несколько подряд следующих текстовых элементов в одну строку.
  */
 public class Simplifier extends BaseOptimization {
     public Simplifier(NodeFactory nodeFactory) {
