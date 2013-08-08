@@ -163,12 +163,22 @@ public class Histone {
         ArrayNode importsResolved = astImportResolver.resolve(templateAST);
         optimizationTrace.addFrame("ImportsResolving", importsResolved, deparser.deparse(importsResolved));
 
+        long L1 = 0, L2 = 0; // counter for infinite loops
         ArrayNode ast = importsResolved;
         long g1 = BaseOptimization.hash(ast);
         while (true) {
+            L1++;
+            if (L1 == 10) break;
+
             {
                 long h1 = BaseOptimization.hash(templateAST);
                 while (true) {
+                    L2++;
+                    if (L2 == 10) {
+                        L2 = 0;
+                        break;
+                    }
+
                     ast = constantFolding.foldConstants(ast);
                     long h2 = BaseOptimization.hash(ast);
                     if (h1 == h2) break;
@@ -181,6 +191,12 @@ public class Histone {
             {
                 long h1 = BaseOptimization.hash(templateAST);
                 while (true) {
+                    L2++;
+                    if (L2 == 10) {
+                        L2 = 0;
+                        break;
+                    }
+
                     ast = constantPropagation.propagateConstants(ast);
                     long h2 = BaseOptimization.hash(ast);
                     if (h1 == h2) break;
@@ -193,6 +209,12 @@ public class Histone {
             {
                 long h1 = BaseOptimization.hash(templateAST);
                 while (true) {
+                    L2++;
+                    if (L2 == 10) {
+                        L2 = 0;
+                        break;
+                    }
+
                     ast = constantIfCases.replaceConstantIfs(ast);
                     long h2 = BaseOptimization.hash(ast);
                     if (h1 == h2) break;
@@ -205,6 +227,12 @@ public class Histone {
             {
                 long h1 = BaseOptimization.hash(templateAST);
                 while (true) {
+                    L2++;
+                    if (L2 == 10) {
+                        L2 = 0;
+                        break;
+                    }
+
                     ast = uselessVariables.removeUselessVariables(ast);
                     long h2 = BaseOptimization.hash(ast);
                     if (h1 == h2) break;

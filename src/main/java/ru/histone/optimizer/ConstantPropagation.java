@@ -68,7 +68,7 @@ public class ConstantPropagation extends BaseOptimization {
 
         if (valueNode.isArray()) {
             ArrayNode value = (ArrayNode) valueNode;
-            if (var.isTextual() && (isConstant(value) || isStatements(value) || isMapOfConstants(value))) {
+            if (var.isTextual() && (isStatements(value) || isMapOfConstants(value))) {
                 context.putVar(varName, value);
             }
         }

@@ -302,6 +302,19 @@ public class AstOptimizerTest {
         assertEquals(astS, finalAstS);
     }
 
+    @Test
+    public void test7() throws IOException, HistoneException {
+        String input = input("test7.tpl");
+
+        ArrayNode ast = histone.parseTemplateToAST(new StringReader(input));
+        ArrayNode finalAst = histone.optimizeAST(ast);
+
+        // Assert that evaluation results are equal
+        String astS = histone.evaluateAST(ast);
+        String finalAstS = histone.evaluateAST(finalAst);
+        assertEquals(astS, finalAstS);
+    }
+
     private String input(String filename) throws IOException {
         StringWriter sw = new StringWriter();
         InputStream is = getClass().getClassLoader().getResourceAsStream("optimizer/" + filename);

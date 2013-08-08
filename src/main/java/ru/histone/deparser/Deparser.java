@@ -232,7 +232,7 @@ public class Deparser implements IDeparser {
 
         String arg1 = processAstNode(ast.get(1));
         String arg2 = processAstNode(ast.get(2));
-        String arg3 = processAstNode(ast.get(3));
+        String arg3 = ast.get(3) != null ? processAstNode(ast.get(3)) : "null";
 
         if (opType == AstNodeType.TERNARY) {
             return ind() + "(" + arg1 + ") ? (" + arg2 + ") : (" + arg3 + ");\n";
