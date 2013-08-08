@@ -17,6 +17,7 @@ package ru.histone.deparser;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 import ru.histone.parser.AstNodeType;
 import ru.histone.utils.StringUtils;
 
@@ -30,7 +31,7 @@ public class Deparser implements IDeparser {
         StringBuilder result = new StringBuilder();
         for (JsonNode node : ast) {
             String processedNode = processAstNode(node);
-            result.append(processedNode);
+            if (processedNode != null) result.append(processedNode + "\n");
         }
         return result.toString();
     }
@@ -47,7 +48,15 @@ public class Deparser implements IDeparser {
     }
 
     protected String processAstNode(JsonNode node) {
-        if (node.isTextual()) return node.toString();
+        if (node.isTextual()) {
+            String escapedString = node.toString();
+            escapedString = org.apache.commons.lang.StringUtils.remove(escapedString, "\\t");
+            escapedString = org.apache.commons.lang.StringUtils.remove(escapedString, "\\n");
+            escapedString = org.apache.commons.lang.StringUtils.remove(escapedString, "\\r");
+            escapedString = escapedString.trim();
+
+            return escapedString.length() > 2 ? ind() + escapedString : null;
+        }
 
         if (!node.isArray()) return null;
         ArrayNode arr = (ArrayNode) node;
@@ -103,9 +112,9 @@ public class Deparser implements IDeparser {
         }
 
         if (objectToInvokeProcessed != null) {
-            return ind() + objectToInvokeProcessed + "." + functionName + "(" + StringUtils.join(argsProcessed, ", ") + ");\n";
+            return ind() + objectToInvokeProcessed + "." + functionName.asText() + "(" + StringUtils.join(argsProcessed, ", ") + ");\n";
         } else {
-            return functionName + "(" + StringUtils.join(argsProcessed, ", ") + ");\n";
+            return ind() + functionName.asText() + "(" + StringUtils.join(argsProcessed, ", ") + ");\n";
         }
     }
 
@@ -115,11 +124,16 @@ public class Deparser implements IDeparser {
         for (JsonNode entry : map) {
             if (entry.isArray()) {
                 ArrayNode entryAsArray = (ArrayNode) entry;
-                String key = entryAsArray.get(0).asText();
+                JsonNode key = entryAsArray.get(0);
                 JsonNode value = entryAsArray.get(1);
                 String valueProcessed = processAstNode(value);
 
-                entriesAsStrings.add(key + " : " + valueProcessed);
+                if (!key.isNull()) {
+                    String keyAsString = key.asText();
+                    entriesAsStrings.add(keyAsString + " : " + valueProcessed);
+                } else {
+                    entriesAsStrings.add(valueProcessed);
+                }
             }
         }
 
@@ -145,7 +159,7 @@ public class Deparser implements IDeparser {
             return ast.get(1).asText();
         }
         if (opType == AstNodeType.STRING) {
-            return ast.get(1).asText();
+            return ast.get(1).toString();
         }
 
         return null;
@@ -171,43 +185,43 @@ public class Deparser implements IDeparser {
         String arg2 = processAstNode(ast.get(2));
 
         if (opType == AstNodeType.ADD) {
-            return ind() + "(" + arg1 + " + " + arg2 + ")\n";
+            return "(" + arg1 + " + " + arg2 + ")";
         }
         if (opType == AstNodeType.SUB) {
-            return ind() + "(" + arg1 + " - " + arg2 + ")\n";
+            return "(" + arg1 + " - " + arg2 + ")";
         }
         if (opType == AstNodeType.MUL) {
-            return ind() + "(" + arg1 + " * " + arg2 + ")\n";
+            return "(" + arg1 + " * " + arg2 + ")";
         }
         if (opType == AstNodeType.DIV) {
-            return ind() + "(" + arg1 + " / " + arg2 + ")\n";
+            return "(" + arg1 + " / " + arg2 + ")";
         }
         if (opType == AstNodeType.MOD) {
-            return ind() + "(" + arg1 + " % " + arg2 + ")\n";
+            return "(" + arg1 + " % " + arg2 + ")";
         }
         if (opType == AstNodeType.OR) {
-            return ind() + "(" + arg1 + " || " + arg2 + ")\n";
+            return "(" + arg1 + " || " + arg2 + ")";
         }
         if (opType == AstNodeType.AND) {
-            return ind() + "(" + arg1 + " && " + arg2 + ")\n";
+            return "(" + arg1 + " && " + arg2 + ")";
         }
         if (opType == AstNodeType.EQUAL) {
-            return ind() + "(" + arg1 + " == " + arg2 + ")\n";
+            return "(" + arg1 + " == " + arg2 + ")";
         }
         if (opType == AstNodeType.NOT_EQUAL) {
-            return ind() + "(" + arg1 + " != " + arg2 + ")\n";
+            return "(" + arg1 + " != " + arg2 + ")";
         }
         if (opType == AstNodeType.LESS_OR_EQUAL) {
-            return ind() + "(" + arg1 + " <= " + arg2 + ")\n";
+            return "(" + arg1 + " <= " + arg2 + ")";
         }
         if (opType == AstNodeType.LESS_THAN) {
-            return ind() + "(" + arg1 + " < " + arg2 + ")\n";
+            return "(" + arg1 + " < " + arg2 + ")";
         }
         if (opType == AstNodeType.GREATER_OR_EQUAL) {
-            return ind() + "(" + arg1 + " >= " + arg2 + ")\n";
+            return "(" + arg1 + " >= " + arg2 + ")";
         }
         if (opType == AstNodeType.GREATER_THAN) {
-            return ind() + "(" + arg1 + " > " + arg2 + ")\n";
+            return "(" + arg1 + " > " + arg2 + ")";
         }
 
         return null;
@@ -239,7 +253,7 @@ public class Deparser implements IDeparser {
 
     protected String processImport(ArrayNode ast) {
         String importResource = ast.get(1).asText();
-        return ind() + "import " + importResource + ";\n";
+        return ind() + "import " + importResource + ";";
     }
 
     protected String processVariable(ArrayNode ast) {
@@ -247,7 +261,7 @@ public class Deparser implements IDeparser {
         JsonNode varDefinition = ast.get(2);
 
         String varDefinitionProcessed = processAstNode(varDefinition);
-        return ind() + varName + " = " + varDefinitionProcessed + ";\n";
+        return ind() + varName.asText() + " = " + varDefinitionProcessed + ";\n";
     }
 
     protected String processMacro(ArrayNode ast) {
@@ -261,7 +275,8 @@ public class Deparser implements IDeparser {
         sb.append(ind() + "macro " + macroName.asText() + "(" + StringUtils.join(argsProcessed, ", ") + ") {\n");
         indent();
         for (JsonNode statement : statements) {
-            sb.append(processAstNode(statement));
+            String s = processAstNode(statement);
+            if (s != null) sb.append(s + "\n");
         }
         unindent();
         sb.append("}\n");
@@ -283,10 +298,11 @@ public class Deparser implements IDeparser {
             sb.append(ind() + "if (" + expressionProcessed + ") {\n");
             indent();
             for (JsonNode statement : statements) {
-                sb.append(processAstNode(statement));
+                String s = processAstNode(statement);
+                if (s != null) sb.append((isSelector(statement) ? ind() : "") +  s + "\n");
             }
             unindent();
-            sb.append("}\n");
+            sb.append(ind() + "}\n");
         }
 
         return sb.toString();
@@ -308,14 +324,16 @@ public class Deparser implements IDeparser {
 
         indent();
         for (JsonNode ifStatement : ifStatements) {
-            result.append(processAstNode(ifStatement));
+            String s = processAstNode(ifStatement);
+            if (s != null) result.append(s);
         }
         unindent();
 
         if (elseStatements != null) {
             result.append(ind() + "} else {\n");
             for (JsonNode elseStatement : elseStatements) {
-                result.append(processAstNode(elseStatement));
+                String s = processAstNode(elseStatement);
+                if (s != null) result.append(s);
             }
             result.append(ind() + "}\n");
         }
@@ -346,7 +364,7 @@ public class Deparser implements IDeparser {
     }
 
     protected void unindent() {
-        if (_indent.length() > 2) {
+        if (_indent.length() >= 2) {
             _indent.setLength(_indent.length() - 2);
         }
     }
@@ -371,6 +389,11 @@ public class Deparser implements IDeparser {
     protected final static Set<Integer> UNARY_OPERATIONS = new HashSet<Integer>(Arrays.asList(AstNodeType.NEGATE, AstNodeType.NOT));
 
     protected final static Set<Integer> TERNARY_OPERATIONS = new HashSet<Integer>(Arrays.asList(AstNodeType.TERNARY));
+
+    public static boolean isSelector(JsonNode ast) {
+        if (ast instanceof ArrayNode) return getNodeType((ArrayNode)ast) == AstNodeType.SELECTOR;
+        else return false;
+    }
 
     public static int getNodeType(ArrayNode astArray) {
         return astArray.get(0).asInt();
