@@ -90,6 +90,10 @@ public class Histone {
         this.simplifier = bootstrap.getSimplifier();
     }
 
+    public ArrayNode parseTemplateToAST(String templateData) throws HistoneException {
+        return parseTemplateToAST(new StringReader(templateData));
+    }
+
     public ArrayNode parseTemplateToAST(Reader templateReader) throws HistoneException {
         String inputString = null;
         try {
