@@ -31,10 +31,6 @@ import java.io.StringWriter;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-/**
- * User: sazonovkirill@gmail.com
- * Date: 24.12.12
- */
 public class AstOptimizerTest {
     private Histone histone;
 

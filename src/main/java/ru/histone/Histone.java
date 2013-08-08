@@ -115,6 +115,7 @@ public class Histone {
                     ast = constantFolding.foldConstants(ast);
                     long h2 = BaseOptimization.hash(ast);
                     if (h1 == h2) break;
+                    h1 = h2;
                 }
             }
             {
@@ -123,6 +124,7 @@ public class Histone {
                     ast = constantPropagation.propagateConstants(ast);
                     long h2 = BaseOptimization.hash(ast);
                     if (h1 == h2) break;
+                    h1 = h2;
                 }
             }
             {
@@ -131,6 +133,7 @@ public class Histone {
                     ast = constantIfCases.replaceConstantIfs(ast);
                     long h2 = BaseOptimization.hash(ast);
                     if (h1 == h2) break;
+                    h1 = h2;
                 }
             }
             {
@@ -139,11 +142,13 @@ public class Histone {
                     ast = uselessVariables.removeUselessVariables(ast);
                     long h2 = BaseOptimization.hash(ast);
                     if (h1 == h2) break;
+                    h1 = h2;
                 }
             }
 
             long g2 = BaseOptimization.hash(ast);
             if (g1 == g2) break;
+            g1 = g2;
         }
 
         ast = astMarker.mark(ast);
@@ -169,6 +174,7 @@ public class Histone {
                     if (h1 == h2) break;
                     else {
                         optimizationTrace.addFrame("ConstantsFolding", ast, deparser.deparse(ast));
+                        h1 = h2;
                     }
                 }
             }
@@ -180,6 +186,7 @@ public class Histone {
                     if (h1 == h2) break;
                     else {
                         optimizationTrace.addFrame("ConstantsPropagation", ast, deparser.deparse(ast));
+                        h1 = h2;
                     }
                 }
             }
@@ -191,6 +198,7 @@ public class Histone {
                     if (h1 == h2) break;
                     else {
                         optimizationTrace.addFrame("ConstantIfCases", ast, deparser.deparse(ast));
+                        h1 = h2;
                     }
                 }
             }
@@ -202,12 +210,14 @@ public class Histone {
                     if (h1 == h2) break;
                     else {
                         optimizationTrace.addFrame("RemoveUselessVariables", ast, deparser.deparse(ast));
+                        h1 = h2;
                     }
                 }
             }
 
             long g2 = BaseOptimization.hash(ast);
             if (g1 == g2) break;
+            g1 = g2;
         }
 
         {
