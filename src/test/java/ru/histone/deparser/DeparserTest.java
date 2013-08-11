@@ -44,7 +44,7 @@ public class DeparserTest {
         String source = deparser.deparse(ast);
 
         try {
-            FileWriter fw = new FileWriter("C:\\Temp\\result.txt");
+            FileWriter fw = new FileWriter("/Users/ksazonov/Temp/result.txt");
             fw.write(source);
             fw.flush();
             fw.close();
@@ -57,7 +57,7 @@ public class DeparserTest {
         String source = deparser.deparse(ast);
 
         try {
-            FileWriter fw = new FileWriter("C:\\Temp\\result.txt");
+            FileWriter fw = new FileWriter("/Users/ksazonov/Temp/result.txt");
             fw.write(source);
             fw.flush();
             fw.close();
@@ -70,7 +70,20 @@ public class DeparserTest {
         String source = deparser.deparse(ast);
 
         try {
-            FileWriter fw = new FileWriter("C:\\Temp\\result.txt");
+            FileWriter fw = new FileWriter("/Users/ksazonov/Temp/result.txt");
+            fw.write(source);
+            fw.flush();
+            fw.close();
+        } catch (Exception e) { throw new RuntimeException(e); }
+    }
+
+    @Test
+    public void test4() throws HistoneException {
+        ArrayNode ast = histone.parseTemplateToAST(input("login.tpl"));
+        String source = deparser.deparse(ast);
+
+        try {
+            FileWriter fw = new FileWriter("/Users/ksazonov/Temp/result.txt");
             fw.write(source);
             fw.flush();
             fw.close();

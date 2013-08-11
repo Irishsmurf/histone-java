@@ -31,7 +31,7 @@ public class Deparser implements IDeparser {
         StringBuilder result = new StringBuilder();
         for (JsonNode node : ast) {
             String processedNode = processAstNode(node);
-            if (processedNode != null) result.append(processedNode + "\n");
+            if (processedNode != null && !StringUtils.isEmpty(processedNode)) result.append(processedNode + "\n");
         }
         return result.toString();
     }
@@ -112,9 +112,9 @@ public class Deparser implements IDeparser {
         }
 
         if (objectToInvokeProcessed != null) {
-            return ind() + objectToInvokeProcessed + "." + functionName.asText() + "(" + StringUtils.join(argsProcessed, ", ") + ");\n";
+            return ind() + objectToInvokeProcessed + "." + functionName.asText() + "(" + StringUtils.join(argsProcessed, ", ") + ")";
         } else {
-            return ind() + functionName.asText() + "(" + StringUtils.join(argsProcessed, ", ") + ");\n";
+            return ind() + functionName.asText() + "(" + StringUtils.join(argsProcessed, ", ") + ")";
         }
     }
 
@@ -234,8 +234,17 @@ public class Deparser implements IDeparser {
         String arg2 = processAstNode(ast.get(2));
         String arg3 = ast.get(3) != null ? processAstNode(ast.get(3)) : "null";
 
+        if (!arg1.startsWith("(")) arg1 = "(" + arg1;
+        if (!arg1.endsWith(")")) arg1 = arg1 + ")";
+
+        if (!arg2.startsWith("(")) arg2 = "(" + arg2;
+        if (!arg2.endsWith(")")) arg2 = arg2 + ")";
+
+        if (!arg3.startsWith("(")) arg3 = "(" + arg3;
+        if (!arg3.endsWith(")")) arg3 = arg3 + ")";
+
         if (opType == AstNodeType.TERNARY) {
-            return ind() + "(" + arg1 + ") ? (" + arg2 + ") : (" + arg3 + ");\n";
+            return arg1 + " ? " + arg2 + " : " + arg3;
         }
 
         return null;
@@ -246,14 +255,16 @@ public class Deparser implements IDeparser {
 
         StringBuilder sb = new StringBuilder();
         for (JsonNode statement : statements) {
-            sb.append(processAstNode(statement));
+            String processedStatement = processAstNode(statement);
+            if (processedStatement != null && !StringUtils.isEmpty(processedStatement))
+                sb.append(ind() + processedStatement + ";\n");
         }
         return sb.toString();
     }
 
     protected String processImport(ArrayNode ast) {
         String importResource = ast.get(1).asText();
-        return ind() + "import " + importResource + ";";
+        return "import " + importResource;
     }
 
     protected String processVariable(ArrayNode ast) {
@@ -261,7 +272,7 @@ public class Deparser implements IDeparser {
         JsonNode varDefinition = ast.get(2);
 
         String varDefinitionProcessed = processAstNode(varDefinition);
-        return ind() + varName.asText() + " = " + varDefinitionProcessed + ";\n";
+        return ind() + varName.asText() + " = " + varDefinitionProcessed;
     }
 
     protected String processMacro(ArrayNode ast) {
@@ -294,12 +305,14 @@ public class Deparser implements IDeparser {
             JsonNode statements = ifElement.get(1);
 
             String expressionProcessed = processAstNode(expression);
+            if (!expressionProcessed.startsWith("(")) expressionProcessed = "(" + expressionProcessed;
+            if (!expressionProcessed.endsWith(")")) expressionProcessed = expressionProcessed + ")";
 
-            sb.append(ind() + "if (" + expressionProcessed + ") {\n");
+            sb.append(ind() + "if " + expressionProcessed + " {\n");
             indent();
             for (JsonNode statement : statements) {
                 String s = processAstNode(statement);
-                if (s != null) sb.append((isSelector(statement) ? ind() : "") +  s + "\n");
+                if (s != null && !StringUtils.isEmpty(s)) sb.append(ind() +  s + "\n");
             }
             unindent();
             sb.append(ind() + "}\n");
