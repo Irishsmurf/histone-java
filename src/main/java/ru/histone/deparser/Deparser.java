@@ -141,7 +141,7 @@ public class Deparser implements IDeparser {
     }
 
     protected String processConstants(ArrayNode ast) {
-        int opType = ast.get(0).asInt();
+        int opType = abs(ast.get(0).asInt());
 
         if (opType == AstNodeType.TRUE) {
             return "true";
@@ -166,7 +166,7 @@ public class Deparser implements IDeparser {
     }
 
     protected String processUnaryOperation(ArrayNode ast) {
-        int opType = ast.get(0).asInt();
+        int opType = abs(ast.get(0).asInt());
         String arg1 = processAstNode(ast.get(1));
 
         if (opType == AstNodeType.NOT) {
@@ -180,7 +180,7 @@ public class Deparser implements IDeparser {
     }
 
     protected String processBinaryOperation(ArrayNode ast) {
-        int opType = ast.get(0).asInt();
+        int opType = abs(ast.get(0).asInt());
         String arg1 = processAstNode(ast.get(1));
         String arg2 = processAstNode(ast.get(2));
 
@@ -228,7 +228,7 @@ public class Deparser implements IDeparser {
     }
 
     protected String processTernaryOperation(ArrayNode ast) {
-        int opType = ast.get(0).asInt();
+        int opType = abs(ast.get(0).asInt());
 
         String arg1 = processAstNode(ast.get(1));
         String arg2 = processAstNode(ast.get(2));
@@ -409,7 +409,11 @@ public class Deparser implements IDeparser {
     }
 
     public static int getNodeType(ArrayNode astArray) {
-        return astArray.get(0).asInt();
+        return abs(astArray.get(0).asInt());
+    }
+
+    protected static int abs(int i) {
+        return Math.abs(i);
     }
 
     public static long hash(JsonNode arr) {

@@ -287,7 +287,10 @@ public class AstMarker extends BaseOptimization {
                 nodeFactory.jsonArray(nodeFactory.jsonArray(statementsOut)) :
                 nodeFactory.jsonArray(nodeFactory.jsonArray(statementsOut), nodeFactory.jsonArray(elseStatementsOut));
 
-        return ast(isSafe, AstNodeType.FOR, var, collection, statementsContainer);
+        // EXPERIMENTAL fix
+        return ast(false, AstNodeType.FOR, var, collection, statementsContainer);
+
+        // return ast(isSafe, AstNodeType.FOR, var, collection, statementsContainer);
     }
 
     /**
