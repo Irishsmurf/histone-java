@@ -155,7 +155,7 @@ public class AstMarker extends BaseOptimization {
         if (!args.isNull()) {
             for (JsonNode arg : args) {
                 argNames.add(arg.asText());
-                context.addSafeVar(arg.asText());
+//                context.addSafeVar(arg.asText());
             }
         }
 
@@ -165,7 +165,7 @@ public class AstMarker extends BaseOptimization {
 
         boolean isSafe = safeArray(statementsOut);
 
-        return ast(isSafe, AstNodeType.MACRO, name, args, statements);
+        return ast(isSafe, AstNodeType.MACRO, name, args, statementsOut);
     }
 
     /**

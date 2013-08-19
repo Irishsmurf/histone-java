@@ -27,7 +27,7 @@ import java.util.Set;
 
 /**
  * This optimization unit removes useless variables from AST; The criteria is extremely simple: variable is useless if there
- * is no selectors, using it.
+ * is no selectors AT ALL, using it.
  * <p/>
  * User: sazonovkirill@gmail.com
  * Date: 09.01.13

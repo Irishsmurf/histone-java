@@ -16,17 +16,16 @@
 package ru.histone.optimizer;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import org.apache.commons.io.FileUtils;
 import org.junit.Before;
 import org.junit.Test;
 import ru.histone.Histone;
 import ru.histone.HistoneBuilder;
 import ru.histone.HistoneException;
+import ru.histone.deparser.Deparser;
 import ru.histone.utils.IOUtils;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringReader;
-import java.io.StringWriter;
+import java.io.*;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -308,6 +307,40 @@ public class AstOptimizerTest {
 
         ArrayNode ast = histone.parseTemplateToAST(new StringReader(input));
         ArrayNode finalAst = histone.optimizeAST(ast);
+
+        // Assert that evaluation results are equal
+        String astS = histone.evaluateAST(ast);
+        String finalAstS = histone.evaluateAST(finalAst);
+        assertEquals(astS, finalAstS);
+    }
+
+    @Test
+    public void test8() throws IOException, HistoneException {
+        String input = input("test8.tpl");
+
+        ArrayNode ast = histone.parseTemplateToAST(new StringReader(input));
+        ArrayNode finalAst = histone.optimizeAST(ast);
+
+        Deparser deparser = new Deparser();
+        String s = deparser.deparse(finalAst);
+        FileUtils.writeStringToFile(new File("/Users/ksazonov/Temp/1.js"), s);
+
+        // Assert that evaluation results are equal
+        String astS = histone.evaluateAST(ast);
+        String finalAstS = histone.evaluateAST(finalAst);
+        assertEquals(astS, finalAstS);
+    }
+
+    @Test
+    public void test9() throws IOException, HistoneException {
+        String input = input("test9.tpl");
+
+        ArrayNode ast = histone.parseTemplateToAST(new StringReader(input));
+        ArrayNode finalAst = histone.optimizeAST(ast);
+
+        Deparser deparser = new Deparser();
+        String s = deparser.deparse(finalAst);
+        FileUtils.writeStringToFile(new File("/Users/ksazonov/Temp/1.js"), s);
 
         // Assert that evaluation results are equal
         String astS = histone.evaluateAST(ast);

@@ -118,15 +118,15 @@ public class Histone {
                     h1 = h2;
                 }
             }
-            {
-                long h1 = BaseOptimization.hash(templateAST);
-                while (true) {
-                    ast = constantPropagation.propagateConstants(ast);
-                    long h2 = BaseOptimization.hash(ast);
-                    if (h1 == h2) break;
-                    h1 = h2;
-                }
-            }
+//            {
+//                long h1 = BaseOptimization.hash(templateAST);
+//                while (true) {
+//                    ast = constantPropagation.propagateConstants(ast);
+//                    long h2 = BaseOptimization.hash(ast);
+//                    if (h1 == h2) break;
+//                    h1 = h2;
+//                }
+//            }
             {
                 long h1 = BaseOptimization.hash(templateAST);
                 while (true) {
@@ -188,24 +188,24 @@ public class Histone {
                     }
                 }
             }
-            {
-                long h1 = BaseOptimization.hash(templateAST);
-                while (true) {
-                    L2++;
-                    if (L2 == 10) {
-                        L2 = 0;
-                        break;
-                    }
-
-                    ast = constantPropagation.propagateConstants(ast);
-                    long h2 = BaseOptimization.hash(ast);
-                    if (h1 == h2) break;
-                    else {
-                        optimizationTrace.addFrame("ConstantsPropagation", ast, deparser.deparse(ast));
-                        h1 = h2;
-                    }
-                }
-            }
+//            {
+//                long h1 = BaseOptimization.hash(templateAST);
+//                while (true) {
+//                    L2++;
+//                    if (L2 == 10) {
+//                        L2 = 0;
+//                        break;
+//                    }
+//
+//                    ast = constantPropagation.propagateConstants(ast);
+//                    long h2 = BaseOptimization.hash(ast);
+//                    if (h1 == h2) break;
+//                    else {
+//                        optimizationTrace.addFrame("ConstantsPropagation", ast, deparser.deparse(ast));
+//                        h1 = h2;
+//                    }
+//                }
+//            }
             {
                 long h1 = BaseOptimization.hash(templateAST);
                 while (true) {

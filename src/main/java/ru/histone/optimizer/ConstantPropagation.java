@@ -27,12 +27,6 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * This optimization unit propagates folded constants.
- * <p/>
- * User: sazonovkirill@gmail.com
- * Date: 07.01.13
- */
 public class ConstantPropagation extends BaseOptimization {
     private Context context;
 
@@ -56,6 +50,85 @@ public class ConstantPropagation extends BaseOptimization {
         context.pop();
     }
 
+    @Override
+    protected JsonNode processFor(ArrayNode for_) throws HistoneException {
+        ArrayNode var = (ArrayNode) for_.get(1);
+        ArrayNode collection = (ArrayNode) for_.get(2);
+        ArrayNode statements = (ArrayNode) for_.get(3).get(0);
+
+        ArrayNode elseStatements = null;
+        if (for_.get(3).size() > 1) {
+            elseStatements = (ArrayNode) for_.get(3).get(1);
+        }
+
+        pushContext();
+        JsonNode[] statementsOut = new JsonNode[statements.size()];
+        for (int i = 0; i < statements.size(); i++) {
+            statementsOut[i] = processAstNode(statements.get(i));
+        }
+        popContext();
+
+        JsonNode[] elseStatementsOut = null;
+        if (elseStatements != null) {
+            pushContext();
+            elseStatementsOut = new JsonNode[elseStatements.size()];
+            for (int i = 0; i < elseStatements.size(); i++) {
+                elseStatementsOut[i] = processAstNode(elseStatements.get(i));
+            }
+            popContext();
+        }
+
+        collection = (ArrayNode) processAstNode(collection);
+
+        ArrayNode statementsContainer = elseStatementsOut == null ?
+                nodeFactory.jsonArray(nodeFactory.jsonArray(statementsOut)) :
+                nodeFactory.jsonArray(nodeFactory.jsonArray(statementsOut), nodeFactory.jsonArray(elseStatementsOut));
+
+        return nodeFactory.jsonArray(AstNodeType.FOR, var, collection, statementsContainer);
+    }
+
+    @Override
+    protected JsonNode processIf(ArrayNode if_) throws HistoneException {
+        ArrayNode conditions = (ArrayNode) if_.get(1);
+
+        ArrayNode conditionsOut = nodeFactory.jsonArray();
+
+        for (JsonNode condition : conditions) {
+            JsonNode expression = condition.get(0);
+            JsonNode statements = condition.get(1);
+
+            pushContext();
+            JsonNode[] statementsOut = new JsonNode[statements.size()];
+            for (int i = 0; i < statements.size(); i++) {
+                statementsOut[i] = processAstNode(statements.get(i));
+            }
+            popContext();
+
+            expression = processAstNode(expression);
+
+            ArrayNode conditionOut = nodeFactory.jsonArray();
+            conditionOut.add(expression);
+            conditionOut.add(nodeFactory.jsonArray(statementsOut));
+            conditionsOut.add(conditionOut);
+        }
+
+        return nodeFactory.jsonArray(AstNodeType.IF, conditionsOut);
+    }
+
+    @Override
+    protected JsonNode processMacro(ArrayNode macro) throws HistoneException {
+        JsonNode name = macro.get(1);
+        ArrayNode args = (ArrayNode) macro.get(2);
+        ArrayNode statements = (ArrayNode) macro.get(3);
+
+        pushContext();
+        args = (ArrayNode) processAstNode(args);
+        statements = (ArrayNode) processArrayOfAstNodes(statements);
+        popContext();
+
+        return nodeFactory.jsonArray(AstNodeType.MACRO, name, args, statements);
+    }
+
     protected JsonNode processVariable(ArrayNode variable) throws HistoneException {
         Assert.isTrue(variable.size() == 3);
 
@@ -68,7 +141,7 @@ public class ConstantPropagation extends BaseOptimization {
 
         if (valueNode.isArray()) {
             ArrayNode value = (ArrayNode) valueNode;
-            if (var.isTextual() && (isStatements(value) || isMapOfConstants(value))) {
+            if (var.isTextual() && (isConstant(value) || /*isStatements(value) || */isMapOfConstants(value))) {
                 context.putVar(varName, value);
             }
         }
