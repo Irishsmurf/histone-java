@@ -80,12 +80,13 @@ public class OptimizationTrace {
         this.processedSource = source;
     }
 
-    public void addFrame(String frameName, ArrayNode ast, String source) {
+    public Frame addFrame(String frameName, ArrayNode ast, String source) {
         Frame frame = new Frame();
         frame.setName(frameName);
         frame.setProcessedAst(ast);
         frame.setProcessedSource(source);
         frames.add(frame);
+        return frame;
     }
 
     public static class Frame {
@@ -93,6 +94,9 @@ public class OptimizationTrace {
 
         private JsonNode processedAst;
         private String processedSource;
+
+        private boolean didBrokeCompability = false;
+        private long evaluationTimeAfterThisStep = 0;
 
         public JsonNode getProcessedAst() {
             return processedAst;
@@ -116,6 +120,22 @@ public class OptimizationTrace {
 
         public void setName(String name) {
             this.name = name;
+        }
+
+        public boolean isDidBrokeCompability() {
+            return didBrokeCompability;
+        }
+
+        public void setDidBrokeCompability(boolean didBrokeCompability) {
+            this.didBrokeCompability = didBrokeCompability;
+        }
+
+        public long getEvaluationTimeAfterThisStep() {
+            return evaluationTimeAfterThisStep;
+        }
+
+        public void setEvaluationTimeAfterThisStep(long evaluationTimeAfterThisStep) {
+            this.evaluationTimeAfterThisStep = evaluationTimeAfterThisStep;
         }
     }
 }

@@ -157,11 +157,22 @@ public class Histone {
         return ast;
     }
 
-    public ArrayNode optimizeASTWithTrace(ArrayNode templateAST, OptimizationTrace optimizationTrace) throws HistoneException {
+    public void addFrame(OptimizationTrace optimizationTrace, String name, ArrayNode optimizedAst, String templateLocation, JsonNode context, String originalOutput) throws HistoneException {
+        OptimizationTrace.Frame f = optimizationTrace.addFrame(name, optimizedAst, deparser.deparse(optimizedAst));
+
+        long t1 = System.currentTimeMillis();
+        String outputAfterThisStep = evaluateAST(templateLocation, optimizedAst, context);
+        long t2 = System.currentTimeMillis();
+
+        f.setDidBrokeCompability(!originalOutput.equals(outputAfterThisStep));
+        f.setEvaluationTimeAfterThisStep(t2 - t1);
+    }
+
+    public ArrayNode optimizeASTWithTrace(ArrayNode templateAST, OptimizationTrace optimizationTrace, String templateLocation, JsonNode context, String originalOutput) throws HistoneException {
         optimizationTrace.setOriginalAstAndSource(templateAST, deparser.deparse(templateAST));
 
         ArrayNode importsResolved = astImportResolver.resolve(templateAST);
-        optimizationTrace.addFrame("ImportsResolving", importsResolved, deparser.deparse(importsResolved));
+        addFrame(optimizationTrace, "ImportsResolving", importsResolved, templateLocation, context, originalOutput);
 
         long L1 = 0, L2 = 0; // counter for infinite loops
         ArrayNode ast = importsResolved;
@@ -183,7 +194,7 @@ public class Histone {
                     long h2 = BaseOptimization.hash(ast);
                     if (h1 == h2) break;
                     else {
-                        optimizationTrace.addFrame("ConstantsFolding", ast, deparser.deparse(ast));
+                        addFrame(optimizationTrace, "ConstantsFolding", ast, templateLocation, context, originalOutput);
                         h1 = h2;
                     }
                 }
@@ -219,7 +230,7 @@ public class Histone {
                     long h2 = BaseOptimization.hash(ast);
                     if (h1 == h2) break;
                     else {
-                        optimizationTrace.addFrame("ConstantIfCases", ast, deparser.deparse(ast));
+                        addFrame(optimizationTrace, "ConstantIfCases", ast, templateLocation, context, originalOutput);
                         h1 = h2;
                     }
                 }
@@ -237,7 +248,7 @@ public class Histone {
                     long h2 = BaseOptimization.hash(ast);
                     if (h1 == h2) break;
                     else {
-                        optimizationTrace.addFrame("RemoveUselessVariables", ast, deparser.deparse(ast));
+                        addFrame(optimizationTrace, "RemoveUselessVariables", ast, templateLocation, context, originalOutput);
                         h1 = h2;
                     }
                 }
@@ -252,21 +263,21 @@ public class Histone {
             long j1 = BaseOptimization.hash(ast);
             ast = astMarker.mark(ast);
             long j2 = BaseOptimization.hash(ast);
-            if (j1 != j2) optimizationTrace.addFrame("AstMarker", ast, deparser.deparse(ast));
+            if (j1 != j2) addFrame(optimizationTrace, "AstMarker", ast, templateLocation, context, originalOutput);
         }
 
         {
             long j1 = BaseOptimization.hash(ast);
             ast = astOptimizer.optimize(ast);
             long j2 = BaseOptimization.hash(ast);
-            if (j1 != j2) optimizationTrace.addFrame("AstOptimizer", ast, deparser.deparse(ast));
+            if (j1 != j2) addFrame(optimizationTrace, "AstOptimizer", ast, templateLocation, context, originalOutput);
         }
 
         {
             long j1 = BaseOptimization.hash(ast);
             ast = simplifier.simplify(ast);
             long j2 = BaseOptimization.hash(ast);
-            if (j1 != j2) optimizationTrace.addFrame("AstSimplifier", ast, deparser.deparse(ast));
+            if (j1 != j2) addFrame(optimizationTrace, "AstSimplifier", ast, templateLocation, context, originalOutput);
         }
 
         optimizationTrace.setProcessedAstAndSource(ast, deparser.deparse(ast));
