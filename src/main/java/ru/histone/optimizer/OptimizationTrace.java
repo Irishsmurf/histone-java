@@ -97,6 +97,7 @@ public class OptimizationTrace {
 
         private boolean didBrokeCompability = false;
         private long evaluationTimeAfterThisStep = 0;
+        private long astLengthAfterThisStep = 0;
 
         public JsonNode getProcessedAst() {
             return processedAst;
@@ -136,6 +137,14 @@ public class OptimizationTrace {
 
         public void setEvaluationTimeAfterThisStep(long evaluationTimeAfterThisStep) {
             this.evaluationTimeAfterThisStep = evaluationTimeAfterThisStep;
+        }
+
+        public long getAstLengthAfterThisStep() {
+            return astLengthAfterThisStep;
+        }
+
+        public void setAstLengthAfterThisStep(long astLengthAfterThisStep) {
+            this.astLengthAfterThisStep = astLengthAfterThisStep;
         }
     }
 }

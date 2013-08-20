@@ -32,8 +32,6 @@ import ru.histone.resourceloaders.ResourceLoader;
 import ru.histone.utils.IOUtils;
 
 import java.io.*;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * Main Histone engine class. Histone template parsing/evaluation is done here.<br/>
@@ -157,127 +155,138 @@ public class Histone {
         return ast;
     }
 
-    public void addFrame(OptimizationTrace optimizationTrace, String name, ArrayNode optimizedAst, String templateLocation, JsonNode context, String originalOutput) throws HistoneException {
+    public void addFrame(OptimizationTrace optimizationTrace, String name, ArrayNode optimizedAst, AdditionalDataForOptimizationDebug debugInfo) throws HistoneException {
         OptimizationTrace.Frame f = optimizationTrace.addFrame(name, optimizedAst, deparser.deparse(optimizedAst));
 
         long t1 = System.currentTimeMillis();
-        String outputAfterThisStep = evaluateAST(templateLocation, optimizedAst, context);
+        String outputAfterThisStep = evaluateAST(debugInfo.getTemplateLocation(), optimizedAst, debugInfo.getEvaluationContext());
         long t2 = System.currentTimeMillis();
 
-        f.setDidBrokeCompability(!originalOutput.equals(outputAfterThisStep));
+        f.setDidBrokeCompability(!debugInfo.getOriginalOutput().equals(outputAfterThisStep));
         f.setEvaluationTimeAfterThisStep(t2 - t1);
+        f.setAstLengthAfterThisStep(BaseOptimization.countNodes(optimizedAst));
     }
 
-    public ArrayNode optimizeASTWithTrace(ArrayNode templateAST, OptimizationTrace optimizationTrace, String templateLocation, JsonNode context, String originalOutput) throws HistoneException {
+    public ArrayNode optimizeASTWithTrace(ArrayNode templateAST,
+                                          OptimizationTrace optimizationTrace,
+                                          OptimizationProfile optimizationProfile,
+                                          AdditionalDataForOptimizationDebug debugInfo) throws HistoneException {
         optimizationTrace.setOriginalAstAndSource(templateAST, deparser.deparse(templateAST));
 
-        ArrayNode importsResolved = astImportResolver.resolve(templateAST);
-        addFrame(optimizationTrace, "ImportsResolving", importsResolved, templateLocation, context, originalOutput);
+        ArrayNode ast = templateAST;
 
-        long L1 = 0, L2 = 0; // counter for infinite loops
-        ArrayNode ast = importsResolved;
-        long g1 = BaseOptimization.hash(ast);
-        while (true) {
-            L1++;
-            if (L1 == 10) break;
-
-            {
-                long h1 = BaseOptimization.hash(templateAST);
-                while (true) {
-                    L2++;
-                    if (L2 == 10) {
-                        L2 = 0;
-                        break;
-                    }
-
-                    ast = constantFolding.foldConstants(ast);
-                    long h2 = BaseOptimization.hash(ast);
-                    if (h1 == h2) break;
-                    else {
-                        addFrame(optimizationTrace, "ConstantsFolding", ast, templateLocation, context, originalOutput);
-                        h1 = h2;
-                    }
-                }
-            }
-//            {
-//                long h1 = BaseOptimization.hash(templateAST);
-//                while (true) {
-//                    L2++;
-//                    if (L2 == 10) {
-//                        L2 = 0;
-//                        break;
-//                    }
-//
-//                    ast = constantPropagation.propagateConstants(ast);
-//                    long h2 = BaseOptimization.hash(ast);
-//                    if (h1 == h2) break;
-//                    else {
-//                        optimizationTrace.addFrame("ConstantsPropagation", ast, deparser.deparse(ast));
-//                        h1 = h2;
-//                    }
-//                }
-//            }
-            {
-                long h1 = BaseOptimization.hash(templateAST);
-                while (true) {
-                    L2++;
-                    if (L2 == 10) {
-                        L2 = 0;
-                        break;
-                    }
-
-                    ast = constantIfCases.replaceConstantIfs(ast);
-                    long h2 = BaseOptimization.hash(ast);
-                    if (h1 == h2) break;
-                    else {
-                        addFrame(optimizationTrace, "ConstantIfCases", ast, templateLocation, context, originalOutput);
-                        h1 = h2;
-                    }
-                }
-            }
-            {
-                long h1 = BaseOptimization.hash(templateAST);
-                while (true) {
-                    L2++;
-                    if (L2 == 10) {
-                        L2 = 0;
-                        break;
-                    }
-
-                    ast = uselessVariables.removeUselessVariables(ast);
-                    long h2 = BaseOptimization.hash(ast);
-                    if (h1 == h2) break;
-                    else {
-                        addFrame(optimizationTrace, "RemoveUselessVariables", ast, templateLocation, context, originalOutput);
-                        h1 = h2;
-                    }
-                }
-            }
-
-            long g2 = BaseOptimization.hash(ast);
-            if (g1 == g2) break;
-            g1 = g2;
+        if (optimizationProfile.isUseImportsResolving()) {
+            ast = astImportResolver.resolve(templateAST);
+            addFrame(optimizationTrace, "ImportsResolving", ast, debugInfo);
         }
 
-        {
-            long j1 = BaseOptimization.hash(ast);
-            ast = astMarker.mark(ast);
-            long j2 = BaseOptimization.hash(ast);
-            if (j1 != j2) addFrame(optimizationTrace, "AstMarker", ast, templateLocation, context, originalOutput);
+        if (optimizationProfile.getUseOptimizationCycle()) {
+            long L1 = 0, L2 = 0; // counter for infinite loops
+            long g1 = BaseOptimization.hash(ast);
+            while (true) {
+                L1++;
+                if (L1 == 10) break;
+
+                if (optimizationProfile.isUseConstantsFolding()) {
+                    long h1 = BaseOptimization.hash(templateAST);
+                    while (true) {
+                        L2++;
+                        if (L2 == 10) {
+                            L2 = 0;
+                            break;
+                        }
+
+                        ast = constantFolding.foldConstants(ast);
+                        long h2 = BaseOptimization.hash(ast);
+                        if (h1 == h2) break;
+                        else {
+                            addFrame(optimizationTrace, "ConstantsFolding", ast, debugInfo);
+                            h1 = h2;
+                        }
+                    }
+                }
+                if (optimizationProfile.isUseConstantPropagation()) {
+                    long h1 = BaseOptimization.hash(templateAST);
+                    while (true) {
+                        L2++;
+                        if (L2 == 10) {
+                            L2 = 0;
+                            break;
+                        }
+
+                        ast = constantPropagation.propagateConstants(ast);
+                        long h2 = BaseOptimization.hash(ast);
+                        if (h1 == h2) break;
+                        else {
+                            optimizationTrace.addFrame("ConstantsPropagation", ast, deparser.deparse(ast));
+                            h1 = h2;
+                        }
+                    }
+                }
+                if (optimizationProfile.isRemoveConstantIfCases()) {
+                    long h1 = BaseOptimization.hash(templateAST);
+                    while (true) {
+                        L2++;
+                        if (L2 == 10) {
+                            L2 = 0;
+                            break;
+                        }
+
+                        ast = constantIfCases.replaceConstantIfs(ast);
+                        long h2 = BaseOptimization.hash(ast);
+                        if (h1 == h2) break;
+                        else {
+                            addFrame(optimizationTrace, "ConstantIfCases", ast, debugInfo);
+                            h1 = h2;
+                        }
+                    }
+                }
+                if (optimizationProfile.isRemoveUselessVariables()) {
+                    long h1 = BaseOptimization.hash(templateAST);
+                    while (true) {
+                        L2++;
+                        if (L2 == 10) {
+                            L2 = 0;
+                            break;
+                        }
+
+                        ast = uselessVariables.removeUselessVariables(ast);
+                        long h2 = BaseOptimization.hash(ast);
+                        if (h1 == h2) break;
+                        else {
+                            addFrame(optimizationTrace, "RemoveUselessVariables", ast, debugInfo);
+                            h1 = h2;
+                        }
+                    }
+                }
+
+                long g2 = BaseOptimization.hash(ast);
+                if (g1 == g2) break;
+                g1 = g2;
+            }
         }
 
-        {
-            long j1 = BaseOptimization.hash(ast);
-            ast = astOptimizer.optimize(ast);
-            long j2 = BaseOptimization.hash(ast);
-            if (j1 != j2) addFrame(optimizationTrace, "AstOptimizer", ast, templateLocation, context, originalOutput);
+        if (optimizationProfile.isUseAstOptimizer()) {
+            {
+                long j1 = BaseOptimization.hash(ast);
+                ast = astMarker.mark(ast);
+                long j2 = BaseOptimization.hash(ast);
+                if (j1 != j2) addFrame(optimizationTrace, "AstMarker", ast, debugInfo);
+            }
+
+            {
+                long j1 = BaseOptimization.hash(ast);
+                ast = astOptimizer.optimize(ast);
+                long j2 = BaseOptimization.hash(ast);
+                if (j1 != j2) addFrame(optimizationTrace, "AstOptimizer", ast, debugInfo);
+            }
         }
 
-        {
+        if (optimizationProfile.isUseAstSimplifier()) {
             long j1 = BaseOptimization.hash(ast);
             ast = simplifier.simplify(ast);
             long j2 = BaseOptimization.hash(ast);
-            if (j1 != j2) addFrame(optimizationTrace, "AstSimplifier", ast, templateLocation, context, originalOutput);
+            if (j1 != j2) addFrame(optimizationTrace, "AstSimplifier", ast, debugInfo);
         }
 
         optimizationTrace.setProcessedAstAndSource(ast, deparser.deparse(ast));
