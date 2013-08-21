@@ -105,50 +105,6 @@ public class Histone {
 
     public ArrayNode optimizeAST(ArrayNode templateAST) throws HistoneException {
         ArrayNode ast = astImportResolver.resolve(templateAST);
-        long g1 = BaseOptimization.hash(ast);
-        while (true) {
-            {
-                long h1 = BaseOptimization.hash(templateAST);
-                while (true) {
-                    ast = constantFolding.foldConstants(ast);
-                    long h2 = BaseOptimization.hash(ast);
-                    if (h1 == h2) break;
-                    h1 = h2;
-                }
-            }
-//            {
-//                long h1 = BaseOptimization.hash(templateAST);
-//                while (true) {
-//                    ast = constantPropagation.propagateConstants(ast);
-//                    long h2 = BaseOptimization.hash(ast);
-//                    if (h1 == h2) break;
-//                    h1 = h2;
-//                }
-//            }
-            {
-                long h1 = BaseOptimization.hash(templateAST);
-                while (true) {
-                    ast = constantIfCases.replaceConstantIfs(ast);
-                    long h2 = BaseOptimization.hash(ast);
-                    if (h1 == h2) break;
-                    h1 = h2;
-                }
-            }
-            {
-                long h1 = BaseOptimization.hash(templateAST);
-                while (true) {
-                    ast = uselessVariables.removeUselessVariables(ast);
-                    long h2 = BaseOptimization.hash(ast);
-                    if (h1 == h2) break;
-                    h1 = h2;
-                }
-            }
-
-            long g2 = BaseOptimization.hash(ast);
-            if (g1 == g2) break;
-            g1 = g2;
-        }
-
         ast = astMarker.mark(ast);
         ast = astOptimizer.optimize(ast);
         ast = simplifier.simplify(ast);
