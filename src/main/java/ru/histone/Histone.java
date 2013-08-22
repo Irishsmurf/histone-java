@@ -103,6 +103,9 @@ public class Histone {
         return parser.parse(inputString);
     }
 
+    /**
+     * Optimize specified AST.
+     */
     public ArrayNode optimizeAST(ArrayNode templateAST) throws HistoneException {
         ArrayNode ast = astImportResolver.resolve(templateAST);
         ast = astMarker.mark(ast);
@@ -111,18 +114,13 @@ public class Histone {
         return ast;
     }
 
-    public void addFrame(OptimizationTrace optimizationTrace, String name, ArrayNode optimizedAst, AdditionalDataForOptimizationDebug debugInfo) throws HistoneException {
-        OptimizationTrace.Frame f = optimizationTrace.addFrame(name, optimizedAst, deparser.deparse(optimizedAst));
-
-        long t1 = System.currentTimeMillis();
-        String outputAfterThisStep = evaluateAST(debugInfo.getTemplateLocation(), optimizedAst, debugInfo.getEvaluationContext());
-        long t2 = System.currentTimeMillis();
-
-        f.setDidBrokeCompability(!debugInfo.getOriginalOutput().equals(outputAfterThisStep));
-        f.setEvaluationTimeAfterThisStep(t2 - t1);
-        f.setAstLengthAfterThisStep(BaseOptimization.countNodes(optimizedAst));
-    }
-
+    //<editor-fold desc="Histone optimization">
+    /**
+     * Optimize specified AST, saving debug data of optimization to {@link OptimizationTrace}.
+     *
+     * @see OptimizationProfile
+     * @see AdditionalDataForOptimizationDebug
+     */
     public ArrayNode optimizeASTWithTrace(ArrayNode templateAST,
                                           OptimizationTrace optimizationTrace,
                                           OptimizationProfile optimizationProfile,
@@ -174,7 +172,7 @@ public class Histone {
                         long h2 = BaseOptimization.hash(ast);
                         if (h1 == h2) break;
                         else {
-                            optimizationTrace.addFrame("ConstantsPropagation", ast, deparser.deparse(ast));
+                            addFrame(optimizationTrace, "ConstantsPropagation", ast, debugInfo);
                             h1 = h2;
                         }
                     }
@@ -248,6 +246,25 @@ public class Histone {
         optimizationTrace.setProcessedAstAndSource(ast, deparser.deparse(ast));
         return ast;
     }
+
+    /**
+     * Add frame information to {@link OptimizationTrace}.
+     */
+    protected void addFrame(OptimizationTrace optimizationTrace, String name, ArrayNode optimizedAst, AdditionalDataForOptimizationDebug debugInfo) throws HistoneException {
+        long t1 = System.currentTimeMillis();
+        String outputAfterThisStep = evaluateAST(debugInfo.getTemplateLocation(), optimizedAst, debugInfo.getEvaluationContext());
+        long t2 = System.currentTimeMillis();
+
+        OptimizationTrace.Frame frame = new OptimizationTrace.Frame();
+        frame.setName(name);
+        frame.setProcessedAst(optimizedAst);
+        frame.setProcessedSource(deparser.deparse(optimizedAst));
+        frame.setDidBrokeCompability(!debugInfo.getOriginalOutput().equals(outputAfterThisStep));
+        frame.setEvaluationTimeAfterThisStep(t2 - t1);
+        frame.setAstLengthAfterThisStep(BaseOptimization.countNodes(optimizedAst));
+        optimizationTrace.getFrames().add(frame);
+    }
+    //</editor-fold>
 
     public String evaluateAST(ArrayNode templateAST) throws HistoneException {
         return evaluateAST(null, templateAST, NullNode.instance);

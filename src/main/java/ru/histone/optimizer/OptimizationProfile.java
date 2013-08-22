@@ -15,6 +15,9 @@
  */
 package ru.histone.optimizer;
 
+/**
+ * Allows to enable/disable different steps of optimization.
+ */
 public class OptimizationProfile {
     private boolean useImportsResolving = false;
     private boolean useConstantsFolding = false;
@@ -31,6 +34,7 @@ public class OptimizationProfile {
                 removeUselessVariables;
     }
 
+    //<editor-fold desc="Trivial getters/setters">
     public boolean isUseImportsResolving() {
         return useImportsResolving;
     }
@@ -86,4 +90,5 @@ public class OptimizationProfile {
     public void setUseAstSimplifier(boolean useAstSimplifier) {
         this.useAstSimplifier = useAstSimplifier;
     }
+    //</editor-fold>
 }
