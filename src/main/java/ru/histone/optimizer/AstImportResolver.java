@@ -44,11 +44,11 @@ public class AstImportResolver {
     private ResourceLoader resourceLoader;
     private Parser parser;
 
-    public AstImportResolver(Parser parser, ResourceLoader resourceLoader) {
+    public AstImportResolver(Parser parser, ResourceLoader resourceLoader, NodeFactory nodeFactory) {
         this.parser = parser;
         this.resourceLoader = resourceLoader;
+        this.nodeFactory = nodeFactory;
     }
-
 
     public ArrayNode resolve(ArrayNode ast) throws HistoneException {
         ImportResolverContext context = new ImportResolverContext();
@@ -103,7 +103,6 @@ public class AstImportResolver {
                 return astArray;
         }
     }
-
 
     private ArrayNode resolveImport(JsonNode pathElement, ImportResolverContext context) throws HistoneException {
         if (!isString(pathElement)) {
@@ -162,6 +161,14 @@ public class AstImportResolver {
                             case AstNodeType.MACRO:
                                 result.add(elem);
                                 break;
+                            // EXPERIMENTAL: This small fix allows to import variable definitions with macroses if variable value is constant
+                            case AstNodeType.VAR:
+                                String varName = elem.get(1).asText();
+                                JsonNode varValue = elem.get(2);
+                                if (jsonNodeIsConstant(varValue)) {
+                                    result.add(elem);
+                                }
+                                break;
                             case AstNodeType.IMPORT:
                                 ArrayNode resolvedAst = resolveImport(elem.get(1), context);
                                 if (resolvedAst.get(0).isArray()) {
@@ -194,6 +201,19 @@ public class AstImportResolver {
         }
     }
 
+    private boolean jsonNodeIsConstant(JsonNode varValue) {
+        if (varValue instanceof ArrayNode) {
+            ArrayNode arr = (ArrayNode) varValue;
+            int nodeType = getNodeType(arr);
+                    return nodeType == AstNodeType.TRUE ||
+                            nodeType == AstNodeType.FALSE ||
+                            nodeType == AstNodeType.NULL ||
+                            nodeType == AstNodeType.INT ||
+                            nodeType == AstNodeType.DOUBLE ||
+                            nodeType == AstNodeType.STRING;
+        } else return false;
+    }
+
     private boolean isString(JsonNode element) {
         return element.isTextual();
     }
@@ -222,9 +242,5 @@ public class AstImportResolver {
             return (ArrayNode) ast.path(0);
         }
         return ast;
-    }
-
-    public void setNodeFactory(NodeFactory nodeFactory) {
-        this.nodeFactory = nodeFactory;
     }
 }

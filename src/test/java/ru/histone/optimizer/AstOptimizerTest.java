@@ -323,7 +323,7 @@ public class AstOptimizerTest {
 
         Deparser deparser = new Deparser();
         String s = deparser.deparse(finalAst);
-        FileUtils.writeStringToFile(new File("/Users/ksazonov/Temp/1.js"), s);
+//        FileUtils.writeStringToFile(new File("/Users/ksazonov/Temp/1.js"), s);
 
         // Assert that evaluation results are equal
         String astS = histone.evaluateAST(ast);
@@ -340,9 +340,21 @@ public class AstOptimizerTest {
 
         Deparser deparser = new Deparser();
         String s = deparser.deparse(finalAst);
-        FileUtils.writeStringToFile(new File("/Users/ksazonov/Temp/1.js"), s);
+//        FileUtils.writeStringToFile(new File("/Users/ksazonov/Temp/1.js"), s);
 
         // Assert that evaluation results are equal
+        String astS = histone.evaluateAST(ast);
+        String finalAstS = histone.evaluateAST(finalAst);
+        assertEquals(astS, finalAstS);
+    }
+
+    @Test
+    public void test10() throws IOException, HistoneException {
+        String input = input("test10.tpl");
+
+        ArrayNode ast = histone.parseTemplateToAST(new StringReader(input));
+        ArrayNode finalAst = histone.optimizeAST(ast);
+
         String astS = histone.evaluateAST(ast);
         String finalAstS = histone.evaluateAST(finalAst);
         assertEquals(astS, finalAstS);

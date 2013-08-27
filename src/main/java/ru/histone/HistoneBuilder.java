@@ -344,8 +344,7 @@ public class HistoneBuilder {
 
         Evaluator evaluator = new Evaluator(evaluatorBootstrap);
 
-        AstImportResolver astImportResolver = new AstImportResolver(parser, resourceLoader);
-        astImportResolver.setNodeFactory(nodeFactory);
+        AstImportResolver astImportResolver = new AstImportResolver(parser, resourceLoader, nodeFactory);
 
         HistoneBootstrap histoneBootstrap = new HistoneBootstrap();
         histoneBootstrap.setNodeFactory(nodeFactory);
