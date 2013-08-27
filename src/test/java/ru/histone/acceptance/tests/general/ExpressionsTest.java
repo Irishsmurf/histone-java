@@ -27,4 +27,5 @@ public class ExpressionsTest extends AcceptanceTest {
     public String getFileName() {
         return "/general/expressions.json";
     }
+
 }

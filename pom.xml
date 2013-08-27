@@ -311,20 +311,11 @@
         <developerConnection>scm:git:ssh://git@github.com/MegafonWebLab/histone-java.git</developerConnection>
         <tag>HEAD</tag>
     </scm>
-    <distributionManagement>
-        <repository>
-            <id>weblab-release</id>
-            <url>http://weblab.megafon.ru/maven/release-weblab</url>
-        </repository>
-        <snapshotRepository>
-            <id>weblab-snapshot</id>
-            <url>http://weblab.megafon.ru/maven/snapshot-weblab</url>
-        </snapshotRepository>
-    </distributionManagement>
+
     <repositories>
         <repository>
-            <id>weblab-release</id>
-            <url>http://weblab.megafon.ru/maven/release</url>
+            <id>hq-weblab-release</id>
+            <url>https://hq-devlabs.megafon.ru/artifactory/weblab-release</url>
             <releases>
                 <enabled>true</enabled>
             </releases>
@@ -333,8 +324,8 @@
             </snapshots>
         </repository>
         <repository>
-            <id>weblab-snapshot</id>
-            <url>http://weblab.megafon.ru/maven/snapshot</url>
+            <id>hq-weblab-snapshot</id>
+            <url>https://hq-devlabs.megafon.ru/artifactory/weblab-snapshot</url>
             <releases>
                 <enabled>false</enabled>
             </releases>
@@ -343,4 +334,15 @@
             </snapshots>
         </repository>
     </repositories>
+
+    <distributionManagement>
+        <repository>
+            <id>hq-weblab-release</id>
+            <url>https://hq-devlabs.megafon.ru/artifactory/weblab-release-local</url>
+        </repository>
+        <snapshotRepository>
+            <id>hq-weblab-snapshot</id>
+            <url>https://hq-devlabs.megafon.ru/artifactory/weblab-snapshot-local</url>
+        </snapshotRepository>
+    </distributionManagement>
 </project>
