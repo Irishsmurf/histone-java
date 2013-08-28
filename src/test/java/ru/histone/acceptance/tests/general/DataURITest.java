@@ -15,14 +15,14 @@
  */
 package ru.histone.acceptance.tests.general;
 
+import org.junit.Ignore;
 import org.junit.runner.RunWith;
 import ru.histone.acceptance.support.AcceptanceTest;
 import ru.histone.acceptance.support.AcceptanceTestsRunner;
 
+@Ignore
 @RunWith(AcceptanceTestsRunner.class)
-
 public class DataURITest extends AcceptanceTest {
-
     @Override
     public String getFileName() {
         return "/general/data-uri.json";

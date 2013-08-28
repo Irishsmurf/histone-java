@@ -271,6 +271,7 @@ public class Histone {
     }
 
     public String evaluateAST(String baseURI, ArrayNode templateAST, JsonNode context) throws HistoneException {
+        if (context == null) context = nodeFactory.jsonObject();
         return evaluator.process(baseURI, templateAST, context);
     }
 
@@ -283,10 +284,12 @@ public class Histone {
     }
 
     public void evaluateAST(ArrayNode templateAST, JsonNode context, Writer output) throws HistoneException {
+        if (context == null) context = nodeFactory.jsonObject();
         evaluateAST(null, templateAST, context, output);
     }
 
     public void evaluateAST(String baseURI, ArrayNode templateAST, JsonNode context, Writer output) throws HistoneException {
+        if (context == null) context = nodeFactory.jsonObject();
         String result = evaluateAST(baseURI, templateAST, context);
         try {
             output.write(result);
@@ -299,16 +302,19 @@ public class Histone {
      * Main function for Histone template evaluation.
      */
     public String evaluate(String baseURI, String templateContent, JsonNode context) throws HistoneException {
+        if (context == null) context = nodeFactory.jsonObject();
         ArrayNode ast = parser.parse(templateContent);
 //        ArrayNode optimizedAst = optimizeAST(ast);
         return evaluator.process(baseURI, ast, context);
     }
 
     public ArrayNode evaluateAsAST(String baseURI, String templateContent, JsonNode context) throws HistoneException {
+        if (context == null) context = nodeFactory.jsonObject();
         return parser.parse(templateContent);
     }
 
     public String evaluateUri(String uri, JsonNode context) throws HistoneException {
+        if (context == null) context = nodeFactory.jsonObject();
         if (resourceLoader == null) throw new IllegalStateException("Resource loader is null for Histone instance");
 
         try {
@@ -330,6 +336,7 @@ public class Histone {
     }
 
     public String evaluate(String templateContent, JsonNode context) throws HistoneException {
+        if (context == null) context = nodeFactory.jsonObject();
         return evaluate(null, templateContent, context);
     }
 
@@ -338,6 +345,7 @@ public class Histone {
     }
 
     public String evaluate(String baseURI, Reader templateReader, JsonNode context) throws HistoneException {
+        if (context == null) context = nodeFactory.jsonObject();
         String templateContent = null;
         try {
             templateContent = IOUtils.toString(templateReader);
@@ -348,6 +356,7 @@ public class Histone {
     }
 
     public void evaluate(String baseURI, Reader templateReader, JsonNode context, Writer outputWriter) throws HistoneException {
+        if (context == null) context = nodeFactory.jsonObject();
         String result = evaluate(baseURI, templateReader, context);
         try {
             outputWriter.write(result);
