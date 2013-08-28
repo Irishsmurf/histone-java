@@ -700,13 +700,7 @@ public class Evaluator {
                 return nodeFactory.UNDEFINED;
             }
             return nodeFactory.jsonToNode(json);
-        } catch (ResourceLoadException e) {
-            Histone.runtime_log_warn_e("Resource loadJSON failed! Unresolvable resource.", e);
-            return nodeFactory.UNDEFINED;
-        } catch (JsonProcessingException e) {
-            Histone.runtime_log_warn_e("Resource loadJSON failed! Unresolvable resource.", e);
-            return nodeFactory.UNDEFINED;
-        } catch (IOException e) {
+        } catch (Exception e) {
             Histone.runtime_log_warn_e("Resource loadJSON failed! Unresolvable resource.", e);
             return nodeFactory.UNDEFINED;
         } finally {
@@ -750,10 +744,7 @@ public class Evaluator {
                 return nodeFactory.UNDEFINED;
             }
             return nodeFactory.string(resourceStream);
-        } catch (ResourceLoadException e) {
-            Histone.runtime_log_warn_e("Resource loadText failed! Unresolvable resource.", e);
-            return nodeFactory.UNDEFINED;
-        } catch (IOException e) {
+        } catch (Exception e) {
             Histone.runtime_log_warn_e("Resource loadText failed! Unresolvable resource.", e);
             return nodeFactory.UNDEFINED;
         } finally {

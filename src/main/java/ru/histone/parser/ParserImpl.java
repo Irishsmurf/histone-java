@@ -296,8 +296,9 @@ public class ParserImpl {
         
         String nameTokenContent="";
         if (nameToken != null) {
-            //throw expectedFound("identifier", tokenizer.next());
             nameTokenContent = nameToken.getContent();
+        } else {
+            throw expectedFound("identifier", tokenizer.next());
         }
         JsonNode name = nodeFactory.jsonString(nameTokenContent);
 
