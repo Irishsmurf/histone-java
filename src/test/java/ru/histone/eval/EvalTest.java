@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import ru.histone.Histone;
 import ru.histone.HistoneBuilder;
@@ -51,6 +52,7 @@ public class EvalTest {
     }
 
     @Test
+    @Ignore
     public void ruslan2() throws HistoneException, URISyntaxException, IOException {
         ObjectNode context = om.createObjectNode();
 
