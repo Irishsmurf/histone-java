@@ -599,6 +599,9 @@ public class Evaluator {
                 // that's why we need to check this here, after GlobalFunctionManager check
                 return processInclude(argsList, context);
             }
+            if ("eval".equals(name)) {
+                return processEval(argsList, context);
+            }
             if ("loadJSON".equals(name)) {
                 // we need to be able to override loadJSON function via user GlobalFunction,
                 // that's why we need to check this here, after GlobalFunctionManager check
@@ -820,6 +823,34 @@ public class Evaluator {
         } finally {
             IOUtils.closeQuietly(resourceStream, log);
             IOUtils.closeQuietly(resource, log);
+        }
+    }
+
+    private Node processEval(List<Node> args, EvaluatorContext context) {
+        if (args.size() == 0) return nodeFactory.UNDEFINED;
+        if (!args.get(0).isString()) return nodeFactory.UNDEFINED;
+
+        final String templateContent = args.get(0).getAsString().getValue();
+        final String currentBaeURI = getContextBaseURI(context);
+        Node requestMap = null;
+        if (args.size() == 2)
+            requestMap = args.get(1);
+
+        try {
+            ArrayNode parsed = parser.parse(templateContent);
+
+            context.saveState();
+            context.putProp("this", requestMap);
+            String processed = processInternal(parsed, context);
+            context.restoreState();
+
+            return nodeFactory.string(processed);
+        } catch (ParserException e) {
+            Histone.runtime_log_warn_e("Cannot parse eval expression.", e);
+            return nodeFactory.UNDEFINED;
+        } catch (EvaluatorException e) {
+            Histone.runtime_log_warn_e("Cannot evaluate eval expression.", e);
+            return nodeFactory.UNDEFINED;
         }
     }
 

@@ -376,4 +376,8 @@ public class HistoneBuilder {
             throw new HistoneException(e);
         }
     }
+
+    public NodeFactory getNodeFactory() {
+        return nodeFactory;
+    }
 }
