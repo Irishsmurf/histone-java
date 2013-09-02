@@ -840,7 +840,7 @@ public class Evaluator {
             ArrayNode parsed = parser.parse(templateContent);
 
             context.saveState();
-            context.putProp("this", requestMap);
+            if (requestMap != null) context.putProp("this", requestMap);
             String processed = processInternal(parsed, context);
             context.restoreState();
 
@@ -1205,7 +1205,11 @@ public class Evaluator {
         if (element.get(0).isArray()) {
             ctx = processNode(element.get(startIdx++), context);
         } else if ("this".equals(element.get(0).asText())) {
-            ctx = context.getInitialContext();
+            if (context.hasProp("this")) {
+                ctx = context.getProp("this");
+            } else {
+                ctx = context.getInitialContext();
+            }
             startIdx++;
         } else if ("global".equals(element.get(0).asText())) {
             if ("baseURI".equals(element.path(1).asText())) {

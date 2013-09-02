@@ -67,7 +67,6 @@ public class EvalTest {
     }
 
     @Test
-    @Ignore
     public void ruslan2() throws HistoneException, URISyntaxException, IOException {
         ObjectNode context = om.createObjectNode();
 
