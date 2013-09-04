@@ -194,8 +194,17 @@
                     <tagNameFormat>v@{project.version}</tagNameFormat>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.codehaus.gmaven</groupId>
+                <artifactId>gmaven-plugin</artifactId>
+                <version>1.5</version>
+                <configuration>
+                    <source>println "##teamcity[buildNumber '"+project.version.substring(0,project.version.indexOf('-SNAPSHOT'))+"']"</source>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
+
     <dependencies>
         <!-- Jackson -->
         <dependency>
