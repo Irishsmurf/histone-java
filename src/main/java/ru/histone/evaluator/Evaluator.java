@@ -811,10 +811,10 @@ public class Evaluator {
             context.setBaseURI(currentBaseURI);
             return result;
         } catch (ResourceLoadException e) {
-            Histone.runtime_log_warn_e("Resource include failed! Unresolvable resource.", e);
+            log.error("Resource include failed! Unresolvable resource.", e);
             return nodeFactory.UNDEFINED;
         } catch (EvaluatorException e) {
-            Histone.runtime_log_warn_e("Resource include failed! Resource evaluation error.", e);
+            log.error("Resource include failed! Resource evaluation error.", e);
             return nodeFactory.UNDEFINED;
         } finally {
             IOUtils.closeQuietly(resource, log);
