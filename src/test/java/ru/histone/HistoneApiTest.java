@@ -54,7 +54,7 @@ public class HistoneApiTest {
     @Test
     public void relativeUrls() throws HistoneException, IOException {
         Histone histone = builder.build();
-        String result = histone.evaluateUri(resourcesFolderPath + "relative_urls/template.tpl", objectMapper.createObjectNode());
+        String result = histone.evaluateURI(resourcesFolderPath + "relative_urls/template.tpl", objectMapper.createObjectNode());
         String expected = readFileFromClasspath("relative_urls/expected.txt");
 
         assertEquals(expected.trim(), result.trim());
