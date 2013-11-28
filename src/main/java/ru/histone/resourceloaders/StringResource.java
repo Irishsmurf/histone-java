@@ -25,26 +25,20 @@ import java.io.UnsupportedEncodingException;
 /**
  * @author sazonovkirill@gmail.com
  */
-public class StringResource implements Resource {
-    private final String content;
+public class StringResource implements Resource<String> {
     private final String baseHref;
     private final String contentType;
-    private final InputStream inputStream;
+    private final String content;
 
     public StringResource(String content, String baseHref, String contentType) {
-        this.content = content;
         this.baseHref = baseHref;
         this.contentType = contentType;
-        try {
-            this.inputStream = new ByteArrayInputStream(content.getBytes("utf-8"));
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException("Encoding error",e);
-        }
+        this.content = content;
     }
 
     @Override
-    public InputStream getInputStream() throws IOException {
-        return inputStream;
+    public String getContent() throws IOException {
+        return content;
     }
 
     @Override
@@ -59,6 +53,5 @@ public class StringResource implements Resource {
 
     @Override
     public void close() throws IOException {
-        IOUtils.closeQuietly(inputStream);
     }
 }

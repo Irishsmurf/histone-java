@@ -39,9 +39,10 @@ public class HistonePlaygroundTest {
 
     @Test
     public void test() throws Exception {
-        String input = "{{var f = 'world'}}{{var numbers = [1,2,3,4,5]}}\n{{for i in numbers}}\n{{for x in numbers}}{{var a = 'Hello'}}{{a}},{{f}} [{{self.index}} : {{self.last}}] {{self.qwe}}{{/for}}\\n{{for y in [numbers]}}{{var a = 'Hello'}}{{a}},{{f}} [{{i}} : {{self.last}}] {{self.index[0]}}{{/for}}\n{{/for}}";
+        String input = "{{10 ? \"20\" : .30}}";
 
         ArrayNode ast = histone.parseTemplateToAST(new StringReader(input));
         String astS = histone.evaluateAST(ast);
+        ast.toString();
     }
 }

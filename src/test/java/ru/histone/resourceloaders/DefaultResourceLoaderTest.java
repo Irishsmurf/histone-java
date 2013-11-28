@@ -51,7 +51,7 @@ public class DefaultResourceLoaderTest {
         Resource resource = resourceLoader.load("test.txt", baseHref, new String[]{ContentType.TEXT});
         assertNotNull(resource);
 
-        String content = IOUtils.toString(resource.getInputStream());
+        String content = IOUtils.toString(((StreamResource)resource).getContent());
         assertEquals("test content", content);
     }
 

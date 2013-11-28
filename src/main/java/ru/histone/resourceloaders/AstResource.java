@@ -15,27 +15,36 @@
  */
 package ru.histone.resourceloaders;
 
-import java.io.Closeable;
+import com.fasterxml.jackson.databind.JsonNode;
+
 import java.io.IOException;
 import java.io.InputStream;
 
-/**
- * All resources loaded via resource loaders should be accessible via this interface
- */
-public interface Resource<T> extends Closeable {
-    /**
-     *
-     * @return Stream content
-     * @throws java.io.IOException if the content could not be opened
-     */
-    public T getContent() throws IOException;
+public class AstResource implements Resource<JsonNode> {
+    private final String baseHref;
+    private final JsonNode ast;
 
-    /**
-     * Return a base href for this resource.
-     *
-     * @return base href value
-     */
-    public String getBaseHref();
+    public AstResource(JsonNode ast, String baseHref) {
+        this.baseHref = baseHref;
+        this.ast = ast;
+    }
 
-    public String getContentType();
+    @Override
+    public JsonNode getContent() throws IOException {
+        return ast;
+    }
+
+    @Override
+    public String getBaseHref() {
+        return baseHref;
+    }
+
+    @Override
+    public String getContentType() {
+        return ContentType.AST;
+    }
+
+    @Override
+    public void close() throws IOException {
+    }
 }

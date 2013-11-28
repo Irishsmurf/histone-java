@@ -286,6 +286,10 @@ public class NodeFactory {
         return jackson.readTree(reader);
     }
 
+    public JsonNode jsonNode(String json) throws IOException {
+        return jackson.readTree(json);
+    }
+
     public Node string(InputStream resourceStream) throws IOException {
         String content = IOUtils.toString(resourceStream, "UTF-8");
         return string(content);

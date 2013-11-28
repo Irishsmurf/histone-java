@@ -15,9 +15,11 @@
  */
 package ru.histone.acceptance.support;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import org.eclipse.jetty.server.Server;
 import org.junit.ComparisonFailure;
 import org.junit.runner.Description;
@@ -60,6 +62,9 @@ public class AcceptanceTestsRunner extends Runner {
         instance = (AcceptanceTest) testClass.newInstance();
         description = instance.getDescription();
         jackson = new ObjectMapper();
+        jackson.setNodeFactory(new JsonNodeFactory(true));
+        jackson.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
+
 
         nodeFactory = new NodeFactory(jackson);
         log = LoggerFactory.getLogger(testClass);

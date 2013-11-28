@@ -21,19 +21,24 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.histone.Histone;
 import ru.histone.HistoneException;
+import ru.histone.evaluator.EvaluatorException;
 import ru.histone.evaluator.nodes.NodeFactory;
 import ru.histone.parser.AstNodeType;
 import ru.histone.parser.Parser;
 import ru.histone.parser.ParserException;
+import ru.histone.resourceloaders.AstResource;
 import ru.histone.resourceloaders.ContentType;
 import ru.histone.resourceloaders.Resource;
 import ru.histone.resourceloaders.ResourceLoadException;
 import ru.histone.resourceloaders.ResourceLoader;
+import ru.histone.resourceloaders.StreamResource;
+import ru.histone.resourceloaders.StringResource;
 import ru.histone.utils.IOUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.text.MessageFormat;
 
 public class AstImportResolver {
 
@@ -111,7 +116,7 @@ public class AstImportResolver {
         }
         String path = pathElement.asText();
         Resource resource = null;
-        InputStream resourceStream = null;
+//        InputStream resourceStream = null;
         try {
             String currentBaseURI = getContextBaseURI(context);
             String resourceFullPath = resourceLoader.resolveFullPath(path, currentBaseURI);
@@ -133,28 +138,19 @@ public class AstImportResolver {
                 }
                 resource = resourceLoader.load(path, currentBaseURI, new String[]{ContentType.TEXT});
 
-                if (resource == null) {
-                    Histone.runtime_log_warn("Can't import resource by path = '{}'. Resource was not found.", path);
-                    //return AstNodeFactory.createNode(AstNodeType.STRING, "");
-                    return nodeFactory.jsonArray(AstNodeType.STRING);
-                }
-                resourceStream = resource.getInputStream();
-                if (resourceStream == null) {
-                    Histone.runtime_log_warn("Can't import resource by path = '{}'. Resource is unreadable", path);
-                    return nodeFactory.jsonArray(AstNodeType.STRING);
-                }
-                String templateContent = IOUtils.toString(resourceStream); //yeah... full file reading, because of our tokenizer is regexp-based :(
+                JsonNode ast = readAstFromResource(resource,path,currentBaseURI);
+
+
                 // Add this resource full path to context
                 context.addImportedResource(resourceFullPath);
 
-                ArrayNode parseResult = parser.parse(templateContent);
                 URI resourceURI = null; //TODO: refactor //resource.getURI();
                 if (resourceURI != null && resourceURI.isAbsolute() && !resourceURI.isOpaque()) {
                     context.setBaseURI(resourceURI.resolve("").toString());
                 }
 
                 ArrayNode result = nodeFactory.jsonArray();
-                for (JsonNode elem : getHistoneContent(parseResult)) {
+                for (JsonNode elem : getHistoneContent((ArrayNode) ast)) {
                     if (elem.isArray()) {
                         int nodeType = getNodeType((ArrayNode) elem);
                         switch (nodeType) {
@@ -189,14 +185,10 @@ public class AstImportResolver {
         } catch (ResourceLoadException e) {
             Histone.runtime_log_warn_e("Resource import failed! Unresolvable resource.", e);
             return nodeFactory.jsonArray(AstNodeType.STRING, nodeFactory.jsonString(""));
-        } catch (IOException e) {
-            Histone.runtime_log_warn_e("Resource import failed! Resource reading error.", e);
-            return nodeFactory.jsonArray(AstNodeType.STRING, nodeFactory.jsonString(""));
         } catch (ParserException e) {
             Histone.runtime_log_warn_e("Resource import failed! Resource parsing error.", e);
             return nodeFactory.jsonArray(AstNodeType.STRING, nodeFactory.jsonString(""));
         } finally {
-            IOUtils.closeQuietly(resourceStream, log);
             IOUtils.closeQuietly(resource, log);
         }
     }
@@ -241,6 +233,54 @@ public class AstImportResolver {
         if (ast.path(0) != null && HISTONE.equals(ast.path(0).path(0).asText())) {
             return (ArrayNode) ast.path(0);
         }
+        return ast;
+    }
+
+    private JsonNode readAstFromResource(Resource resource, String path, String currentBaseURI) throws EvaluatorException {
+        JsonNode ast = null;
+        try {
+            if (resource == null) {
+                throw new ResourceLoadException(MessageFormat.format("Can't import resource by path = '{}'. Resource was not found.", path));
+            }
+
+            if (!(resource instanceof StringResource) && !(resource instanceof StreamResource) && !(resource instanceof AstResource)) {
+                throw new ResourceLoadException(MessageFormat.format("Can't import resource by path: {0}. Resource type {1} is unknown", path, resource.getClass()));
+            }
+
+            String templateContent = null;
+            if (resource instanceof StringResource) {
+                templateContent = ((StringResource) resource).getContent();
+            } else if (resource instanceof StreamResource) {
+                templateContent = IOUtils.toString(((StreamResource) resource).getContent());
+            } else if (resource instanceof AstResource) {
+                ast = ((AstResource) resource).getContent();
+            } else {
+                throw new ResourceLoadException(MessageFormat.format("Unsupported resource class: {0}", resource.getClass()));
+            }
+
+            if (resource instanceof StringResource || resource instanceof StreamResource) {
+                if (templateContent == null) {
+                    throw new ResourceLoadException(MessageFormat.format("Can't import resource by path: {0}. Resource is unreadable", path));
+                }
+
+                if (resource.getContentType() == ContentType.TEXT) {
+                    ast = parser.parse(templateContent);
+                } else if (resource.getContentType() == ContentType.AST) {
+                    ast = nodeFactory.jsonNode(templateContent);
+                } else {
+                    throw new ResourceLoadException(MessageFormat.format("Unsupported content-type:{0} of resource href:{1}, baseHref:{2}", resource.getContentType(), path, currentBaseURI));
+                }
+            } else {
+                if (ast == null) {
+                    throw new ResourceLoadException(MessageFormat.format("Can't import resource by path = {0}. Resource is unreadable", path));
+                }
+            }
+        } catch (IOException e) {
+            throw new ResourceLoadException("Resource import failed! Resource reading error.", e);
+        } catch (ParserException e) {
+            throw new ResourceLoadException("Resource import failed! Resource parsing error.", e);
+        }
+
         return ast;
     }
 }

@@ -23,29 +23,82 @@ import org.slf4j.LoggerFactory;
 import ru.histone.GlobalProperty;
 import ru.histone.Histone;
 import ru.histone.HistoneException;
-import ru.histone.evaluator.functions.global.*;
-import ru.histone.evaluator.functions.node.*;
-import ru.histone.evaluator.functions.node.number.*;
-import ru.histone.evaluator.functions.node.object.*;
+import ru.histone.evaluator.functions.global.DayOfWeek;
+import ru.histone.evaluator.functions.global.DaysInMonth;
+import ru.histone.evaluator.functions.global.GlobalFunctionExecutionException;
+import ru.histone.evaluator.functions.global.GlobalFunctionsManager;
+import ru.histone.evaluator.functions.global.Max;
+import ru.histone.evaluator.functions.global.Min;
+import ru.histone.evaluator.functions.global.Rand;
+import ru.histone.evaluator.functions.global.Range;
+import ru.histone.evaluator.functions.global.ResolveURI;
+import ru.histone.evaluator.functions.global.UniqueId;
+import ru.histone.evaluator.functions.node.IsBoolean;
+import ru.histone.evaluator.functions.node.IsFloat;
+import ru.histone.evaluator.functions.node.IsInteger;
+import ru.histone.evaluator.functions.node.IsMap;
+import ru.histone.evaluator.functions.node.IsNull;
+import ru.histone.evaluator.functions.node.IsNumber;
+import ru.histone.evaluator.functions.node.IsString;
+import ru.histone.evaluator.functions.node.IsUndefined;
+import ru.histone.evaluator.functions.node.NodeFunctionExecutionException;
+import ru.histone.evaluator.functions.node.NodeFunctionsManager;
+import ru.histone.evaluator.functions.node.ToBoolean;
+import ru.histone.evaluator.functions.node.ToJson;
+import ru.histone.evaluator.functions.node.ToMap;
+import ru.histone.evaluator.functions.node.ToString;
+import ru.histone.evaluator.functions.node.number.Abs;
+import ru.histone.evaluator.functions.node.number.Ceil;
+import ru.histone.evaluator.functions.node.number.Floor;
+import ru.histone.evaluator.functions.node.number.Log;
+import ru.histone.evaluator.functions.node.number.Pow;
+import ru.histone.evaluator.functions.node.number.Round;
+import ru.histone.evaluator.functions.node.number.ToChar;
+import ru.histone.evaluator.functions.node.number.ToFixed;
+import ru.histone.evaluator.functions.node.object.Group;
+import ru.histone.evaluator.functions.node.object.HasKey;
+import ru.histone.evaluator.functions.node.object.Join;
+import ru.histone.evaluator.functions.node.object.Keys;
+import ru.histone.evaluator.functions.node.object.Remove;
 import ru.histone.evaluator.functions.node.object.Slice;
-import ru.histone.evaluator.functions.node.string.*;
+import ru.histone.evaluator.functions.node.object.ToQueryString;
+import ru.histone.evaluator.functions.node.object.Values;
+import ru.histone.evaluator.functions.node.string.CharCodeAt;
 import ru.histone.evaluator.functions.node.string.Size;
-import ru.histone.evaluator.nodes.*;
+import ru.histone.evaluator.functions.node.string.Split;
+import ru.histone.evaluator.functions.node.string.Strip;
+import ru.histone.evaluator.functions.node.string.Test;
+import ru.histone.evaluator.functions.node.string.ToLowerCase;
+import ru.histone.evaluator.functions.node.string.ToNumber;
+import ru.histone.evaluator.functions.node.string.ToUpperCase;
+import ru.histone.evaluator.nodes.GlobalObjectNode;
+import ru.histone.evaluator.nodes.NameSpaceNode;
+import ru.histone.evaluator.nodes.Node;
+import ru.histone.evaluator.nodes.NodeFactory;
+import ru.histone.evaluator.nodes.NumberHistoneNode;
+import ru.histone.evaluator.nodes.ObjectHistoneNode;
+import ru.histone.evaluator.nodes.StringHistoneNode;
 import ru.histone.parser.AstNodeType;
 import ru.histone.parser.Parser;
 import ru.histone.parser.ParserException;
+import ru.histone.resourceloaders.AstResource;
 import ru.histone.resourceloaders.ContentType;
 import ru.histone.resourceloaders.Resource;
 import ru.histone.resourceloaders.ResourceLoadException;
 import ru.histone.resourceloaders.ResourceLoader;
+import ru.histone.resourceloaders.StreamResource;
+import ru.histone.resourceloaders.StringResource;
 import ru.histone.utils.ArrayUtils;
-import ru.histone.utils.BOMInputStream;
 import ru.histone.utils.IOUtils;
 import ru.histone.utils.StringUtils;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringReader;
 import java.lang.reflect.Array;
 import java.net.URI;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -426,7 +479,7 @@ public class Evaluator {
 
 
     private Node runNameSpaceMacro(MacroFunc macro, List<Node> args, EvaluatorContext context) throws EvaluatorException {
-       // MacroFunc macro = context.getMacro(name);
+        // MacroFunc macro = context.getMacro(name);
         if (macro == null) {
             Histone.runtime_log_warn("macro not found");
             return nodeFactory.UNDEFINED;
@@ -458,7 +511,6 @@ public class Evaluator {
         }
         String path = pathElement.asText();
         Resource resource = null;
-        InputStream resourceStream = null;
         try {
             String currentBaseURI = getContextBaseURI(context);
             String resourceFullPath = resourceLoader.resolveFullPath(path, currentBaseURI);
@@ -467,45 +519,29 @@ public class Evaluator {
                 Histone.runtime_log_info("Resource already imported.");
                 return nodeFactory.UNDEFINED;
             } else {
-                resource = resourceLoader.load(path, currentBaseURI, new String[]{ContentType.TEXT});
-                if (resource == null) {
-                    Histone.runtime_log_warn("Can't import resource by path = '{}'. Resource was not found.", path);
+                resource = resourceLoader.load(path, currentBaseURI, new String[]{ContentType.TEXT, ContentType.AST});
+                JsonNode ast = readAstFromResource(resource, path, currentBaseURI);
+
+                if (ast == null) {
                     return nodeFactory.UNDEFINED;
                 }
-                resourceStream = resource.getInputStream();
-                if (resourceStream == null) {
-                    Histone.runtime_log_warn("Can't import resource by path = '{}'. Resource is unreadable", path);
-                    return nodeFactory.UNDEFINED;
-                }
-                String templateContent = IOUtils.toString(resourceStream); //yeah... full file reading, because of our tokenizer is regexp-based :(
 
                 // Add this resource full path to context
                 context.addImportedResource(resourceFullPath.toString());
 
-                JsonNode parseResult = parser.parse(templateContent);
                 URI resourceURI = (resource.getBaseHref() != null) ? URI.create(resource.getBaseHref()) : null;
                 if (resourceURI != null && resourceURI.isAbsolute() && !resourceURI.isOpaque()) {
                     context.setBaseURI(resourceURI.toString());
-//                    context.setGlobalValue(GlobalProperty.BASE_URI, nodeFactory.string(resourceURI.toString()));
                 }
-//                nodeFactory.string(processInternal(parseResult, context));  -  WTF??
-                processInternal(parseResult, context);
+                processInternal(ast, context);
                 context.setBaseURI(currentBaseURI);
-//                context.setGlobalValue(GlobalProperty.BASE_URI, currentBaseURI == null ? nodeFactory.NULL : nodeFactory.string(currentBaseURI.toString()));
 
                 return nodeFactory.UNDEFINED;
             }
         } catch (ResourceLoadException e) {
             Histone.runtime_log_warn_e("Resource import failed! Unresolvable resource.", e);
             return nodeFactory.UNDEFINED;
-        } catch (IOException e) {
-            Histone.runtime_log_warn_e("Resource import failed! Resource reading error.", e);
-            return nodeFactory.UNDEFINED;
-        } catch (ParserException e) {
-            Histone.runtime_log_warn_e("Resource import failed! Resource parsing error.", e);
-            return nodeFactory.UNDEFINED;
         } finally {
-            IOUtils.closeQuietly(resourceStream, log);
             IOUtils.closeQuietly(resource, log);
         }
     }
@@ -565,8 +601,8 @@ public class Evaluator {
                 } else {
                     // if target wasn't global object, then we need to check if we have Node function
                     if (!nodeFunctionsManager.hasFunction(targetNode, name)) {
-                        if(targetNode.isNamespace()){
-                            NameSpaceNode  nameSpaceNode = (NameSpaceNode) targetNode;
+                        if (targetNode.isNamespace()) {
+                            NameSpaceNode nameSpaceNode = (NameSpaceNode) targetNode;
                             if (nameSpaceNode.hasMacro(name)) {
                                 return runNameSpaceMacro(nameSpaceNode.getMacro(name), argsList, context);
                             }
@@ -576,9 +612,9 @@ public class Evaluator {
                     }
                     return runNodeFunc(targetNode, name, argsList);
                 }
-            //check for anonymous macros for prop elements
-            } else if(context.hasProp(name) && context.getProp(name).isNamespace()) {
-                NameSpaceNode  nameSpaceNode = (NameSpaceNode)  context.getProp(name);
+                //check for anonymous macros for prop elements
+            } else if (context.hasProp(name) && context.getProp(name).isNamespace()) {
+                NameSpaceNode nameSpaceNode = (NameSpaceNode) context.getProp(name);
                 if (nameSpaceNode.hasMacro("")) {
                     return runNameSpaceMacro(nameSpaceNode.getMacro(""), argsList, context);
                 }
@@ -666,35 +702,21 @@ public class Evaluator {
         BufferedReader reader = null;
         try {
             resource = resourceLoader.load(path, currentBaseURI, new String[]{ContentType.TEXT}, requestMap);
-            if (resource == null) {
-                Histone.runtime_log_warn(String.format("Can't load resource by path = '%s'. Resource was not found.", path));
-                return nodeFactory.UNDEFINED;
-
-            }
-            resourceStream = resource.getInputStream();
-            if (resourceStream == null) {
-                Histone.runtime_log_warn(String.format("Can't load resource by path = '%s'. Resource is unreadable.", path));
-                return nodeFactory.UNDEFINED;
-            }
+            String jsonContent = readStringFromResource(resource, path, currentBaseURI);
 
             JsonNode json = null;
-
-            StringWriter writer = new StringWriter();
-            IOUtils.copy(resourceStream, writer);
-            String s = writer.toString();
-
             //if server returned normal json, not jsonp we need to return it, regardless jsonp boolean flag
             try {
-                json = nodeFactory.jsonNode(new StringReader(s));
+                json = nodeFactory.jsonNode(new StringReader(jsonContent));
             } catch (JsonProcessingException e) {
                 // try isJsonp
                 if (isJsonp) {
-                    int i1 = s.indexOf("(");
-                    int i2 = s.indexOf(")");
+                    int i1 = jsonContent.indexOf("(");
+                    int i2 = jsonContent.indexOf(")");
 
                     if (i1 > 0 && i2 > 0 && i1 < i2) {
-                        s = s.substring(s.indexOf('(') + 1, s.lastIndexOf(')'));
-                        json = nodeFactory.jsonNode(new StringReader(s));
+                        jsonContent = jsonContent.substring(jsonContent.indexOf('(') + 1, jsonContent.lastIndexOf(')'));
+                        json = nodeFactory.jsonNode(new StringReader(jsonContent));
                     }
                 }
             }
@@ -734,24 +756,15 @@ public class Evaluator {
         }
 
         Resource resource = null;
-        InputStream resourceStream = null;
         try {
             resource = resourceLoader.load(path, currentBaseURI, new String[]{ContentType.TEXT}, requestMap);
-            if (resource == null) {
-                Histone.runtime_log_warn(String.format("Can't load resource by path = '%s'. Resource was not found.", path));
-                return nodeFactory.UNDEFINED;
-            }
-            resourceStream = resource.getInputStream();
-            if (resourceStream == null) {
-                Histone.runtime_log_warn(String.format("Can't load resource by path = '%s'. Resource is unreadable.", path));
-                return nodeFactory.UNDEFINED;
-            }
-            return nodeFactory.string(resourceStream);
+            String content = readStringFromResource(resource, path, currentBaseURI);
+
+            return nodeFactory.string(content);
         } catch (Exception e) {
             Histone.runtime_log_warn_e("Resource loadText failed! Unresolvable resource.", e);
             return nodeFactory.UNDEFINED;
         } finally {
-            IOUtils.closeQuietly(resourceStream, log);
             IOUtils.closeQuietly(resource, log);
         }
     }
@@ -773,55 +786,37 @@ public class Evaluator {
             if (args.get(1).isObject()) {
                 requestMap = args.get(1).getAsObject();
             } else {
-               // throw new GlobalFunctionExecutionException("Wrong argument type: " + args.get(1).getAsString().getValue());
+                // throw new GlobalFunctionExecutionException("Wrong argument type: " + args.get(1).getAsString().getValue());
             }
         }
 
         Resource resource = null;
-        InputStream resourceStream = null;
         try {
-            resource = resourceLoader.load(path, currentBaseURI, new String[]{ContentType.TEXT}, requestMap);
-            if (resource == null) {
-                Histone.runtime_log_warn("Can't include resource by path = '{}'. Resource was not found.", path);
-                return nodeFactory.UNDEFINED;
-            }
-            resourceStream = resource.getInputStream();
-            if (resourceStream == null) {
-                Histone.runtime_log_warn("Can't include resource by path = '{}'. Resource is unreadable", path);
-                return nodeFactory.UNDEFINED;
-            }
-            String templateContent = IOUtils.toString(resourceStream); //yeah... full file reading, because of our tokenizer is regexp-based :(
-            ArrayNode parseResult = parser.parse(templateContent);
+            resource = resourceLoader.load(path, currentBaseURI, new String[]{ContentType.TEXT, ContentType.AST}, requestMap);
+            JsonNode ast = readAstFromResource(resource, path, currentBaseURI);
+
             GlobalObjectNode globalCopy = new GlobalObjectNode(nodeFactory, global);
             URI resourceUri = (resource.getBaseHref() != null) ? URI.create(resource.getBaseHref()) : null;
             if (args.size() <= 1) {
                 EvaluatorContext includeContext = EvaluatorContext.createEmpty(nodeFactory, globalCopy);
                 if (resourceUri != null && resourceUri.isAbsolute() && !resourceUri.isOpaque()) {
                     includeContext.setBaseURI(resourceUri.toString());
-//                globalCopy.add(GlobalProperty.BASE_URI.getName(), nodeFactory.string(resourceUri.toString()));
                 }
-                String includeOutput = processInternal(parseResult, includeContext);
+                String includeOutput = processInternal(ast, includeContext);
                 return nodeFactory.string(includeOutput);
             }
             EvaluatorContext includeContext = EvaluatorContext.createFromJson(nodeFactory, globalCopy, args.get(1).getAsJsonNode());
             includeContext.setBaseURI(resourceUri.toString());
-            StringHistoneNode result = nodeFactory.string(processInternal(parseResult, includeContext));
+            StringHistoneNode result = nodeFactory.string(processInternal(ast, includeContext));
             context.setBaseURI(currentBaseURI);
             return result;
         } catch (ResourceLoadException e) {
             Histone.runtime_log_warn_e("Resource include failed! Unresolvable resource.", e);
             return nodeFactory.UNDEFINED;
-        } catch (IOException e) {
-            Histone.runtime_log_warn_e("Resource include failed! Resource reading error.", e);
-            return nodeFactory.UNDEFINED;
-        } catch (ParserException e) {
-            Histone.runtime_log_warn_e("Resource include failed! Resource parsing error.", e);
-            return nodeFactory.UNDEFINED;
         } catch (EvaluatorException e) {
             Histone.runtime_log_warn_e("Resource include failed! Resource evaluation error.", e);
             return nodeFactory.UNDEFINED;
         } finally {
-            IOUtils.closeQuietly(resourceStream, log);
             IOUtils.closeQuietly(resource, log);
         }
     }
@@ -866,21 +861,10 @@ public class Evaluator {
         final String currentBaseURI = getContextBaseURI(context);
 
         Resource resource = null;
-        InputStream resourceStream = null;
         try {
-            resource = resourceLoader.load(path, currentBaseURI, new String[]{ContentType.TEXT});
-            if (resource == null) {
-                Histone.runtime_log_warn("Can't get required resource by path = '{}'. Resource was not found.", path);
-                return nodeFactory.UNDEFINED;
-            }
-            resourceStream = resource.getInputStream();
-            if (resourceStream == null) {
-                Histone.runtime_log_warn("Can't get required resource by path = '{}'. Resource is unreadable", path);
-                return nodeFactory.UNDEFINED;
-            }
+            resource = resourceLoader.load(path, currentBaseURI, new String[]{ContentType.TEXT, ContentType.AST});
 
-            String templateContent = IOUtils.toString(resourceStream); //yeah... full file reading, because of our tokenizer is regexp-based :(
-            ArrayNode parseResult = parser.parse(templateContent);
+            JsonNode ast = readAstFromResource(resource, path, currentBaseURI);
 
             GlobalObjectNode globalCopy = new GlobalObjectNode(nodeFactory, global);
             URI resourceUri = (resource.getBaseHref() != null) ? URI.create(resource.getBaseHref()) : null;
@@ -888,15 +872,15 @@ public class Evaluator {
             if (resourceUri != null && resourceUri.isAbsolute() && !resourceUri.isOpaque()) {
                 includeContext.setBaseURI(resourceUri.toString());
             }
-            processInternal(parseResult, includeContext);
+            processInternal(ast, includeContext);
             NameSpaceNode nameSpaceNode = nodeFactory.nameSpace();
             Map<String, Node> props = includeContext.getProps();
-            for(String key: props.keySet()){
-               nameSpaceNode.add(key, props.get(key));
+            for (String key : props.keySet()) {
+                nameSpaceNode.add(key, props.get(key));
             }
 
             Map<String, MacroFunc> macros = includeContext.getMacros();
-            for(String key: macros.keySet()){
+            for (String key : macros.keySet()) {
                 nameSpaceNode.addMacro(key, macros.get(key));
             }
 
@@ -904,17 +888,10 @@ public class Evaluator {
         } catch (ResourceLoadException e) {
             Histone.runtime_log_warn_e("Required resource failed! Unresolvable resource.", e);
             return nodeFactory.UNDEFINED;
-        } catch (IOException e) {
-            Histone.runtime_log_warn_e("Required resource failed! Resource reading error.", e);
-            return nodeFactory.UNDEFINED;
-        } catch (ParserException e) {
-            Histone.runtime_log_warn_e("Required resource failed! Resource parsing error.", e);
-            return nodeFactory.UNDEFINED;
         } catch (EvaluatorException e) {
-                Histone.runtime_log_warn_e("Required resource failed! Resource evaluation error.", e);
-                return nodeFactory.UNDEFINED;
+            Histone.runtime_log_warn_e("Required resource failed! Resource evaluation error.", e);
+            return nodeFactory.UNDEFINED;
         } finally {
-            IOUtils.closeQuietly(resourceStream, log);
             IOUtils.closeQuietly(resource, log);
         }
     }
@@ -1229,7 +1206,7 @@ public class Evaluator {
             startIdx++;
         } else {
             if ("baseURI".equals(element.path(0).asText()) && !context.hasStackProp("baseURI")) {
-                if (context.getGlobal().hasProp("baseURI") ) {
+                if (context.getGlobal().hasProp("baseURI")) {
                     ctx = context.getGlobal().getProp("baseURI");
                     startIdx = startIdx + 1;
                 } else {
@@ -1278,5 +1255,83 @@ public class Evaluator {
         log.debug("processSelector(): result={}", new Object[]{result});
 
         return result;
+    }
+
+    private JsonNode readAstFromResource(Resource resource, String path, String currentBaseURI) throws EvaluatorException {
+        JsonNode ast = null;
+        try {
+            if (resource == null) {
+                throw new ResourceLoadException(MessageFormat.format("Can't import resource by path = '{}'. Resource was not found.", path));
+            }
+
+            if (!(resource instanceof StringResource) && !(resource instanceof StreamResource) && !(resource instanceof AstResource)) {
+                throw new ResourceLoadException(MessageFormat.format("Can't import resource by path = '{}'. Resource type '{}' is unknown", path, resource.getClass()));
+            }
+
+            String templateContent = null;
+            if (resource instanceof StringResource) {
+                templateContent = ((StringResource) resource).getContent();
+            } else if (resource instanceof StreamResource) {
+                templateContent = IOUtils.toString(((StreamResource) resource).getContent());
+            } else if (resource instanceof AstResource) {
+                ast = ((AstResource) resource).getContent();
+            } else {
+                throw new ResourceLoadException(MessageFormat.format("Unsupported resource class: {0}", resource.getClass()));
+            }
+
+            if (resource instanceof StringResource || resource instanceof StreamResource) {
+                if (templateContent == null) {
+                    throw new ResourceLoadException(MessageFormat.format("Can't import resource by path: {0}. Resource is unreadable", path));
+                }
+
+                if (resource.getContentType() == ContentType.TEXT) {
+                    ast = parser.parse(templateContent);
+                } else if (resource.getContentType() == ContentType.AST) {
+                    ast = nodeFactory.jsonNode(templateContent);
+                } else {
+                    throw new ResourceLoadException(MessageFormat.format("Unsupported content-type:{0} of resource href:{1}, baseHref:{2}", resource.getContentType(), path, currentBaseURI));
+                }
+            } else {
+                if (ast == null) {
+                    throw new ResourceLoadException(MessageFormat.format("Can't import resource by path = {0}. Resource is unreadable", path));
+                }
+            }
+        } catch (IOException e) {
+            throw new ResourceLoadException("Resource import failed! Resource reading error.", e);
+        } catch (ParserException e) {
+            throw new ResourceLoadException("Resource import failed! Resource parsing error.", e);
+        }
+
+        return ast;
+    }
+
+    private String readStringFromResource(Resource resource, String path, String currentBaseURI) throws ResourceLoadException {
+        String content = null;
+
+        try {
+            if (resource == null) {
+                throw new ResourceLoadException(MessageFormat.format("Can't load resource by path: {0}. Resource was not found.", path));
+            }
+
+            if (!(resource instanceof StringResource) && !(resource instanceof StreamResource)) {
+                throw new ResourceLoadException(MessageFormat.format("Can't import resource by path: {0}. Resource type {1} is unknown", path, resource.getClass()));
+            }
+
+            if (resource instanceof StringResource) {
+                content = ((StringResource) resource).getContent();
+            } else if (resource instanceof StreamResource) {
+                content = IOUtils.toString(((StreamResource) resource).getContent());
+            } else {
+                throw new ResourceLoadException(MessageFormat.format("Unsupported resource class: {0}", resource.getClass()));
+            }
+
+            if (content == null) {
+                throw new ResourceLoadException(MessageFormat.format("Can't load resource by path: {0}. Resource is unreadable.", path));
+            }
+        } catch (IOException e) {
+            throw new ResourceLoadException("Resource import failed! Resource reading error.", e);
+        }
+
+        return content;
     }
 }

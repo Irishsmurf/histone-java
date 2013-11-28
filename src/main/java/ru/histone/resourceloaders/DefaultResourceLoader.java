@@ -16,6 +16,7 @@
 package ru.histone.resourceloaders;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.Header;
 import org.apache.http.HttpRequest;
@@ -48,8 +49,10 @@ import ru.histone.evaluator.nodes.Node;
 import ru.histone.evaluator.nodes.NodeFactory;
 import ru.histone.evaluator.nodes.ObjectHistoneNode;
 import ru.histone.parser.Parser;
+import ru.histone.parser.ParserException;
 import ru.histone.tokenizer.TokenizerFactory;
 import ru.histone.utils.BOMInputStream;
+import ru.histone.utils.IOUtils;
 import ru.histone.utils.PathUtils;
 
 import java.io.ByteArrayInputStream;
@@ -91,7 +94,7 @@ public class DefaultResourceLoader implements ResourceLoader {
     /**
      * {@inheritDoc}
      */
-    protected Resource load(String location, String baseLocation, Node... args) throws ResourceLoadException {
+    private Resource load(String location, String baseLocation, Node... args) throws ResourceLoadException {
         log.debug("Trying to load resource from location={}, with baseLocation={}", new Object[]{location, baseLocation});
 
         String fullLocation = PathUtils.resolveUrl(location, baseLocation);
@@ -122,15 +125,41 @@ public class DefaultResourceLoader implements ResourceLoader {
     public Resource load(String href, String baseHref, String[] contentTypes, Node... args) throws ResourceLoadException {
         final Set<String> contentTypesSet = new HashSet<String>();
         contentTypesSet.addAll(Arrays.asList(contentTypes));
-
-        if (contentTypesSet.contains(ContentType.TEXT)) {
-            return load(href, baseHref, args);
+        Resource resource = null;
+        if (contentTypesSet.contains(ContentType.TEXT) || contentTypesSet.contains(ContentType.AST)) {
+            resource = load(href, baseHref, args);
         } else {
             throw new UnsupportedContentTypeException(contentTypes, getClass());
         }
+
+        if (contentTypesSet.contains(ContentType.AST)) {
+            String content = null;
+            ArrayNode ast = null;
+
+            try {
+                if (resource instanceof StringResource) {
+                    content = ((StringResource) resource).getContent();
+                } else if (resource instanceof StreamResource) {
+                    content = IOUtils.toString(((StreamResource) resource).getContent());
+                } else {
+                    throw new ResourceLoadException("Unsupported resource class:" + resource.getClass());
+                }
+                ast = parser.parse(content);
+            } catch (IOException e) {
+                throw new ResourceLoadException("Error reading resource InputStream", e);
+            } catch (ParserException e) {
+                throw new ResourceLoadException("Error parsing resource", e);
+            }
+
+            String fullLocation = PathUtils.resolveUrl(href, baseHref);
+            resource = new AstResource(ast, fullLocation);
+        }
+
+        return resource;
+
     }
 
-    private Resource loadFileResource(URI location) {
+    private StreamResource loadFileResource(URI location) {
         InputStream stream = null;
 
         File file = new File(location);
@@ -158,7 +187,7 @@ public class DefaultResourceLoader implements ResourceLoader {
         return new StreamResource(bomStream, location.toString(), ContentType.TEXT, file.lastModified());
     }
 
-    private Resource loadHttpResource(URI location, Node[] args) {
+    private StreamResource loadHttpResource(URI location, Node[] args) {
         URI newLocation = URI.create(location.toString().replace("#fragment", ""));
         final Map<Object, Node> requestMap = args != null && args.length != 0 && args[0] instanceof ObjectHistoneNode ? ((ObjectHistoneNode) args[0])
                 .getElements() : new HashMap<Object, Node>();
@@ -240,31 +269,32 @@ public class DefaultResourceLoader implements ResourceLoader {
         }
         return new StreamResource(input, location.toString(), ContentType.TEXT);
     }
-    
-    private Resource loadDataResource(String location){
 
-        InputStream input = null;
-        if(!location.matches("data:(.*);base64,(.*)")){
+    private Resource loadDataResource(String location) {
+
+        Resource resource = null;
+
+        if (!location.matches("data:(.*);base64,(.*)")) {
             return null;
         }
-        URI uri = makeFullLocation(location,"");
+        URI uri = makeFullLocation(location, "");
         String[] stringUri = uri.getSchemeSpecificPart().split(",");
 
-        if(stringUri.length > 1){
+        if (stringUri.length > 1) {
             String toEncode = stringUri[1];
-            if(stringUri[0].contains("base64") ){
-                input = new ByteArrayInputStream(Base64.decodeBase64(toEncode.getBytes()));
+            if (stringUri[0].contains("base64")) {
+                InputStream stream = new ByteArrayInputStream(Base64.decodeBase64(toEncode.getBytes()));
+                resource = new StreamResource(stream, location.toString(), ContentType.TEXT);
             } else {
-                input = new ByteArrayInputStream(toEncode.getBytes());
+                resource = new StringResource(toEncode, location.toString(), ContentType.TEXT);
             }
         } else {
-            input = new ByteArrayInputStream("".getBytes());
+            resource = new StringResource("", location.toString(), ContentType.TEXT);
         }
 
-        return new StreamResource(input, location.toString(), ContentType.TEXT);
+        return resource;
     }
-    
-    
+
 
     private Map<String, String> filterRequestHeaders(Map<String, String> requestHeaders) {
         String[] prohibited = {"accept-charset", "accept-encoding", "access-control-request-headers", "access-control-request-method",

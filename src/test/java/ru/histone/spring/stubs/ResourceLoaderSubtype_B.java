@@ -28,7 +28,7 @@ public class ResourceLoaderSubtype_B implements ResourceLoader {
 //        private final URI uri = URI.create("dummyB://stubresource");
 //
 //        @Override
-//        public InputStream getInputStream() throws IOException {
+//        public InputStream getContent() throws IOException {
 //            return new ByteArrayInputStream("resolver_b_result".getBytes());
 //        }
 //

@@ -20,7 +20,7 @@ import ru.histone.utils.IOUtils;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class StreamResource implements Resource {
+public class StreamResource implements Resource<InputStream> {
     private final InputStream stream;
     private final String baseHref;
     private final String contentType;
@@ -40,7 +40,7 @@ public class StreamResource implements Resource {
     }
 
     @Override
-    public InputStream getInputStream() throws IOException {
+    public InputStream getContent() throws IOException {
         return stream;
     }
 

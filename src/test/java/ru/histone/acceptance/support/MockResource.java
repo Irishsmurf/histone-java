@@ -28,7 +28,7 @@ public class MockResource implements Resource {
 //    }
 //
 //    @Override
-//    public InputStream getInputStream() throws IOException {
+//    public InputStream getContent() throws IOException {
 //        return new ByteArrayInputStream(dataHolder.getData().getBytes());
 //    }
 //
@@ -43,7 +43,7 @@ public class MockResource implements Resource {
 //    }
 
     @Override
-    public InputStream getInputStream() throws IOException {
+    public InputStream getContent() throws IOException {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 

@@ -703,7 +703,7 @@ public class ParserImpl {
         } else if (tokenizer.isNext(TokenType.EXPR_DOUBLE)) {
             Token token = tokenizer.next();
             BigDecimal val = new BigDecimal(token.getContent());
-            tree = nodeFactory.jsonArray(AstNodeType.DOUBLE, nodeFactory.jsonNumber(val));
+            tree = nodeFactory.jsonArray(AstNodeType.DOUBLE, nodeFactory.jsonNumber(val.stripTrailingZeros()));
         } else if (tokenizer.isNext(TokenType.EXPR_STRING)) {
             Token token = tokenizer.next();
             String val = unescapeString(StringUtils.stripSuroundings(token.getContent(), "'\""));
