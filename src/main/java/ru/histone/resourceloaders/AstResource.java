@@ -1,5 +1,5 @@
 /**
- *    Copyright 2012 MegaFon
+ *    Copyright 2013 MegaFon
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package ru.histone.resourceloaders;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import java.io.IOException;
-import java.io.InputStream;
 
 public class AstResource implements Resource<JsonNode> {
     private final String baseHref;
