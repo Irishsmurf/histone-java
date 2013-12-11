@@ -79,8 +79,7 @@ public class GlobalFunctionsManager {
      * @param name function name
      * @param args arguments values passed to function
      * @return function result
-     * @throws GlobalFunctionExecutionException
-     *          if no such function registered, or exception occurs during function execution
+     * @throws GlobalFunctionExecutionException if no such function registered, or exception occurs during function execution
      */
     public Node execute(String name, Node... args) throws GlobalFunctionExecutionException {
         GlobalFunction function = globalFunctions.get(name);
@@ -91,6 +90,8 @@ public class GlobalFunctionsManager {
         Node result;
         try {
             result = function.execute(args);
+        } catch (GlobalFunctionStopTheWorldException e) {
+            throw e;
         } catch (Exception e) {
             throw new GlobalFunctionExecutionException(String.format("GlobalFunction '%s' execution error", name), e);
         }

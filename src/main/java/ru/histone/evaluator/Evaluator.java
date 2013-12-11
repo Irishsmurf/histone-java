@@ -23,9 +23,11 @@ import org.slf4j.LoggerFactory;
 import ru.histone.GlobalProperty;
 import ru.histone.Histone;
 import ru.histone.HistoneException;
+import ru.histone.HistoneStopTheWorldException;
 import ru.histone.evaluator.functions.global.DayOfWeek;
 import ru.histone.evaluator.functions.global.DaysInMonth;
 import ru.histone.evaluator.functions.global.GlobalFunctionExecutionException;
+import ru.histone.evaluator.functions.global.GlobalFunctionStopTheWorldException;
 import ru.histone.evaluator.functions.global.GlobalFunctionsManager;
 import ru.histone.evaluator.functions.global.Max;
 import ru.histone.evaluator.functions.global.Min;
@@ -908,6 +910,8 @@ public class Evaluator {
     private Node runGlobalFunc(String name, List<Node> args) throws EvaluatorException {
         try {
             return globalFunctionsManager.execute(name, args.toArray((Node[]) Array.newInstance(Node.class, args.size())));
+        } catch (GlobalFunctionStopTheWorldException e) {
+            throw new HistoneStopTheWorldException(e.getPayload(), "StopTheWorld exception in GlobalNodeFunction.execute method", e);
         } catch (GlobalFunctionExecutionException e) {
             Histone.runtime_log_warn("Global function '%s' execution failed!", e, name);
             return nodeFactory.UNDEFINED;
