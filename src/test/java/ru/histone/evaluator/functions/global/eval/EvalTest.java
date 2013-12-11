@@ -13,14 +13,13 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package ru.histone.eval;
+package ru.histone.evaluator.functions.global.eval;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import ru.histone.Histone;
 import ru.histone.HistoneBuilder;
@@ -40,7 +39,7 @@ public class EvalTest {
     public void init() throws HistoneException, URISyntaxException {
         histone = new HistoneBuilder().build();
         om = new ObjectMapper();
-        baseUri = this.getClass().getClassLoader().getResource("ru/histone/eval").toURI().toString();
+        baseUri = this.getClass().getClassLoader().getResource("ru/histone/evaluator/functions/global/eval").toURI().toString();
     }
 
     @Test

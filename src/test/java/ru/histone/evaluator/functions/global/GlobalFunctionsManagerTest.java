@@ -27,6 +27,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class GlobalFunctionsManagerTest {
 
@@ -38,12 +39,13 @@ public class GlobalFunctionsManagerTest {
     private GlobalFunction emptyFunction1_DuplicatedName;
     private GlobalFunction emptyFunction1_DifferentCase;
     private GlobalFunction functionWithException;
+    private GlobalFunction functionWithStopTheWorldException;
     private NodeFactory nodeFactory;
 
     @Before
     public void before() {
         nodeFactory = new NodeFactory(new ObjectMapper());
-        
+
         emptyFunction1 = new GlobalFunction(nodeFactory) {
             @Override
             public String getName() {
@@ -103,7 +105,34 @@ public class GlobalFunctionsManagerTest {
                 throw new RuntimeException("Some exception");
             }
         };
+
+        functionWithStopTheWorldException = new GlobalFunction(nodeFactory) {
+            @Override
+            public String getName() {
+                return "functionWithException";
+            }
+
+            @Override
+            public Node execute(Node... args) throws GlobalFunctionExecutionException {
+                CustomPayload payload = new CustomPayload("test123");
+                throw new GlobalFunctionStopTheWorldException(payload, "Custom stop");
+            }
+
+        };
     }
+
+    public static class CustomPayload {
+        private String text;
+
+        public CustomPayload(String text) {
+            this.text = text;
+        }
+
+        public String getText() {
+            return text;
+        }
+    }
+
 
     @Test
     public void checkFunctionOnEmptyFunctionList() {
@@ -155,12 +184,12 @@ public class GlobalFunctionsManagerTest {
         GlobalFunctionsManager manager = new GlobalFunctionsManager();
         manager.registerFunction(emptyFunction1);
         manager.registerFunction(emptyFunction1_DifferentCase);
-        
+
         Node result1 = manager.execute(emptyFunction1.getName());
         Node result2 = manager.execute(emptyFunction1_DifferentCase.getName());
 
-        assertEquals("emptyFunction1",result1.getAsString().getValue());
-        assertEquals("emptyfunction1",result2.getAsString().getValue());
+        assertEquals("emptyFunction1", result1.getAsString().getValue());
+        assertEquals("emptyfunction1", result2.getAsString().getValue());
     }
 
     @Test
@@ -195,6 +224,25 @@ public class GlobalFunctionsManagerTest {
         manager.registerFunction(functionWithException);
 
         manager.execute("functionWithException");
+    }
+
+    @Test
+    public void stopTheWorldExceptionInGlobalFunction() {
+        GlobalFunctionsManager manager = new GlobalFunctionsManager();
+        manager.registerFunction(functionWithStopTheWorldException);
+
+        try {
+            manager.execute("functionWithException");
+        } catch (GlobalFunctionStopTheWorldException e) {
+            assertNotNull(e.getPayload());
+            assertNotNull(e.getMessage());
+            assertTrue(e.getPayload() instanceof CustomPayload);
+            assertEquals("Custom stop", e.getMessage());
+            assertEquals("test123", ((CustomPayload) e.getPayload()).getText());
+
+            return;
+        }
+        fail("Expected GlobalFunctionStopTheWorldException exception");
     }
 
     @Test

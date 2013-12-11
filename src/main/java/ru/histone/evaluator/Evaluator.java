@@ -911,7 +911,7 @@ public class Evaluator {
         try {
             return globalFunctionsManager.execute(name, args.toArray((Node[]) Array.newInstance(Node.class, args.size())));
         } catch (GlobalFunctionStopTheWorldException e) {
-            throw new HistoneStopTheWorldException(e.getPayload(), "StopTheWorld exception in GlobalNodeFunction.execute method", e);
+            throw new HistoneStopTheWorldException(e.getPayload(), "StopTheWorld exception in global function " + name + "() method", e);
         } catch (GlobalFunctionExecutionException e) {
             Histone.runtime_log_warn("Global function '%s' execution failed!", e, name);
             return nodeFactory.UNDEFINED;
