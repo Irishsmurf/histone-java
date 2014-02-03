@@ -22,6 +22,11 @@ import ru.histone.Histone;
 import ru.histone.HistoneBuilder;
 import ru.histone.HistoneException;
 import ru.histone.evaluator.nodes.NodeFactory;
+import ru.histone.utils.IOUtils;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringWriter;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -66,5 +71,13 @@ public abstract class AbstractOptimizersTest {
             fail("Expected unsafe:" + ast.get(1).get(0).toString());
         }
     }
+
+    protected String input(String filename) throws IOException {
+        StringWriter sw = new StringWriter();
+        InputStream is = getClass().getClassLoader().getResourceAsStream("optimizer/" + filename);
+        IOUtils.copy(is, sw);
+        return sw.toString();
+    }
+
 
 }
