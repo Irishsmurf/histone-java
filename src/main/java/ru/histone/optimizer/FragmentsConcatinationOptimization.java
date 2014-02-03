@@ -17,6 +17,7 @@ package ru.histone.optimizer;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 import ru.histone.HistoneException;
 import ru.histone.evaluator.nodes.NodeFactory;
 import ru.histone.parser.AstNodeType;
@@ -41,10 +42,26 @@ public class FragmentsConcatinationOptimization extends AbstractASTWalker {
             } else if (node.isArray() && node.size() > 1 && node.get(0).isInt() && node.get(0).asInt() == AstNodeType.STRING) {
                 sb.append(node.get(1).asText());
             } else {
-                result.add(nodeFactory.jsonString(sb.toString()));
-                sb.setLength(0);
+                if (sb.length() > 0) {
+                    result.add(nodeFactory.jsonString(sb.toString()));
+                    sb.setLength(0);
+                }
                 JsonNode processedNode = processAstNode(node);
-                result.add(processedNode);
+                if (processedNode.isArray()) {
+                    processedNode = simplifyArrayNode((ArrayNode) processedNode);
+                }
+                if (processedNode.isArray() && processedNode.size() == 1) {
+                    if (result.size() > 0 && result.get(result.size() - 1).isTextual()) {
+                        TextNode prev = (TextNode) result.get(result.size() - 1);
+                        TextNode cur = (TextNode) processedNode.get(0);
+                        TextNode newElem = (TextNode) nodeFactory.jsonString(prev.textValue() + cur.textValue());
+                        result.set(result.size() - 1, newElem);
+                    } else {
+                        result.add(processedNode.get(0));
+                    }
+                } else {
+                    result.add(processedNode);
+                }
             }
         }
         if (sb.length() > 0) {
