@@ -17,6 +17,7 @@ package ru.histone.optimizer;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import ru.histone.Histone;
 import ru.histone.HistoneBuilder;
@@ -34,6 +35,8 @@ import static org.junit.Assert.assertEquals;
  * User: sazonovkirill@gmail.com
  * Date: 25.12.12
  */
+@Ignore
+@Deprecated
 public class UselessVariablesTest {
     private Histone histone;
 

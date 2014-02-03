@@ -32,7 +32,7 @@ import java.util.Arrays;
  * User: sazonovkirill@gmail.com
  * Date: 25.12.12
  */
-public class ConstantFolding extends BaseOptimization {
+public class ConstantFolding extends AbstractASTWalker {
     private final Evaluator evaluator;
 
     public ConstantFolding(NodeFactory nodeFactory, Evaluator evaluator) {

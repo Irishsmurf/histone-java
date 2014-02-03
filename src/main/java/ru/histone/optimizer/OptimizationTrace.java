@@ -24,6 +24,7 @@ import java.util.List;
 /**
  * Contains some debug information about optimization of histone template AST.
  */
+@Deprecated
 public class OptimizationTrace {
     /**
      * Initial AST.

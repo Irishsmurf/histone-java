@@ -32,7 +32,7 @@ import java.util.Set;
  * User: sazonovkirill@gmail.com
  * Date: 09.01.13
  */
-public class UselessVariables extends BaseOptimization {
+public class UselessVariables extends AbstractASTWalker {
     /**
      * @see {@link Mode}
      */

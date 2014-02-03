@@ -28,7 +28,7 @@ import ru.histone.parser.AstNodeType;
  * User: sazonovkirill@gmail.com
  * Date: 09.01.13
  */
-public class ConstantIfCases extends BaseOptimization {
+public class ConstantIfCases extends AbstractASTWalker {
     public ConstantIfCases(NodeFactory nodeFactory) {
         super(nodeFactory);
     }

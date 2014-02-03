@@ -40,6 +40,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.text.MessageFormat;
 
+@Deprecated
 public class AstImportResolver {
 
     private static final String HISTONE = "HISTONE";

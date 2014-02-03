@@ -18,6 +18,7 @@ package ru.histone.optimizer;
 /**
  * Allows to enable/disable different steps of optimization.
  */
+@Deprecated
 public class OptimizationProfile {
     private boolean useImportsResolving = false;
     private boolean useConstantsFolding = false;

@@ -38,6 +38,7 @@ import static org.junit.Assert.assertTrue;
  * Date: 25.12.12
  */
 @Ignore("This test validates only one optimization - ConstantPropagation - and fails, due to now optimization includes much more modules")
+@Deprecated
 public class ConstantPropagationTest {
     private Histone histone;
 

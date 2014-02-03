@@ -32,7 +32,7 @@ import ru.histone.evaluator.functions.node.NodeFunctionsManager;
 import ru.histone.evaluator.nodes.GlobalObjectNode;
 import ru.histone.evaluator.nodes.Node;
 import ru.histone.evaluator.nodes.NodeFactory;
-import ru.histone.optimizer.*;
+import ru.histone.optimizer.AstImportResolver;
 import ru.histone.parser.Parser;
 import ru.histone.resourceloaders.DefaultResourceLoader;
 import ru.histone.resourceloaders.ResourceLoader;
@@ -88,6 +88,7 @@ public class HistoneBuilder {
 
     /**
      * Set node factory
+     *
      * @param nodeFactory
      */
     public void setNodeFactory(NodeFactory nodeFactory) {
@@ -350,17 +351,7 @@ public class HistoneBuilder {
         histoneBootstrap.setNodeFactory(nodeFactory);
         histoneBootstrap.setParser(parser);
         histoneBootstrap.setEvaluator(evaluator);
-        histoneBootstrap.setAstImportResolver(astImportResolver);
         histoneBootstrap.setResourceLoader(new DefaultResourceLoader());
-
-        // Optimizers
-        histoneBootstrap.setConstantFolding(new ConstantFolding(nodeFactory, evaluator));
-        histoneBootstrap.setConstantPropagation(new ConstantPropagation(nodeFactory));
-        histoneBootstrap.setConstantIfCases(new ConstantIfCases(nodeFactory));
-        histoneBootstrap.setUselessVariables(new UselessVariables(nodeFactory));
-        histoneBootstrap.setAstMarker(new AstMarker(nodeFactory));
-        histoneBootstrap.setAstOptimizer(new AstOptimizer(nodeFactory, evaluator));
-        histoneBootstrap.setSimplifier(new Simplifier(nodeFactory));
 
         return new Histone(histoneBootstrap);
     }

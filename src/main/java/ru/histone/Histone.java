@@ -18,25 +18,21 @@ package ru.histone;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.NullNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.histone.deparser.Deparser;
 import ru.histone.deparser.IDeparser;
 import ru.histone.evaluator.Evaluator;
-import ru.histone.evaluator.EvaluatorException;
 import ru.histone.evaluator.nodes.NodeFactory;
+import ru.histone.optimizer.AbstractASTWalker;
 import ru.histone.optimizer.AdditionalDataForOptimizationDebug;
-import ru.histone.optimizer.AstImportResolver;
-import ru.histone.optimizer.AstMarker;
-import ru.histone.optimizer.AstOptimizer;
-import ru.histone.optimizer.BaseOptimization;
-import ru.histone.optimizer.ConstantFolding;
-import ru.histone.optimizer.ConstantIfCases;
-import ru.histone.optimizer.ConstantPropagation;
+import ru.histone.optimizer.ConstantsSubstitutionOptimizer;
 import ru.histone.optimizer.OptimizationProfile;
 import ru.histone.optimizer.OptimizationTrace;
-import ru.histone.optimizer.Simplifier;
-import ru.histone.optimizer.UselessVariables;
+import ru.histone.optimizer.OptimizationTypes;
+import ru.histone.optimizer.SafeASTEvaluationOptimizer;
+import ru.histone.optimizer.SafeASTNodesMarker;
 import ru.histone.parser.Parser;
 import ru.histone.parser.ParserException;
 import ru.histone.resourceloaders.AstResource;
@@ -53,6 +49,10 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.io.Writer;
 import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * Main Histone engine class. Histone template parsing/evaluation is done here.<br/>
@@ -80,17 +80,7 @@ public class Histone {
     private Parser parser;
     private Evaluator evaluator;
     private NodeFactory nodeFactory;
-    private AstOptimizer astOptimizer;
-    private AstImportResolver astImportResolver;
-    private AstMarker astMarker;
     private ResourceLoader resourceLoader;
-
-    // Optimizers
-    private ConstantFolding constantFolding;
-    private ConstantPropagation constantPropagation;
-    private ConstantIfCases constantIfCases;
-    private UselessVariables uselessVariables;
-    private Simplifier simplifier;
 
     private final IDeparser deparser = new Deparser();
 
@@ -98,15 +88,7 @@ public class Histone {
         this.parser = bootstrap.getParser();
         this.evaluator = bootstrap.getEvaluator();
         this.nodeFactory = bootstrap.getNodeFactory();
-        this.astImportResolver = bootstrap.getAstImportResolver();
-        this.astMarker = bootstrap.getAstMarker();
-        this.astOptimizer = bootstrap.getAstOptimizer();
         this.resourceLoader = bootstrap.getResourceLoader();
-        this.constantFolding = bootstrap.getConstantFolding();
-        this.constantPropagation = bootstrap.getConstantPropagation();
-        this.constantIfCases = bootstrap.getConstantIfCases();
-        this.uselessVariables = bootstrap.getUselessVariables();
-        this.simplifier = bootstrap.getSimplifier();
     }
 
     public ArrayNode parseTemplateToAST(String templateData) throws HistoneException {
@@ -127,11 +109,50 @@ public class Histone {
     /**
      * Optimize specified AST.
      */
-    public ArrayNode optimizeAST(ArrayNode templateAST) throws HistoneException {
-        ArrayNode ast = astImportResolver.resolve(templateAST);
-        ast = astMarker.mark(ast);
-        ast = astOptimizer.optimize(ast);
-        ast = simplifier.simplify(ast);
+    public ArrayNode optimizeAST(ArrayNode templateAST, OptimizationTypes... optimizationsToRun) throws HistoneException {
+        return optimizeAST(templateAST, nodeFactory.jsonObject(), optimizationsToRun);
+    }
+
+    public ArrayNode optimizeAST(ArrayNode templateAST, ObjectNode context, OptimizationTypes... optimizationsToRun) throws HistoneException {
+//        Deque<AbstractASTWalker> optimizationsList = new LinkedList<AbstractASTWalker>();
+        ArrayList<AbstractASTWalker> optimizationsList = new ArrayList<AbstractASTWalker>();
+
+        Set<OptimizationTypes> optimizationsToRunSet = new TreeSet<OptimizationTypes>();
+        Collections.addAll(optimizationsToRunSet, optimizationsToRun);
+
+        ConstantsSubstitutionOptimizer constantsSubstitutionOptimizer = new ConstantsSubstitutionOptimizer(nodeFactory, context);
+        if (optimizationsToRunSet.contains(OptimizationTypes.CONSTANTS_SUBSTITUTION)) {
+            optimizationsList.add(0, constantsSubstitutionOptimizer);
+        }
+
+        SafeASTNodesMarker safeASTNodesMarker = new SafeASTNodesMarker(nodeFactory);
+        if (optimizationsToRunSet.contains(OptimizationTypes.SAFE_CODE_MARKER)) {
+            int idx = optimizationsList.indexOf(constantsSubstitutionOptimizer);
+            // if we don't have constantsSubstitutionOptimizer, then we will insert at idx=0,
+            // otherwise right after constantsSubstitutionOptimizer
+            optimizationsList.add(++idx, safeASTNodesMarker);
+        }
+
+        SafeASTEvaluationOptimizer safeASTEvaluationOptimizer = new SafeASTEvaluationOptimizer(nodeFactory, evaluator);
+        if (optimizationsToRunSet.contains(OptimizationTypes.SAFE_CODE_EVALUATION)) {
+            int idx = optimizationsList.indexOf(safeASTNodesMarker);
+            if (idx < 0) {
+                idx = optimizationsList.indexOf(constantsSubstitutionOptimizer);
+                // if we don't have constantsSubstitutionOptimizer, then we will insert at idx=0,
+                // otherwise right after constantsSubstitutionOptimizer
+                optimizationsList.add(++idx, safeASTNodesMarker);
+                optimizationsList.add(++idx, safeASTEvaluationOptimizer);
+            } else {
+                optimizationsList.add(++idx, safeASTEvaluationOptimizer);
+            }
+        }
+
+        ArrayNode ast = templateAST;
+
+        for (AbstractASTWalker optimization : optimizationsList) {
+            ast = optimization.process(ast);
+        }
+
         return ast;
     }
 
@@ -143,6 +164,7 @@ public class Histone {
      * @see OptimizationProfile
      * @see AdditionalDataForOptimizationDebug
      */
+    /*
     public ArrayNode optimizeASTWithTrace(ArrayNode templateAST,
                                           OptimizationTrace optimizationTrace,
                                           OptimizationProfile optimizationProfile,
@@ -158,13 +180,13 @@ public class Histone {
 
         if (optimizationProfile.getUseOptimizationCycle()) {
             long L1 = 0, L2 = 0; // counter for infinite loops
-            long g1 = BaseOptimization.hash(ast);
+            long g1 = AbstractASTWalker.hash(ast);
             while (true) {
                 L1++;
                 if (L1 == 10) break;
 
                 if (optimizationProfile.isUseConstantsFolding()) {
-                    long h1 = BaseOptimization.hash(templateAST);
+                    long h1 = AbstractASTWalker.hash(templateAST);
                     while (true) {
                         L2++;
                         if (L2 == 10) {
@@ -173,7 +195,7 @@ public class Histone {
                         }
 
                         ast = constantFolding.foldConstants(ast);
-                        long h2 = BaseOptimization.hash(ast);
+                        long h2 = AbstractASTWalker.hash(ast);
                         if (h1 == h2) break;
                         else {
                             addFrame(optimizationTrace, "ConstantsFolding", ast, debugInfo);
@@ -182,7 +204,7 @@ public class Histone {
                     }
                 }
                 if (optimizationProfile.isUseConstantPropagation()) {
-                    long h1 = BaseOptimization.hash(templateAST);
+                    long h1 = AbstractASTWalker.hash(templateAST);
                     while (true) {
                         L2++;
                         if (L2 == 10) {
@@ -191,7 +213,7 @@ public class Histone {
                         }
 
                         ast = constantPropagation.propagateConstants(ast);
-                        long h2 = BaseOptimization.hash(ast);
+                        long h2 = AbstractASTWalker.hash(ast);
                         if (h1 == h2) break;
                         else {
                             addFrame(optimizationTrace, "ConstantsPropagation", ast, debugInfo);
@@ -200,7 +222,7 @@ public class Histone {
                     }
                 }
                 if (optimizationProfile.isRemoveConstantIfCases()) {
-                    long h1 = BaseOptimization.hash(templateAST);
+                    long h1 = AbstractASTWalker.hash(templateAST);
                     while (true) {
                         L2++;
                         if (L2 == 10) {
@@ -209,7 +231,7 @@ public class Histone {
                         }
 
                         ast = constantIfCases.replaceConstantIfs(ast);
-                        long h2 = BaseOptimization.hash(ast);
+                        long h2 = AbstractASTWalker.hash(ast);
                         if (h1 == h2) break;
                         else {
                             addFrame(optimizationTrace, "ConstantIfCases", ast, debugInfo);
@@ -218,7 +240,7 @@ public class Histone {
                     }
                 }
                 if (optimizationProfile.isRemoveUselessVariables()) {
-                    long h1 = BaseOptimization.hash(templateAST);
+                    long h1 = AbstractASTWalker.hash(templateAST);
                     while (true) {
                         L2++;
                         if (L2 == 10) {
@@ -227,7 +249,7 @@ public class Histone {
                         }
 
                         ast = uselessVariables.removeUselessVariables(ast);
-                        long h2 = BaseOptimization.hash(ast);
+                        long h2 = AbstractASTWalker.hash(ast);
                         if (h1 == h2) break;
                         else {
                             addFrame(optimizationTrace, "RemoveUselessVariables", ast, debugInfo);
@@ -236,7 +258,7 @@ public class Histone {
                     }
                 }
 
-                long g2 = BaseOptimization.hash(ast);
+                long g2 = AbstractASTWalker.hash(ast);
                 if (g1 == g2) break;
                 g1 = g2;
             }
@@ -244,35 +266,35 @@ public class Histone {
 
         if (optimizationProfile.isUseAstOptimizer()) {
             {
-                long j1 = BaseOptimization.hash(ast);
+                long j1 = AbstractASTWalker.hash(ast);
                 ast = astMarker.mark(ast);
-                long j2 = BaseOptimization.hash(ast);
-                if (j1 != j2) addFrame(optimizationTrace, "AstMarker", ast, debugInfo);
+                long j2 = AbstractASTWalker.hash(ast);
+                if (j1 != j2) addFrame(optimizationTrace, "SafeASTNodesMarker", ast, debugInfo);
             }
 
             {
-                long j1 = BaseOptimization.hash(ast);
+                long j1 = AbstractASTWalker.hash(ast);
                 ast = astOptimizer.optimize(ast);
-                long j2 = BaseOptimization.hash(ast);
-                if (j1 != j2) addFrame(optimizationTrace, "AstOptimizer", ast, debugInfo);
+                long j2 = AbstractASTWalker.hash(ast);
+                if (j1 != j2) addFrame(optimizationTrace, "SafeASTEvaluationOptimizer", ast, debugInfo);
             }
         }
 
         if (optimizationProfile.isUseAstSimplifier()) {
-            long j1 = BaseOptimization.hash(ast);
-            ast = simplifier.simplify(ast);
-            long j2 = BaseOptimization.hash(ast);
+            long j1 = AbstractASTWalker.hash(ast);
+            ast = fragmentsConcatinationOptimization.simplify(ast);
+            long j2 = AbstractASTWalker.hash(ast);
             if (j1 != j2) addFrame(optimizationTrace, "AstSimplifier", ast, debugInfo);
         }
 
         optimizationTrace.setProcessedAstAndSource(ast, deparser.deparse(ast));
         return ast;
-    }
+    } */
 
     /**
      * Add frame information to {@link OptimizationTrace}.
      */
-    protected void addFrame(OptimizationTrace optimizationTrace, String name, ArrayNode optimizedAst, AdditionalDataForOptimizationDebug debugInfo) throws HistoneException {
+    /* protected void addFrame(OptimizationTrace optimizationTrace, String name, ArrayNode optimizedAst, AdditionalDataForOptimizationDebug debugInfo) throws HistoneException {
         long t1 = System.currentTimeMillis();
         String outputAfterThisStep = evaluateAST(debugInfo.getTemplateLocation(), optimizedAst, debugInfo.getEvaluationContext());
         long t2 = System.currentTimeMillis();
@@ -283,11 +305,10 @@ public class Histone {
         frame.setProcessedSource(deparser.deparse(optimizedAst));
         frame.setDidBrokeCompability(!debugInfo.getOriginalOutput().equals(outputAfterThisStep));
         frame.setEvaluationTimeAfterThisStep(t2 - t1);
-        frame.setAstLengthAfterThisStep(BaseOptimization.countNodes(optimizedAst));
+        frame.setAstLengthAfterThisStep(AbstractASTWalker.countNodes(optimizedAst));
         optimizationTrace.getFrames().add(frame);
-    }
+    } */
     //</editor-fold>
-
     public String evaluateAST(ArrayNode templateAST) throws HistoneException {
         return evaluateAST(null, templateAST, NullNode.instance);
     }

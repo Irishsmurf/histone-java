@@ -18,6 +18,7 @@ package ru.histone.optimizer;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.apache.commons.io.FileUtils;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import ru.histone.Histone;
 import ru.histone.HistoneBuilder;
@@ -30,7 +31,9 @@ import java.io.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-public class AstOptimizerTest {
+@Ignore
+@Deprecated
+public class SafeASTEvaluationOptimizerTest {
     private Histone histone;
 
     @Before

@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 /**
  * Contains some data, required for tracing histone optimization
  */
+@Deprecated
 public class AdditionalDataForOptimizationDebug {
     /**
      * Location of source template.

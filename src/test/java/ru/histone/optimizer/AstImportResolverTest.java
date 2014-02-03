@@ -18,6 +18,7 @@ package ru.histone.optimizer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import ru.histone.Histone;
 import ru.histone.HistoneBuilder;
@@ -38,6 +39,8 @@ import java.net.URISyntaxException;
 
 import static org.junit.Assert.assertEquals;
 
+@Ignore
+@Deprecated
 public class AstImportResolverTest {
     private ObjectMapper om = new ObjectMapper();
     private Histone histone;

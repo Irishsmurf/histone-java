@@ -18,6 +18,7 @@ package ru.histone.optimizer;
 import java.util.HashSet;
 import java.util.Set;
 
+@Deprecated
 public class ImportResolverContext {
     private Set<String> importedResources;
     private String baseURI;

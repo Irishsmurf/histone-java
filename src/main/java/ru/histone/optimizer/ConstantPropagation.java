@@ -27,19 +27,19 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ConstantPropagation extends BaseOptimization {
+public class ConstantPropagation extends AbstractASTWalker {
     private Context context;
 
     public ConstantPropagation(NodeFactory nodeFactory) {
         super(nodeFactory);
     }
 
-    public ArrayNode propagateConstants(ArrayNode ast) throws HistoneException {
-        context = new Context();
-
-        return process(ast);
-    }
-
+//    public ArrayNode propagateConstants(ArrayNode ast) throws HistoneException {
+//        context = new Context();
+//
+//        return process(ast);
+//    }
+//
     @Override
     public void pushContext() {
         context.push();

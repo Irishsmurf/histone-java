@@ -17,7 +17,6 @@ package ru.histone;
 
 import ru.histone.evaluator.Evaluator;
 import ru.histone.evaluator.nodes.NodeFactory;
-import ru.histone.optimizer.*;
 import ru.histone.parser.Parser;
 import ru.histone.resourceloaders.ResourceLoader;
 
@@ -25,17 +24,7 @@ public class HistoneBootstrap {
     private Parser parser;
     private Evaluator evaluator;
     private NodeFactory nodeFactory;
-    private AstOptimizer astOptimizer;
-    private AstImportResolver astImportResolver;
-    private AstMarker astMarker;
     private ResourceLoader resourceLoader;
-
-    // Optimizers
-    private ConstantFolding constantFolding;
-    private ConstantPropagation constantPropagation;
-    private ConstantIfCases constantIfCases;
-    private UselessVariables uselessVariables;
-    private Simplifier simplifier;
 
     public Parser getParser() {
         return parser;
@@ -61,30 +50,6 @@ public class HistoneBootstrap {
         this.nodeFactory = nodeFactory;
     }
 
-    public AstOptimizer getAstOptimizer() {
-        return astOptimizer;
-    }
-
-    public void setAstOptimizer(AstOptimizer astOptimizer) {
-        this.astOptimizer = astOptimizer;
-    }
-
-    public AstImportResolver getAstImportResolver() {
-        return astImportResolver;
-    }
-
-    public void setAstImportResolver(AstImportResolver astImportResolver) {
-        this.astImportResolver = astImportResolver;
-    }
-
-    public AstMarker getAstMarker() {
-        return astMarker;
-    }
-
-    public void setAstMarker(AstMarker astMarker) {
-        this.astMarker = astMarker;
-    }
-
     public ResourceLoader getResourceLoader() {
         return resourceLoader;
     }
@@ -93,45 +58,6 @@ public class HistoneBootstrap {
         this.resourceLoader = resourceLoader;
     }
 
-    public ConstantFolding getConstantFolding() {
-        return constantFolding;
-    }
-
-    public void setConstantFolding(ConstantFolding constantFolding) {
-        this.constantFolding = constantFolding;
-    }
-
-    public ConstantPropagation getConstantPropagation() {
-        return constantPropagation;
-    }
-
-    public void setConstantPropagation(ConstantPropagation constantPropagation) {
-        this.constantPropagation = constantPropagation;
-    }
-
-    public ConstantIfCases getConstantIfCases() {
-        return constantIfCases;
-    }
-
-    public void setConstantIfCases(ConstantIfCases constantIfCases) {
-        this.constantIfCases = constantIfCases;
-    }
-
-    public UselessVariables getUselessVariables() {
-        return uselessVariables;
-    }
-
-    public void setUselessVariables(UselessVariables uselessVariables) {
-        this.uselessVariables = uselessVariables;
-    }
-
-    public Simplifier getSimplifier() {
-        return simplifier;
-    }
-
-    public void setSimplifier(Simplifier simplifier) {
-        this.simplifier = simplifier;
-    }
 }
 
 

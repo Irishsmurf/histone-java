@@ -26,6 +26,7 @@ import ru.histone.evaluator.nodes.NodeFactory;
 import ru.histone.parser.AstNodeType;
 
 
+@Deprecated
 public class AstImportMarker {
    private static final Logger log = LoggerFactory.getLogger(AstImportMarker.class);
    private NodeFactory nodeFactory = new NodeFactory(new ObjectMapper());
