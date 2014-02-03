@@ -28,7 +28,8 @@ import ru.histone.evaluator.nodes.NodeFactory;
 import ru.histone.optimizer.AbstractASTWalker;
 import ru.histone.optimizer.AdditionalDataForOptimizationDebug;
 import ru.histone.optimizer.ConstantsSubstitutionOptimizer;
-import ru.histone.optimizer.FragmentsConcatinationOptimization;
+import ru.histone.optimizer.EliminateSingleNodeArrayOptimizer;
+import ru.histone.optimizer.FragmentsConcatinationOptimizer;
 import ru.histone.optimizer.InlineMacroOptimizer;
 import ru.histone.optimizer.OptimizationProfile;
 import ru.histone.optimizer.OptimizationTrace;
@@ -155,7 +156,8 @@ public class Histone {
             optimizationsList.add(++idx, inlineMacroOptimizer);
         }
 
-        optimizationsList.add(new FragmentsConcatinationOptimization(nodeFactory));
+        optimizationsList.add(new FragmentsConcatinationOptimizer(nodeFactory));
+        optimizationsList.add(new EliminateSingleNodeArrayOptimizer(nodeFactory));
 
         ArrayNode ast = templateAST;
 

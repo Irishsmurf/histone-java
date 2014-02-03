@@ -28,8 +28,8 @@ import java.util.List;
 /**
  * Упрощает AST дерево, объединяя несколько подряд следующих текстовых элементов в одну строку.
  */
-public class FragmentsConcatinationOptimization extends AbstractASTWalker {
-    public FragmentsConcatinationOptimization(NodeFactory nodeFactory) {
+public class FragmentsConcatinationOptimizer extends AbstractASTWalker {
+    public FragmentsConcatinationOptimizer(NodeFactory nodeFactory) {
         super(nodeFactory);
     }
 
