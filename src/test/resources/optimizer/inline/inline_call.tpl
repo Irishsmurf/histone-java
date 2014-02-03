@@ -1,8 +1,3 @@
 {{*Macro body should replace macro call*}}
-
-        {{macro macro1()}}
-        Hello world
-        {{/macro}}
-
-
-        {{macro1()}}
+A{{macro macro1(a)}}Hello {{a}} world{{/macro}}B
+{{macro1('test')}}

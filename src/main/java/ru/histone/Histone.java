@@ -28,6 +28,7 @@ import ru.histone.evaluator.nodes.NodeFactory;
 import ru.histone.optimizer.AbstractASTWalker;
 import ru.histone.optimizer.AdditionalDataForOptimizationDebug;
 import ru.histone.optimizer.ConstantsSubstitutionOptimizer;
+import ru.histone.optimizer.InlineMacroOptimizer;
 import ru.histone.optimizer.OptimizationProfile;
 import ru.histone.optimizer.OptimizationTrace;
 import ru.histone.optimizer.OptimizationTypes;
@@ -145,6 +146,12 @@ public class Histone {
             } else {
                 optimizationsList.add(++idx, safeASTEvaluationOptimizer);
             }
+        }
+
+        InlineMacroOptimizer inlineMacroOptimizer = new InlineMacroOptimizer(nodeFactory);
+        if (optimizationsToRunSet.contains(OptimizationTypes.INLINE_MACRO)) {
+            int idx = optimizationsList.indexOf(safeASTEvaluationOptimizer);
+            optimizationsList.add(++idx, inlineMacroOptimizer);
         }
 
         ArrayNode ast = templateAST;
