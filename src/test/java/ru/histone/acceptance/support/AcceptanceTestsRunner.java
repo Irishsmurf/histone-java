@@ -37,6 +37,7 @@ import ru.histone.evaluator.EvaluatorException;
 import ru.histone.evaluator.functions.global.GlobalFunction;
 import ru.histone.evaluator.functions.node.NodeFunction;
 import ru.histone.evaluator.nodes.*;
+import ru.histone.optimizer.OptimizationTypes;
 import ru.histone.parser.ParserException;
 import ru.histone.utils.CollectionUtils;
 
@@ -163,7 +164,7 @@ public class AcceptanceTestsRunner extends Runner {
 
                 ArrayNode rootAST = histone.parseTemplateToAST(new StringReader(testCase.getInput()));
                 ArrayNode outputAST = (ArrayNode) rootAST.get(1);
-                ArrayNode optimizedAST = histone.optimizeAST(outputAST);
+                ArrayNode optimizedAST = histone.optimizeAST(outputAST, OptimizationTypes.FRAGMENT_CONCATENATION,OptimizationTypes.ELIMINATE_SINGLE_NODE);
                 String outputAST_evaluated = histone.evaluateAST(outputAST);
                 String optimizedAST_evaluated = histone.evaluateAST(optimizedAST);
                 if (!outputAST_evaluated.equals(optimizedAST_evaluated)) {

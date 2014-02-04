@@ -117,6 +117,7 @@ public class SafeASTNodesMarker extends AbstractASTWalker {
         ArrayNode args = (ArrayNode) macro.get(2);
         ArrayNode statements = (ArrayNode) macro.get(3);
 
+
         pushContext();
 
         // Adding macro arguments and 'self' keyword as safe variables.

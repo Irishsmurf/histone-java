@@ -31,7 +31,7 @@ public class EliminateSingleNodeArrayOptimizer extends AbstractASTWalker {
         ArrayNode result = null;
 
         if (ast.size() == 1) {
-            if (ast.get(0).isArray()) {
+            if (ast.get(0).isArray() && ast.get(0).get(0).isTextual()) {
                 result = simplifyArrayNode((ArrayNode) ast.get(0));
             } else {
                 result = ast;

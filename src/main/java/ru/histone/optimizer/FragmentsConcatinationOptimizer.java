@@ -22,9 +22,6 @@ import ru.histone.HistoneException;
 import ru.histone.evaluator.nodes.NodeFactory;
 import ru.histone.parser.AstNodeType;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * Упрощает AST дерево, объединяя несколько подряд следующих текстовых элементов в одну строку.
  */
@@ -72,35 +69,17 @@ public class FragmentsConcatinationOptimizer extends AbstractASTWalker {
         return result;
     }
 
-//    protected JsonNode[] simplifyArray(JsonNode[] ast) throws HistoneException {
-//        List<JsonNode> result = new ArrayList<JsonNode>();
-//        StringBuilder sb = new StringBuilder();
-//        for (JsonNode node : ast) {
-//            if (node.isTextual()) {
-//                sb.append(node.asText());
-//            } else if (node.isArray() && node.size() > 1 && node.get(0).isInt() && node.get(0).asInt() == AstNodeType.STRING) {
-//                sb.append(node.get(1).asText());
-//            } else {
-//                result.add(nodeFactory.jsonString(sb.toString()));
-//                sb.setLength(0);
-//                JsonNode processedNode = processAstNode(node);
-//                result.add(processedNode);
-//            }
-//        }
-//        if (sb.length() > 0) {
-//            result.add(nodeFactory.jsonString(sb.toString()));
-//        }
-//
-//        JsonNode[] r = new JsonNode[result.size()];
-//        result.toArray(r);
-//        return r;
-//    }
-
     @Override
     public ArrayNode process(ArrayNode ast) throws HistoneException {
         ast = removeHistoneAstSignature(ast);
 
-        return simplifyArrayNode(ast);
+        ArrayNode jsonNodes = simplifyArrayNode(ast);
+
+        if (jsonNodes.isArray() && jsonNodes.size() > 0 && jsonNodes.get(0).isInt()) {
+            jsonNodes = nodeFactory.jsonArray(jsonNodes);
+        }
+
+        return jsonNodes;
     }
 
     @Override
@@ -139,7 +118,7 @@ public class FragmentsConcatinationOptimizer extends AbstractASTWalker {
 
         ArrayNode statementsContainer = elseStatementsOut == null ?
                 nodeFactory.jsonArray(simplifyArrayNode(statementsOut)) :
-                nodeFactory.jsonArray(simplifyArrayNode(statementsOut), nodeFactory.jsonArray(simplifyArrayNode(elseStatementsOut)));
+                nodeFactory.jsonArray( simplifyArrayNode(statementsOut), simplifyArrayNode(elseStatementsOut));
 
         return nodeFactory.jsonArray(AstNodeType.FOR, var, collection, statementsContainer);
     }
