@@ -150,11 +150,11 @@ public class Histone {
             }
         }
 
-        InlineMacroOptimizer inlineMacroOptimizer = new InlineMacroOptimizer(nodeFactory);
-        if (optimizationsToRunSet.contains(OptimizationTypes.INLINE_MACRO)) {
-            int idx = optimizationsList.indexOf(safeASTEvaluationOptimizer);
-            optimizationsList.add(++idx, inlineMacroOptimizer);
-        }
+//        InlineMacroOptimizer inlineMacroOptimizer = new InlineMacroOptimizer(nodeFactory);
+//        if (optimizationsToRunSet.contains(OptimizationTypes.INLINE_MACRO)) {
+//            int idx = optimizationsList.indexOf(safeASTEvaluationOptimizer);
+//            optimizationsList.add(++idx, inlineMacroOptimizer);
+//        }
 
         if (optimizationsList.size() > 0 || optimizationsToRunSet.contains(OptimizationTypes.FRAGMENT_CONCATENATION)) {
             optimizationsList.add(new FragmentsConcatinationOptimizer(nodeFactory));

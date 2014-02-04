@@ -49,7 +49,7 @@ public class FragmentsConcatinationOptimizer extends AbstractASTWalker {
                 if (processedNode.isArray() && processedNode.get(0).isTextual()) {
                     processedNode = simplifyArrayNode((ArrayNode) processedNode);
                 }
-                if (processedNode.isArray() && processedNode.size() == 1) {
+                if (processedNode.isArray() && processedNode.size() == 1 && processedNode.get(0).isTextual()) {
                     if (result.size() > 0 && result.get(result.size() - 1).isTextual()) {
                         TextNode prev = (TextNode) result.get(result.size() - 1);
                         TextNode cur = (TextNode) processedNode.get(0);
