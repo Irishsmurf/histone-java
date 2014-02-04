@@ -35,7 +35,7 @@ public class SpecialBugsTest {
     @Test
     public void bigDeciamlAsIs() throws HistoneException {
         ObjectMapper jackson = new ObjectMapper();
-        JsonNodeFactory jsonNodeFactory = new JsonNodeFactory(true);
+        JsonNodeFactory jsonNodeFactory = JsonNodeFactory.instance;
         jackson.setNodeFactory(jsonNodeFactory);
 
         HistoneBuilder builder = new HistoneBuilder();

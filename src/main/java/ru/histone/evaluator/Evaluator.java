@@ -548,6 +548,14 @@ public class Evaluator {
         }
     }
 
+    public boolean hasFunction(Class<? extends Node> nodeClass, String name) {
+        return nodeFunctionsManager.hasFunction(nodeClass, name);
+    }
+
+    public boolean isFunctionSave(Class<? extends Node> nodeClass, String name) {
+        return nodeFunctionsManager.isFunctionSafe(nodeClass, name);
+    }
+
     private String getContextBaseURI(EvaluatorContext context) {
         return context.getBaseURI() == null ? null : context.getBaseURI().toString();
     }

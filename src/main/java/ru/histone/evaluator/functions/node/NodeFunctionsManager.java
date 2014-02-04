@@ -93,6 +93,10 @@ public class NodeFunctionsManager {
         return getFunction(nodeClass, name) != null;
     }
 
+    public boolean isFunctionSafe(Class<? extends Node> nodeClass, String name) {
+        return getFunction(nodeClass, name).isSafe();
+    }
+
     /**
      * Execute function with specified name and arguments on specified target<br/>
      *

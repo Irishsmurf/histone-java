@@ -19,6 +19,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.IntNode;
 import ru.histone.HistoneException;
+import ru.histone.evaluator.Evaluator;
+import ru.histone.evaluator.nodes.Node;
 import ru.histone.evaluator.nodes.NodeFactory;
 import ru.histone.parser.AstNodeType;
 import ru.histone.utils.Assert;
@@ -45,9 +47,11 @@ import java.util.Set;
  */
 public class SafeASTNodesMarker extends AbstractASTWalker {
     private Context context = new Context();
+    private final Evaluator evaluator;
 
-    public SafeASTNodesMarker(NodeFactory nodeFactory) {
+    public SafeASTNodesMarker(NodeFactory nodeFactory, Evaluator evaluator) {
         super(nodeFactory);
+        this.evaluator = evaluator;
     }
 
     /**
@@ -135,7 +139,10 @@ public class SafeASTNodesMarker extends AbstractASTWalker {
         popContext();
 
         boolean isSafe = safeArray(statementsOut);
-
+        if (isSafe) {
+            context.addSafeMacro(name.asText());
+        }
+        context.addMacro(name.asText());
         return ast(isSafe, AstNodeType.MACRO, name, args, statementsOut);
     }
 
@@ -163,19 +170,41 @@ public class SafeASTNodesMarker extends AbstractASTWalker {
         JsonNode name = call.get(2);
         JsonNode args = call.get(3);
 
-        if (!target.isNull() || !name.isTextual() || StringUtils.isBlank(name.asText())) {
-            return ast(false, AstNodeType.CALL, target, name, args);
+        if (!target.isNull()) {
+            boolean targetIsSafe = safeAstNode(target);
+            if (!targetIsSafe) {
+                return ast(false, AstNodeType.CALL, target, name, args);
+            }
+
+            Node node = evaluator.evaluate(target);
+            if (evaluator.hasFunction(node.getClass(), name.asText())) {
+                boolean isFunctionSafe = evaluator.isFunctionSave(node.getClass(), name.asText());
+                return ast(isFunctionSafe, AstNodeType.CALL, target, name, args);
+            } else {
+                return ast(false, AstNodeType.CALL, target, name, args);
+            }
+        } else {
+            String macrosName = name.asText();
+            boolean isSafe = context.isMacroSafe(macrosName);
+
+            if (args.isArray()) {
+                args = processArrayOfAstNodes(args);
+                isSafe = isSafe && safeArray((ArrayNode) args);
+            }
+
+            return ast(isSafe, AstNodeType.CALL, target, name, args);
         }
 
-        String macrosName = name.asText();
-        boolean isSafe = context.isMacroSafe(macrosName);
+//        if (!target.isNull() || !name.isTextual() || StringUtils.isBlank(name.asText())) {
+//            return ast(false, AstNodeType.CALL, target, name, args);
+//        }
 
-        if (args.isArray()) {
-            args = processArrayOfAstNodes(args);
-            isSafe = isSafe && safeArray((ArrayNode) args);
-        }
+  /*      int targetType = target.get(0);
+        if(targetType == AstNodeType.INT){
+            targetCla
+        }*/
 
-        return ast(isSafe, AstNodeType.CALL, target, name, args);
+
     }
 
     /**
@@ -253,9 +282,9 @@ public class SafeASTNodesMarker extends AbstractASTWalker {
                 nodeFactory.jsonArray(nodeFactory.jsonArray(statementsOut), nodeFactory.jsonArray(elseStatementsOut));
 
         // EXPERIMENTAL fix
-        return ast(false, AstNodeType.FOR, var, collection, statementsContainer);
+//        return ast(false, AstNodeType.FOR, var, collection, statementsContainer);
 
-        // return ast(isSafe, AstNodeType.FOR, var, collection, statementsContainer);
+        return ast(isSafe, AstNodeType.FOR, var, collection, statementsContainer);
     }
 
     /**
@@ -378,25 +407,27 @@ public class SafeASTNodesMarker extends AbstractASTWalker {
     }
 
     class Context {
-
-
         private Deque<Set<String>> declaredVariables;
-        private Deque<Map<String, Set<String>>> declaredMacroses;
+        private Deque<Set<String>> safeMacroses;
+        private Deque<Set<String>> allMacroses;
 
         public Context() {
             this.declaredVariables = new ArrayDeque<Set<String>>();
-            this.declaredMacroses = new ArrayDeque<Map<String, Set<String>>>();
+            this.safeMacroses = new ArrayDeque<Set<String>>();
+            this.allMacroses = new ArrayDeque<Set<String>>();
             push();
         }
 
         public void push() {
             declaredVariables.push(new HashSet<String>());
-            declaredMacroses.push(new HashMap<String, Set<String>>());
+            safeMacroses.push(new HashSet<String>());
+            allMacroses.push(new HashSet<String>());
         }
 
         public void pop() {
             declaredVariables.pollFirst();
-            declaredMacroses.pollFirst();
+            safeMacroses.pollFirst();
+            allMacroses.pollFirst();
         }
 
         public boolean isVarSafe(String name) {
@@ -407,17 +438,20 @@ public class SafeASTNodesMarker extends AbstractASTWalker {
             declaredVariables.getFirst().add(name);
         }
 
-        public boolean isMacroSafe(String name) {
-            for (Map<String, Set<String>> stack : declaredMacroses) {
-                if (stack.containsKey(name)) {
-                    return true;
-                }
-            }
-            return false;
+        public boolean hasMacro(String name) {
+            return allMacroses.getFirst().contains(name);
         }
 
-        public void addSafeMacro(String name, Set<String> argNames) {
-            declaredMacroses.getFirst().put(name, argNames);
+        public boolean isMacroSafe(String name) {
+            return safeMacroses.getFirst().contains(name);
+        }
+
+        public void addMacro(String name) {
+            allMacroses.getFirst().add(name);
+        }
+
+        public void addSafeMacro(String name) {
+            safeMacroses.getFirst().add(name);
         }
 
     }

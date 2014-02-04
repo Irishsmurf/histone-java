@@ -71,5 +71,8 @@ public class ToNumber extends NodeFunction<StringHistoneNode> {
         }
     }
 
-
+    @Override
+    public boolean isSafe() {
+        return true;
+    }
 }

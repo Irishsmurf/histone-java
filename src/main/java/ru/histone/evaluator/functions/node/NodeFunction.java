@@ -55,4 +55,8 @@ public abstract class NodeFunction<T extends Node> {
      *          if your function stops with error and you need to put details into log, then you should use this exception
      */
     public abstract Node execute(T target, Node... args) throws NodeFunctionExecutionException;
+
+    public boolean isSafe() {
+        return false;
+    }
 }

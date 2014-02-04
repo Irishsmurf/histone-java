@@ -128,7 +128,7 @@ public class Histone {
             optimizationsList.add(0, constantsSubstitutionOptimizer);
         }
 
-        SafeASTNodesMarker safeASTNodesMarker = new SafeASTNodesMarker(nodeFactory);
+        SafeASTNodesMarker safeASTNodesMarker = new SafeASTNodesMarker(nodeFactory, evaluator);
         if (optimizationsToRunSet.contains(OptimizationTypes.SAFE_CODE_MARKER)) {
             int idx = optimizationsList.indexOf(constantsSubstitutionOptimizer);
             // if we don't have constantsSubstitutionOptimizer, then we will insert at idx=0,
