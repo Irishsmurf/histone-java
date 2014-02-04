@@ -84,12 +84,14 @@ public class FragmentsConcatinationOptimizer extends AbstractASTWalker {
 
     @Override
     protected JsonNode processStatements(ArrayNode statements) throws HistoneException {
+        int type = statements.get(0).asInt();
         statements = (ArrayNode) statements.get(1);
-        return nodeFactory.jsonArray(AstNodeType.STATEMENTS, simplifyArrayNode(statements));
+        return nodeFactory.jsonArray(type, simplifyArrayNode(statements));
     }
 
     @Override
     protected JsonNode processFor(ArrayNode for_) throws HistoneException {
+        int type = for_.get(0).asInt();
         ArrayNode var = (ArrayNode) for_.get(1);
         ArrayNode collection = (ArrayNode) for_.get(2);
         ArrayNode statements = (ArrayNode) for_.get(3).get(0);
@@ -120,25 +122,27 @@ public class FragmentsConcatinationOptimizer extends AbstractASTWalker {
                 nodeFactory.jsonArray(simplifyArrayNode(statementsOut)) :
                 nodeFactory.jsonArray( simplifyArrayNode(statementsOut), simplifyArrayNode(elseStatementsOut));
 
-        return nodeFactory.jsonArray(AstNodeType.FOR, var, collection, statementsContainer);
+        return nodeFactory.jsonArray(type, var, collection, statementsContainer);
     }
 
     @Override
-    protected JsonNode processMacro(ArrayNode macro) throws HistoneException {
-        JsonNode name = macro.get(1);
-        ArrayNode args = (ArrayNode) macro.get(2);
-        ArrayNode statements = (ArrayNode) macro.get(3);
+    protected JsonNode processMacro(ArrayNode expr_macro) throws HistoneException {
+        int type = expr_macro.get(0).asInt();
+        JsonNode name = expr_macro.get(1);
+        ArrayNode args = (ArrayNode) expr_macro.get(2);
+        ArrayNode statements = (ArrayNode) expr_macro.get(3);
 
         pushContext();
         args = (ArrayNode) processAstNode(args);
         statements = (ArrayNode) processArrayOfAstNodes(statements);
         popContext();
 
-        return nodeFactory.jsonArray(AstNodeType.MACRO, name, args, simplifyArrayNode(statements));
+        return nodeFactory.jsonArray(type, name, args, simplifyArrayNode(statements));
     }
 
     @Override
     protected JsonNode processIf(ArrayNode if_) throws HistoneException {
+        int type = if_.get(0).asInt();
         ArrayNode conditions = (ArrayNode) if_.get(1);
 
         ArrayNode conditionsOut = nodeFactory.jsonArray();
@@ -162,7 +166,7 @@ public class FragmentsConcatinationOptimizer extends AbstractASTWalker {
             conditionsOut.add(conditionOut);
         }
 
-        return nodeFactory.jsonArray(AstNodeType.IF, conditionsOut);
+        return nodeFactory.jsonArray(type, conditionsOut);
     }
 
 
