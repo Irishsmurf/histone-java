@@ -30,7 +30,7 @@ public class EliminateSingleNodeArrayOptimizationTest extends AbstractOptimizers
         ArrayNode input = (ArrayNode) getJackson().readTree("[[[\"AAA\",[101,1],\"BBB\"]]]");
         ArrayNode expected = (ArrayNode) getJackson().readTree("[\"AAA\",[101,1],\"BBB\"]");
 
-        ArrayNode ast = getHistone().optimizeAST(input);
+        ArrayNode ast = getHistone().optimizeAST(input, OptimizationTypes.FRAGMENT_CONCATENATION, OptimizationTypes.ELIMINATE_SINGLE_NODE);
 
         assertEquals(expected.toString(), ast.toString());
     }
