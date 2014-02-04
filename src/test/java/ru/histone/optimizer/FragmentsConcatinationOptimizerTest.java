@@ -30,7 +30,7 @@ public class FragmentsConcatinationOptimizerTest extends AbstractOptimizersTest 
         ArrayNode input = (ArrayNode) getJackson().readTree("[\"AAA\",\"BBB\"]");
         ArrayNode expeced = (ArrayNode) getJackson().readTree("[\"AAABBB\"]");
 
-        ArrayNode ast = getHistone().optimizeAST(input);
+        ArrayNode ast = getHistone().optimizeAST(input, OptimizationTypes.FRAGMENT_CONCATENATION, OptimizationTypes.ELIMINATE_SINGLE_NODE);
 
         assertEquals(expeced.toString(), ast.toString());
     }
@@ -40,7 +40,7 @@ public class FragmentsConcatinationOptimizerTest extends AbstractOptimizersTest 
         ArrayNode input = (ArrayNode) getJackson().readTree("[[\"AAA\"]]");
         ArrayNode expected = (ArrayNode) getJackson().readTree("[\"AAA\"]");
 
-        ArrayNode ast = getHistone().optimizeAST(input);
+        ArrayNode ast = getHistone().optimizeAST(input, OptimizationTypes.FRAGMENT_CONCATENATION, OptimizationTypes.ELIMINATE_SINGLE_NODE);
 
         assertEquals(expected.toString(), ast.toString());
     }
@@ -50,9 +50,30 @@ public class FragmentsConcatinationOptimizerTest extends AbstractOptimizersTest 
         ArrayNode input = (ArrayNode) getJackson().readTree("[[\"AAA\",\"BBB\",[\"C\",[\"C\",\"C\"]]]]");
         ArrayNode expected = (ArrayNode) getJackson().readTree("[\"AAABBBCCC\"]");
 
-        ArrayNode ast = getHistone().optimizeAST(input);
+        ArrayNode ast = getHistone().optimizeAST(input, OptimizationTypes.FRAGMENT_CONCATENATION, OptimizationTypes.ELIMINATE_SINGLE_NODE);
 
         assertEquals(expected.toString(), ast.toString());
     }
+
+    @Test
+    public void test_keep_selectors() throws IOException, HistoneException {
+        ArrayNode input = (ArrayNode) getJackson().readTree("[[\"AAA\",\"BBB\",[105, [\"x\", \"y\", \"z\"]]]]");
+        ArrayNode expected = (ArrayNode) getJackson().readTree("[\"AAABBB\",[105, [\"x\", \"y\", \"z\"]]]");
+
+        ArrayNode ast = getHistone().optimizeAST(input, OptimizationTypes.FRAGMENT_CONCATENATION, OptimizationTypes.ELIMINATE_SINGLE_NODE);
+
+        assertEquals(expected.toString(), ast.toString());
+    }
+
+    @Test
+    public void test_if_statements() throws IOException, HistoneException {
+        ArrayNode input = (ArrayNode) getJackson().readTree("[[1000,[[[16],[\"asdfadsf\",\"zzz\"]]]]]");
+        ArrayNode expected = (ArrayNode) getJackson().readTree("[1000,[[[16],[\"asdfadsfzzz\"]]]]");
+
+        ArrayNode ast = getHistone().optimizeAST(input, OptimizationTypes.FRAGMENT_CONCATENATION, OptimizationTypes.ELIMINATE_SINGLE_NODE);
+
+        assertEquals(expected.toString(), ast.toString());
+    }
+
 
 }

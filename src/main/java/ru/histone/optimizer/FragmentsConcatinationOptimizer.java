@@ -38,16 +38,18 @@ public class FragmentsConcatinationOptimizer extends AbstractASTWalker {
         StringBuilder sb = new StringBuilder();
         for (JsonNode node : ast) {
             if (node.isTextual()) {
+                // if we have fragment here
                 sb.append(node.asText());
-            } else if (node.isArray() && node.size() > 1 && node.get(0).isInt() && node.get(0).asInt() == AstNodeType.STRING) {
-                sb.append(node.get(1).asText());
+//            } else if (node.isArray() && node.size() == 2 && node.get(0).isInt() && node.get(0).asInt() == AstNodeType.STRING) {
+//                //if we have text constant here
+//                sb.append(node.get(1).asText());
             } else {
                 if (sb.length() > 0) {
                     result.add(nodeFactory.jsonString(sb.toString()));
                     sb.setLength(0);
                 }
                 JsonNode processedNode = processAstNode(node);
-                if (processedNode.isArray()) {
+                if (processedNode.isArray() && processedNode.get(0).isTextual()) {
                     processedNode = simplifyArrayNode((ArrayNode) processedNode);
                 }
                 if (processedNode.isArray() && processedNode.size() == 1) {
@@ -70,29 +72,29 @@ public class FragmentsConcatinationOptimizer extends AbstractASTWalker {
         return result;
     }
 
-    protected JsonNode[] simplifyArray(JsonNode[] ast) throws HistoneException {
-        List<JsonNode> result = new ArrayList<JsonNode>();
-        StringBuilder sb = new StringBuilder();
-        for (JsonNode node : ast) {
-            if (node.isTextual()) {
-                sb.append(node.asText());
-            } else if (node.isArray() && node.size() > 1 && node.get(0).isInt() && node.get(0).asInt() == AstNodeType.STRING) {
-                sb.append(node.get(1).asText());
-            } else {
-                result.add(nodeFactory.jsonString(sb.toString()));
-                sb.setLength(0);
-                JsonNode processedNode = processAstNode(node);
-                result.add(processedNode);
-            }
-        }
-        if (sb.length() > 0) {
-            result.add(nodeFactory.jsonString(sb.toString()));
-        }
-
-        JsonNode[] r = new JsonNode[result.size()];
-        result.toArray(r);
-        return r;
-    }
+//    protected JsonNode[] simplifyArray(JsonNode[] ast) throws HistoneException {
+//        List<JsonNode> result = new ArrayList<JsonNode>();
+//        StringBuilder sb = new StringBuilder();
+//        for (JsonNode node : ast) {
+//            if (node.isTextual()) {
+//                sb.append(node.asText());
+//            } else if (node.isArray() && node.size() > 1 && node.get(0).isInt() && node.get(0).asInt() == AstNodeType.STRING) {
+//                sb.append(node.get(1).asText());
+//            } else {
+//                result.add(nodeFactory.jsonString(sb.toString()));
+//                sb.setLength(0);
+//                JsonNode processedNode = processAstNode(node);
+//                result.add(processedNode);
+//            }
+//        }
+//        if (sb.length() > 0) {
+//            result.add(nodeFactory.jsonString(sb.toString()));
+//        }
+//
+//        JsonNode[] r = new JsonNode[result.size()];
+//        result.toArray(r);
+//        return r;
+//    }
 
     @Override
     public ArrayNode process(ArrayNode ast) throws HistoneException {
@@ -121,23 +123,23 @@ public class FragmentsConcatinationOptimizer extends AbstractASTWalker {
         collection = (ArrayNode) processAstNode(collection);
 
         pushContext();
-        JsonNode[] statementsOut = new JsonNode[statements.size()];
+        ArrayNode statementsOut = nodeFactory.jsonArray();
         for (int i = 0; i < statements.size(); i++) {
-            statementsOut[i] = processAstNode(statements.get(i));
+            statementsOut.add(processAstNode(statements.get(i)));
         }
         popContext();
 
-        JsonNode[] elseStatementsOut = null;
+        ArrayNode elseStatementsOut = null;
         if (elseStatements != null) {
-            elseStatementsOut = new JsonNode[elseStatements.size()];
+            elseStatementsOut = nodeFactory.jsonArray();
             for (int i = 0; i < elseStatements.size(); i++) {
-                elseStatementsOut[i] = processAstNode(elseStatements.get(i));
+                elseStatementsOut.add(processAstNode(elseStatements.get(i)));
             }
         }
 
         ArrayNode statementsContainer = elseStatementsOut == null ?
-                nodeFactory.jsonArray(nodeFactory.jsonArray(simplifyArray(statementsOut))) :
-                nodeFactory.jsonArray(nodeFactory.jsonArray(simplifyArray(statementsOut)), nodeFactory.jsonArray(simplifyArray(elseStatementsOut)));
+                nodeFactory.jsonArray(simplifyArrayNode(statementsOut)) :
+                nodeFactory.jsonArray(simplifyArrayNode(statementsOut), nodeFactory.jsonArray(simplifyArrayNode(elseStatementsOut)));
 
         return nodeFactory.jsonArray(AstNodeType.FOR, var, collection, statementsContainer);
     }
@@ -169,15 +171,15 @@ public class FragmentsConcatinationOptimizer extends AbstractASTWalker {
             expression = processAstNode(expression);
 
             pushContext();
-            JsonNode[] statementsOut = new JsonNode[statements.size()];
+            ArrayNode statementsOut = nodeFactory.jsonArray();
             for (int i = 0; i < statements.size(); i++) {
-                statementsOut[i] = processAstNode(statements.get(i));
+                statementsOut.add(processAstNode(statements.get(i)));
             }
             popContext();
 
             ArrayNode conditionOut = nodeFactory.jsonArray();
             conditionOut.add(expression);
-            conditionOut.add(nodeFactory.jsonArray(simplifyArray(statementsOut)));
+            conditionOut.add(simplifyArrayNode(statementsOut));
             conditionsOut.add(conditionOut);
         }
 

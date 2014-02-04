@@ -156,8 +156,10 @@ public class Histone {
             optimizationsList.add(++idx, inlineMacroOptimizer);
         }
 
-        if (optimizationsList.size() > 0) {
+        if (optimizationsList.size() > 0 || optimizationsToRunSet.contains(OptimizationTypes.FRAGMENT_CONCATENATION)) {
             optimizationsList.add(new FragmentsConcatinationOptimizer(nodeFactory));
+        }
+        if (optimizationsList.size() > 0 || optimizationsToRunSet.contains(OptimizationTypes.ELIMINATE_SINGLE_NODE)) {
             optimizationsList.add(new EliminateSingleNodeArrayOptimizer(nodeFactory));
         }
 

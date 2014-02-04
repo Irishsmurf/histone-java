@@ -39,7 +39,7 @@ public class HistonePlaygroundTest {
 
     @Test
     public void test() throws Exception {
-        String input = "{{10 ? \"20\" : .30}}";
+        String input = "{{if true}}asdfadsf{{'test'}}zzz{{/if}}";
 
         ArrayNode ast = histone.parseTemplateToAST(new StringReader(input));
         String astS = histone.evaluateAST(ast);
