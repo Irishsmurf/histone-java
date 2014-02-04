@@ -520,7 +520,7 @@ public abstract class AbstractASTWalker {
      * Returns {@link AstNodeType} value for the input node.
      */
     public static int getNodeType(ArrayNode astArray) {
-        return astArray.get(0).asInt();
+        return astArray.get(0).isInt() ? astArray.get(0).asInt() : 0;
     }
 
     /**

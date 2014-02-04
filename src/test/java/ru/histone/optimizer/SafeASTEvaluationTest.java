@@ -31,7 +31,7 @@ public class SafeASTEvaluationTest extends AbstractOptimizersTest {
     @Test
     public void expr_int() throws IOException, HistoneException {
         String input = "A{{1+2}}{{x+3}}{{3}}";
-        ArrayNode expectedAST = (ArrayNode) getJackson().readTree("[[\"A\"],[\"3\"],[9,[105,[\"x\"]],[\"3\"]],[\"3\"]]]");
+        ArrayNode expectedAST = (ArrayNode) getJackson().readTree("[\"A3\",[9,[105,[\"x\"]],[\"3\"]],\"3\"]]");
         ObjectNode context = getNodeFactory().jsonObject();
         ArrayNode initialAST = getHistone().parseTemplateToAST(input);
         ArrayNode optimizedAST = getHistone().optimizeAST(initialAST, context,OptimizationTypes.SAFE_CODE_EVALUATION);
