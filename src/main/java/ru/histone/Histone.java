@@ -156,8 +156,10 @@ public class Histone {
             optimizationsList.add(++idx, inlineMacroOptimizer);
         }
 
-        optimizationsList.add(new FragmentsConcatinationOptimizer(nodeFactory));
-        optimizationsList.add(new EliminateSingleNodeArrayOptimizer(nodeFactory));
+        if (optimizationsList.size() > 0) {
+            optimizationsList.add(new FragmentsConcatinationOptimizer(nodeFactory));
+            optimizationsList.add(new EliminateSingleNodeArrayOptimizer(nodeFactory));
+        }
 
         ArrayNode ast = templateAST;
 
