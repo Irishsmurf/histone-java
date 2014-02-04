@@ -63,7 +63,7 @@ public class AcceptanceTestsRunner extends Runner {
         instance = (AcceptanceTest) testClass.newInstance();
         description = instance.getDescription();
         jackson = new ObjectMapper();
-        jackson.setNodeFactory(JsonNodeFactory.instance);
+        jackson.setNodeFactory(new JsonNodeFactory(true));
         jackson.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
 
 
