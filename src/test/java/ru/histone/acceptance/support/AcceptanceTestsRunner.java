@@ -36,7 +36,11 @@ import ru.histone.acceptance.websever.TestHandler;
 import ru.histone.evaluator.EvaluatorException;
 import ru.histone.evaluator.functions.global.GlobalFunction;
 import ru.histone.evaluator.functions.node.NodeFunction;
-import ru.histone.evaluator.nodes.*;
+import ru.histone.evaluator.nodes.BooleanHistoneNode;
+import ru.histone.evaluator.nodes.Node;
+import ru.histone.evaluator.nodes.NodeFactory;
+import ru.histone.evaluator.nodes.NumberHistoneNode;
+import ru.histone.evaluator.nodes.StringHistoneNode;
 import ru.histone.optimizer.OptimizationTypes;
 import ru.histone.parser.ParserException;
 import ru.histone.utils.CollectionUtils;
@@ -58,6 +62,8 @@ public class AcceptanceTestsRunner extends Runner {
     private int testIdx = 0;
     private AcceptanceTest instance;
     private static final String MDC_TEST_NAME = "MDC_TEST_NAME";
+
+    private final OptimizationTypes[] OPTIMIZATION_TYPES = {OptimizationTypes.FRAGMENT_CONCATENATION, OptimizationTypes.ELIMINATE_SINGLE_NODE};
 
     public AcceptanceTestsRunner(Class<?> testClass) throws IllegalAccessException, InstantiationException {
         instance = (AcceptanceTest) testClass.newInstance();
@@ -164,7 +170,7 @@ public class AcceptanceTestsRunner extends Runner {
 
                 ArrayNode rootAST = histone.parseTemplateToAST(new StringReader(testCase.getInput()));
                 ArrayNode outputAST = (ArrayNode) rootAST.get(1);
-                ArrayNode optimizedAST = histone.optimizeAST(outputAST, OptimizationTypes.FRAGMENT_CONCATENATION,OptimizationTypes.ELIMINATE_SINGLE_NODE);
+                ArrayNode optimizedAST = histone.optimizeAST(outputAST, OPTIMIZATION_TYPES);
                 String outputAST_evaluated = histone.evaluateAST(outputAST);
                 String optimizedAST_evaluated = histone.evaluateAST(optimizedAST);
                 if (!outputAST_evaluated.equals(optimizedAST_evaluated)) {
@@ -229,7 +235,7 @@ public class AcceptanceTestsRunner extends Runner {
 
                 ArrayNode rootAST = histone.parseTemplateToAST(new StringReader(testCase.getInput()));
                 ArrayNode outputAST = (ArrayNode) rootAST.get(1);
-                ArrayNode optimizedAST = histone.optimizeAST(outputAST);
+                ArrayNode optimizedAST = histone.optimizeAST(outputAST, OPTIMIZATION_TYPES);
                 String outputAST_evaluated = histone.evaluateAST(null, outputAST, context);
                 String optimizedAST_evaluated = histone.evaluateAST(null, optimizedAST, context);
                 if (!outputAST_evaluated.equals(optimizedAST_evaluated)) {
