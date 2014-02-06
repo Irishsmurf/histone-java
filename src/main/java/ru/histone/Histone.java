@@ -160,7 +160,7 @@ public class Histone {
             optimizationsList.add(new FragmentsConcatinationOptimizer(nodeFactory));
         }
         if (optimizationsList.size() > 0 || optimizationsToRunSet.contains(OptimizationTypes.ELIMINATE_SINGLE_NODE)) {
-            optimizationsList.add(new EliminateSingleNodeArrayOptimizer(nodeFactory));
+//            optimizationsList.add(new EliminateSingleNodeArrayOptimizer(nodeFactory));
         }
 
         ArrayNode ast = templateAST;
