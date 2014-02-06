@@ -66,5 +66,16 @@ public class ConstantsSubstitutionTest {
 
         assertEquals(expectedAST.toString(), optimizedAST.toString());
     }
+    @Test
+    public void expr_var() throws IOException, HistoneException {
+        String input = "a {{var x = 10}}{{for r in range(1, 10)}}{{var x = x + 10}}{{x}} {{/for}} b";
+        ArrayNode expectedAST = (ArrayNode) jackson.readTree("[[1001,\"b\",[17]],[1000,[[[16],[\"AAA\"]],[[17],[\"BBB\"]]]]]");
+        ObjectNode context = nodeFactory.jsonObject();
+        context.put("a", true);
+        ArrayNode initialAST = histone.parseTemplateToAST(input);
+        ArrayNode optimizedAST = histone.optimizeAST(initialAST, context, OptimizationTypes.CONSTANTS_SUBSTITUTION);
+
+        assertEquals(expectedAST.toString(), optimizedAST.toString());
+    }
 
 }

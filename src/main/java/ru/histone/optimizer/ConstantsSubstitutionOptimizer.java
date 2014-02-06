@@ -89,9 +89,9 @@ public class ConstantsSubstitutionOptimizer extends AbstractASTWalker {
 
         if (valueNode.isArray()) {
             ArrayNode value = (ArrayNode) valueNode;
-            if (var.isTextual() && (isConstant(value) || /*isStatements(value) || */isMapOfConstants(value))) {
+//            if (var.isTextual() && (isConstant(value) || /*isStatements(value) || */isMapOfConstants(value))) {
                 context.getFirst().put(varName, AstNode.create(value));
-            }
+//            }
         }
 
         return nodeFactory.jsonArray(AstNodeType.VAR, var, valueNode);

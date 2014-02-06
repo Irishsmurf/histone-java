@@ -41,10 +41,10 @@ public class HistonePlaygroundTest {
     @Test
     public void test() throws Exception {
         String input = "a {{min([[]], [[]])}} b";
-        input="{{var x = 10}}";
+        input="a {{var x = 10}}{{for r in range(1, 10)}}{{var x = x + 10}}{{x}} {{/for}} b";
 
         ArrayNode ast = histone.parseTemplateToAST(new StringReader(input));
-        ArrayNode astOpt = histone.optimizeAST(ast, OptimizationTypes.FRAGMENT_CONCATENATION, OptimizationTypes.ELIMINATE_SINGLE_NODE);
+        ArrayNode astOpt = histone.optimizeAST(ast, OptimizationTypes.CONSTANTS_SUBSTITUTION);
         System.out.println("ast:   " + ast.get(1).toString());
         System.out.println("astOpt:" + astOpt.toString());
 
