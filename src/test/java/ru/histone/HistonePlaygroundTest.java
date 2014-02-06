@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.junit.Before;
 import org.junit.Test;
+import ru.histone.optimizer.OptimizationTypes;
 
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
@@ -39,10 +40,20 @@ public class HistonePlaygroundTest {
 
     @Test
     public void test() throws Exception {
-        String input = "{{if true}}asdfadsf{{'test'}}zzz{{/if}}";
+        String input = "a {{min([[]], [[]])}} b";
+        input="{{var x = 10}}";
 
         ArrayNode ast = histone.parseTemplateToAST(new StringReader(input));
-        String astS = histone.evaluateAST(ast);
-        ast.toString();
+        ArrayNode astOpt = histone.optimizeAST(ast, OptimizationTypes.FRAGMENT_CONCATENATION, OptimizationTypes.ELIMINATE_SINGLE_NODE);
+        System.out.println("ast:   " + ast.get(1).toString());
+        System.out.println("astOpt:" + astOpt.toString());
+
+
+        String output = histone.evaluateAST(ast);
+        String outputOpt = histone.evaluateAST(astOpt);
+        System.out.println("output:   " + output);
+        System.out.println("outputOpt:" + outputOpt);
+
+        "".toString();
     }
 }

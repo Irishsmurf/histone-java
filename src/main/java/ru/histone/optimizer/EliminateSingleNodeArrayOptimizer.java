@@ -31,28 +31,25 @@ public class EliminateSingleNodeArrayOptimizer extends AbstractASTWalker {
     protected ArrayNode simplifyArrayNode(ArrayNode ast) throws HistoneException {
         ArrayNode result = null;
 
-        if (ast.size() == 1) {
-            if (ast.get(0).isTextual()) {
-                result = ast;
-            } else if (ast.get(0).isArray()) {
-                if (!ast.get(0).get(0).isInt()) {
-                    result = simplifyArrayNode((ArrayNode) ast.get(0));
-                } else {
-                    result = ast;
-                }
+        if (ast.size() == 1 && ast.get(0).isArray() && ast.get(0).size() > 0) {
+            if (ast.get(0).get(0).isTextual()) {
+                result = (ArrayNode) ast.get(0);
+            } else if (ast.get(0).get(0).isArray()) {
+                result = simplifyArrayNode((ArrayNode) ast.get(0));
+            } else {
+                result = (ArrayNode) processAstNode(ast);
             }
         } else {
             ArrayNode newAst = nodeFactory.jsonArray();
             for (JsonNode node : ast) {
                 if (node.isArray()) {
-                    newAst.add(simplifyArrayNode((ArrayNode) node));
+                    newAst.add(processAstNode(node));
                 } else {
                     newAst.add(node);
                 }
             }
             result = newAst;
         }
-
 
         return result;
     }
