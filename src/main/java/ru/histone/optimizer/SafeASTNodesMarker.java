@@ -120,8 +120,6 @@ public class SafeASTNodesMarker extends AbstractASTWalker {
         JsonNode name = macro.get(1);
         ArrayNode args = (ArrayNode) macro.get(2);
         ArrayNode statements = (ArrayNode) macro.get(3);
-
-
         pushContext();
 
         // Adding macro arguments and 'self' keyword as safe variables.
@@ -130,7 +128,7 @@ public class SafeASTNodesMarker extends AbstractASTWalker {
         if (!args.isNull()) {
             for (JsonNode arg : args) {
                 argNames.add(arg.asText());
-//                context.addSafeVar(arg.asText());
+                context.addSafeVar(arg.asText());
             }
         }
 
