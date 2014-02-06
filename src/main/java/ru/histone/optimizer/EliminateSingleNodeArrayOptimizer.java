@@ -15,6 +15,7 @@
  */
 package ru.histone.optimizer;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import ru.histone.HistoneException;
 import ru.histone.evaluator.nodes.NodeFactory;
@@ -31,13 +32,25 @@ public class EliminateSingleNodeArrayOptimizer extends AbstractASTWalker {
         ArrayNode result = null;
 
         if (ast.size() == 1) {
-            if (ast.get(0).isArray() && ast.get(0).get(0).isTextual()) {
-                result = simplifyArrayNode((ArrayNode) ast.get(0));
-            } else {
+            if (ast.get(0).isTextual()) {
                 result = ast;
+            } else if (ast.get(0).isArray()) {
+                if (!ast.get(0).get(0).isInt()) {
+                    result = simplifyArrayNode((ArrayNode) ast.get(0));
+                } else {
+                    result = ast;
+                }
             }
         } else {
-            result = ast;
+            ArrayNode newAst = nodeFactory.jsonArray();
+            for (JsonNode node : ast) {
+                if (node.isArray()) {
+                    newAst.add(simplifyArrayNode((ArrayNode) node));
+                } else {
+                    newAst.add(node);
+                }
+            }
+            result = newAst;
         }
 
 

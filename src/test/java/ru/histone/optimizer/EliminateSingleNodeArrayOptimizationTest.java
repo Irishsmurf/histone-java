@@ -16,6 +16,7 @@
 package ru.histone.optimizer;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import org.junit.Ignore;
 import org.junit.Test;
 import ru.histone.HistoneException;
 
@@ -29,6 +30,26 @@ public class EliminateSingleNodeArrayOptimizationTest extends AbstractOptimizers
     public void test() throws IOException, HistoneException {
         ArrayNode input = (ArrayNode) getJackson().readTree("[[[\"AAA\",[101,1],\"BBB\"]]]");
         ArrayNode expected = (ArrayNode) getJackson().readTree("[\"AAA\",[101,1],\"BBB\"]");
+
+        ArrayNode ast = getHistone().optimizeAST(input, OptimizationTypes.FRAGMENT_CONCATENATION, OptimizationTypes.ELIMINATE_SINGLE_NODE);
+
+        assertEquals(expected.toString(), ast.toString());
+    }
+
+    @Test
+    public void test2() throws IOException, HistoneException {
+        ArrayNode input = (ArrayNode) getJackson().readTree("[[[[101,1]]]]");
+        ArrayNode expected = (ArrayNode) getJackson().readTree("[[101,1]]");
+
+        ArrayNode ast = getHistone().optimizeAST(input, OptimizationTypes.FRAGMENT_CONCATENATION, OptimizationTypes.ELIMINATE_SINGLE_NODE);
+
+        assertEquals(expected.toString(), ast.toString());
+    }
+
+    @Test
+    public void test3() throws IOException, HistoneException {
+        ArrayNode input = (ArrayNode) getJackson().readTree("[[[[\"A\"]]]]");
+        ArrayNode expected = (ArrayNode) getJackson().readTree("[\"A\"]");
 
         ArrayNode ast = getHistone().optimizeAST(input, OptimizationTypes.FRAGMENT_CONCATENATION, OptimizationTypes.ELIMINATE_SINGLE_NODE);
 
