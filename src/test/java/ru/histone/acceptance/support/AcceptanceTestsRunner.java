@@ -170,15 +170,16 @@ public class AcceptanceTestsRunner extends Runner {
 
                 ArrayNode rootAST = histone.parseTemplateToAST(new StringReader(testCase.getInput()));
                 ArrayNode outputAST = (ArrayNode) rootAST.get(1);
-                ArrayNode optimizedAST = histone.optimizeAST(outputAST, OPTIMIZATION_TYPES);
+                ArrayNode optimizedAST = histone.optimizeAST(outputAST);
                 String outputAST_evaluated = histone.evaluateAST(outputAST);
                 String optimizedAST_evaluated = histone.evaluateAST(optimizedAST);
                 if (!outputAST_evaluated.equals(optimizedAST_evaluated)) {
-                    String msg = "For input='" + testCase.getInput() + "', " +
-                            "baseAST=" + outputAST + ", " +
-                            "optimizedAST=" + optimizedAST + ", " +
-                            "baseEvaluated='" + outputAST_evaluated + "', " +
-                            "optimizedEvaluated='" + optimizedAST_evaluated + "'";
+                    String msg = "For input='" + testCase.getInput() + "', "
+                            + "baseAST=" + outputAST + ", "
+                            + "optimizedAST=" + optimizedAST + ", "
+                            + "baseEvaluated='" + outputAST_evaluated + "', "
+                            + "optimizedEvaluated='" + optimizedAST_evaluated + "'";
+                    ;
                     notifier.fireTestFailure(new Failure(testCaseDescription, new ComparisonFailure(msg, outputAST_evaluated, optimizedAST_evaluated)));
                 }
 
@@ -189,7 +190,7 @@ public class AcceptanceTestsRunner extends Runner {
                     String msgF = "For input='" + testCase.getInput() + "'";
                     notifier.fireTestFailure(new Failure(testCaseDescription, new ComparisonFailure(msgF, expectedAST.toString(), outputAST.toString())));
                 }
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 String msg = "For input='" + testCase.getInput() + "', expectedAST=" + testCase.getExpectedAST() + ", but exception occured=" + e.getMessage();
                 log.debug("Test failure: " + msg, e);
                 notifier.fireTestFailure(new Failure(testCaseDescription, e));
@@ -221,7 +222,7 @@ public class AcceptanceTestsRunner extends Runner {
 
                 String expectedF = "expected=" + expectedException.getExpected() + ", found=" + expectedException.getFound();
                 notifier.fireTestFailure(new Failure(testCaseDescription, new ComparisonFailure(msgF, expectedF, "")));
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 String msg = "For input='" + testCase.getInput() + "', expectedException=" + testCase.getException().toString() + ", but exception occured=" + e.getMessage();
                 log.debug("Test failure: " + msg, e);
                 notifier.fireTestFailure(new Failure(testCaseDescription, e));
