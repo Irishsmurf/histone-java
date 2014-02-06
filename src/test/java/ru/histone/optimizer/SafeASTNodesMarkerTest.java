@@ -139,13 +139,44 @@ public class SafeASTNodesMarkerTest extends AbstractOptimizersTest {
         assertUnSafe(ast);
     }
 
+
+
     @Test
-    public void unsafeMacro2() throws HistoneException, IOException {
-        String input = input("marker/unsafe_macro_2.tpl");
+    public void safeMacro1() throws HistoneException, IOException {
+        String input = input("marker/safe_macro_1.tpl");
         ArrayNode ast = getHistone().parseTemplateToAST(new StringReader(input));
         ast = getHistone().optimizeAST(ast, OptimizationTypes.SAFE_CODE_MARKER);
 
-        assertUnSafe(ast);
+        assertSafe(ast);
+    }
+
+
+    @Test
+    public void safeMacro2() throws HistoneException, IOException {
+        String input = input("marker/safe_macro_2.tpl");
+        ArrayNode ast = getHistone().parseTemplateToAST(new StringReader(input));
+        ast = getHistone().optimizeAST(ast, OptimizationTypes.SAFE_CODE_MARKER);
+
+        assertSafe(ast);
+    }
+
+    @Test
+    public void safeMacro3() throws HistoneException, IOException {
+        String input = input("marker/safe_macro_3.tpl");
+        ArrayNode ast = getHistone().parseTemplateToAST(new StringReader(input));
+        ast = getHistone().optimizeAST(ast, OptimizationTypes.SAFE_CODE_MARKER);
+
+        assertSafe(ast);
+    }
+
+
+    @Test
+    public void safeMacro4() throws HistoneException, IOException {
+        String input = input("marker/safe_macro_4.tpl");
+        ArrayNode ast = getHistone().parseTemplateToAST(new StringReader(input));
+        ast = getHistone().optimizeAST(ast, OptimizationTypes.SAFE_CODE_MARKER);
+
+        assertSafe(ast);
     }
 
     @Ignore("safe_template1.tpl has incorrect test code")
