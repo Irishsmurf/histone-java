@@ -20,7 +20,6 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import ru.histone.HistoneException;
 import ru.histone.evaluator.nodes.NodeFactory;
-import ru.histone.parser.AstNodeType;
 
 /**
  * Упрощает AST дерево, объединяя несколько подряд следующих текстовых элементов в одну строку.
@@ -58,13 +57,22 @@ public class FragmentsConcatinationOptimizer extends AbstractASTWalker {
                     } else {
                         result.add(processedNode.get(0));
                     }
+                } else if (processedNode.isArray() && processedNode.size() == 0) {
+                    //do nothing
                 } else {
                     result.add(processedNode);
                 }
             }
         }
         if (sb.length() > 0) {
-            result.add(nodeFactory.jsonString(sb.toString()));
+            if (result.size() > 0 && result.get(result.size() - 1).isTextual()) {
+                TextNode prev = (TextNode) result.get(result.size() - 1);
+                TextNode cur = (TextNode) nodeFactory.jsonString(sb.toString());
+                TextNode newElem = (TextNode) nodeFactory.jsonString(prev.textValue() + cur.textValue());
+                result.set(result.size() - 1, newElem);
+            } else {
+                result.add(nodeFactory.jsonString(sb.toString()));
+            }
         }
         return result;
     }
@@ -120,7 +128,7 @@ public class FragmentsConcatinationOptimizer extends AbstractASTWalker {
 
         ArrayNode statementsContainer = elseStatementsOut == null ?
                 nodeFactory.jsonArray(simplifyArrayNode(statementsOut)) :
-                nodeFactory.jsonArray( simplifyArrayNode(statementsOut), simplifyArrayNode(elseStatementsOut));
+                nodeFactory.jsonArray(simplifyArrayNode(statementsOut), simplifyArrayNode(elseStatementsOut));
 
         return nodeFactory.jsonArray(type, var, collection, statementsContainer);
     }

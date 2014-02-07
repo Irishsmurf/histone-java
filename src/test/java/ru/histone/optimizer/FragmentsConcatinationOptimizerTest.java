@@ -76,6 +76,16 @@ public class FragmentsConcatinationOptimizerTest extends AbstractOptimizersTest 
     }
 
     @Test
+    public void test_empty_fragments() throws IOException, HistoneException {
+        ArrayNode input = (ArrayNode) getJackson().readTree("[\"a\",[\"\"],\"\",\"b\"]");
+        ArrayNode expected = (ArrayNode) getJackson().readTree("[\"ab\"]");
+
+        ArrayNode ast = getHistone().optimizeAST(input, OptimizationTypes.FRAGMENT_CONCATENATION, OptimizationTypes.ELIMINATE_SINGLE_NODE);
+
+        assertEquals(expected.toString(), ast.toString());
+    }
+
+    @Test
     public void test_compatabilityCheck() throws IOException, HistoneException {
         String inputTpl = "a {{for item in itemsX}} b {{else}} c {{/for}} d";
         ArrayNode input = getHistone().parseTemplateToAST(inputTpl);
