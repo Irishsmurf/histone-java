@@ -21,6 +21,7 @@ import ru.histone.HistoneException;
 import ru.histone.evaluator.Evaluator;
 import ru.histone.evaluator.nodes.Node;
 import ru.histone.evaluator.nodes.NodeFactory;
+import ru.histone.parser.AstNodeType;
 
 /**
  * This optimization unit evaluates constant AST branches and replaces them by evaluation result (string constant AST node).
@@ -45,8 +46,23 @@ public class SafeASTEvaluationOptimizer extends AbstractASTWalker {
     @Override
     protected JsonNode processAstNode(JsonNode node) throws HistoneException {
         if (SafeASTNodesMarker.safeAstNode(node)) {
-            JsonNode evaluated = evaluateAstOnCleanContext(node);
-            return nodeFactory.jsonArray(evaluated);
+            if (node instanceof ArrayNode) {
+                int type = getNodeType((ArrayNode)node);
+                if (type == AstNodeType.INT
+                        || type == AstNodeType.TRUE
+                        || type == AstNodeType.FALSE
+                        || type == AstNodeType.NULL
+                        || type == AstNodeType.DOUBLE
+                        || type == AstNodeType.STRING) {
+                    return clearSafeFlag(super.processAstNode(node));
+                } else {
+                    JsonNode evaluated = evaluateAstOnCleanContext(node);
+                    return nodeFactory.jsonArray(evaluated);
+                }
+            } else {
+                JsonNode evaluated = evaluateAstOnCleanContext(node);
+                return nodeFactory.jsonArray(evaluated);
+            }
         } else {
             return clearSafeFlag(super.processAstNode(node));
         }
