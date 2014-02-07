@@ -24,7 +24,7 @@ import java.util.Map;
 
 public class ASTTreeElementsCounter {
 
-    public int count(JsonNode node) {
+    public static int count(JsonNode node) {
         int count = 0;
 
         if (node != null) {
@@ -40,7 +40,7 @@ public class ASTTreeElementsCounter {
         return count;
     }
 
-    private int countArray(ArrayNode node) {
+    private static int countArray(ArrayNode node) {
         int count = 0;
 
         for (int i = 0; i < node.size(); i++) {
@@ -50,7 +50,7 @@ public class ASTTreeElementsCounter {
         return count;
     }
 
-    private int countObject(ObjectNode node) {
+    private static int countObject(ObjectNode node) {
         int count = 0;
 
         Iterator<Map.Entry<String, JsonNode>> iter = node.fields();
