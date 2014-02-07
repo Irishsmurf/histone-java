@@ -46,7 +46,19 @@ public class SafeASTEvaluationTest extends AbstractOptimizersTest {
         ObjectNode context = getNodeFactory().jsonObject();
         context.put("a", true);
         ArrayNode initialAST = getHistone().parseTemplateToAST(input);
-        ArrayNode optimizedAST = getHistone().optimizeAST(initialAST, context, OptimizationTypes.CONSTANTS_SUBSTITUTION);
+        ArrayNode optimizedAST = getHistone().optimizeAST(initialAST, context, OptimizationTypes.SAFE_CODE_EVALUATION);
+
+        assertEquals(expectedAST.toString(), optimizedAST.toString());
+    }
+
+    @Test
+    public void expr_if2() throws IOException, HistoneException {
+        String input = "a {{if this.page.prefs.action is 'login'}} {{'login'}} A {{/if}} b";
+        ArrayNode expectedAST = (ArrayNode) getJackson().readTree("[\"a \",[1000,[[[3,[105,[\"this\",\"page\",\"prefs\",\"action\"]],[103,\"login\"]],[\" login A \"]]]],\" b\"]");
+        ObjectNode context = getNodeFactory().jsonObject();
+        context.put("a", true);
+        ArrayNode initialAST = getHistone().parseTemplateToAST(input);
+        ArrayNode optimizedAST = getHistone().optimizeAST(initialAST, context, OptimizationTypes.SAFE_CODE_EVALUATION);
 
         assertEquals(expectedAST.toString(), optimizedAST.toString());
     }
