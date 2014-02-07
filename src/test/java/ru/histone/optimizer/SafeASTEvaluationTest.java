@@ -52,9 +52,9 @@ public class SafeASTEvaluationTest extends AbstractOptimizersTest {
     }
 
     @Test
-    public void expr_if2() throws IOException, HistoneException {
-        String input = "a {{if this.page.prefs.action is 'login'}} {{'login'}} A {{/if}} b";
-        ArrayNode expectedAST = (ArrayNode) getJackson().readTree("[\"a \",[1000,[[[3,[105,[\"this\",\"page\",\"prefs\",\"action\"]],[103,\"login\"]],[\" login A \"]]]],\" b\"]");
+    public void expr_complexIf() throws IOException, HistoneException {
+        String input = "a {{if ZZZ is 'login'}} A{{'login'}}A {{elseif ZZZ is 'ttt'}} B{{123}}B {{else}} C{{true}}C {{/if}} b";
+        ArrayNode expectedAST = (ArrayNode) getJackson().readTree("[\"a \",[-1000,[[[3,[105,[\"ZZZ\"]],[103,\"login\"]],[\" AloginA \"]],[[3,[105,[\"ZZZ\"]],[103,\"ttt\"]],[\" B123B \"]],[[16],[\" CtrueC \"]]]],\" b\"]");
         ObjectNode context = getNodeFactory().jsonObject();
         context.put("a", true);
         ArrayNode initialAST = getHistone().parseTemplateToAST(input);
