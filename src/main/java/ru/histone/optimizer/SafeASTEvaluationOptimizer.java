@@ -44,6 +44,11 @@ public class SafeASTEvaluationOptimizer extends AbstractASTWalker {
     }
 
     @Override
+    public ArrayNode process(ArrayNode ast) throws HistoneException {
+        return (ArrayNode) clearSafeFlag(super.process(ast));
+    }
+
+    @Override
     protected JsonNode processIf(ArrayNode ast) throws HistoneException {
         int type = ast.get(0).asInt();
 
