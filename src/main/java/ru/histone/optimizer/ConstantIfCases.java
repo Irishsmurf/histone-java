@@ -37,8 +37,8 @@ public class ConstantIfCases extends AbstractASTWalker {
         return process(ast);
     }
 
-    protected JsonNode processIf(ArrayNode if_) throws HistoneException {
-        ArrayNode conditions = (ArrayNode) if_.get(1);
+    protected JsonNode processIf(ArrayNode ast) throws HistoneException {
+        ArrayNode conditions = (ArrayNode) ast.get(1);
 
         if (conditions.size() == 1 &&
                 conditions.get(0).size() == 2 &&

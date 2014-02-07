@@ -52,8 +52,8 @@ public class UselessVariables extends AbstractASTWalker {
     }
 
     @Override
-    protected JsonNode processSelector(ArrayNode selector) throws HistoneException {
-        JsonNode fullVariable = selector.get(1);
+    protected JsonNode processSelector(ArrayNode ast) throws HistoneException {
+        JsonNode fullVariable = ast.get(1);
 
         JsonNode firstToken = fullVariable.get(0);
         if (firstToken.isTextual()) {
@@ -78,15 +78,15 @@ public class UselessVariables extends AbstractASTWalker {
             }
         }
 
-        return selector;
+        return ast;
     }
 
     @Override
-    protected JsonNode processVariable(ArrayNode variable) throws HistoneException {
-        Assert.isTrue(variable.size() == 3);
+    protected JsonNode processVariable(ArrayNode ast) throws HistoneException {
+        Assert.isTrue(ast.size() == 3);
 
-        JsonNode var = variable.get(1);
-        JsonNode value = variable.get(2);
+        JsonNode var = ast.get(1);
+        JsonNode value = ast.get(2);
         JsonNode processedValue = processAstNode(value);
 
         String varName = var.asText();

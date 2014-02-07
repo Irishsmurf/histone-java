@@ -91,22 +91,22 @@ public class FragmentsConcatinationOptimizer extends AbstractASTWalker {
     }
 
     @Override
-    protected JsonNode processStatements(ArrayNode statements) throws HistoneException {
-        int type = statements.get(0).asInt();
-        statements = (ArrayNode) statements.get(1);
-        return nodeFactory.jsonArray(type, simplifyArrayNode(statements));
+    protected JsonNode processStatements(ArrayNode ast) throws HistoneException {
+        int type = ast.get(0).asInt();
+        ast = (ArrayNode) ast.get(1);
+        return nodeFactory.jsonArray(type, simplifyArrayNode(ast));
     }
 
     @Override
-    protected JsonNode processFor(ArrayNode for_) throws HistoneException {
-        int type = for_.get(0).asInt();
-        ArrayNode var = (ArrayNode) for_.get(1);
-        ArrayNode collection = (ArrayNode) for_.get(2);
-        ArrayNode statements = (ArrayNode) for_.get(3).get(0);
+    protected JsonNode processFor(ArrayNode ast) throws HistoneException {
+        int type = ast.get(0).asInt();
+        ArrayNode var = (ArrayNode) ast.get(1);
+        ArrayNode collection = (ArrayNode) ast.get(2);
+        ArrayNode statements = (ArrayNode) ast.get(3).get(0);
 
         ArrayNode elseStatements = null;
-        if (for_.get(3).size() > 1) {
-            elseStatements = (ArrayNode) for_.get(3).get(1);
+        if (ast.get(3).size() > 1) {
+            elseStatements = (ArrayNode) ast.get(3).get(1);
         }
 
         collection = (ArrayNode) processAstNode(collection);
@@ -149,9 +149,9 @@ public class FragmentsConcatinationOptimizer extends AbstractASTWalker {
     }
 
     @Override
-    protected JsonNode processIf(ArrayNode if_) throws HistoneException {
-        int type = if_.get(0).asInt();
-        ArrayNode conditions = (ArrayNode) if_.get(1);
+    protected JsonNode processIf(ArrayNode ast) throws HistoneException {
+        int type = ast.get(0).asInt();
+        ArrayNode conditions = (ArrayNode) ast.get(1);
 
         ArrayNode conditionsOut = nodeFactory.jsonArray();
 

@@ -58,12 +58,12 @@ public class SafeASTNodesMarker extends AbstractASTWalker {
      * Statements are safe, if all of them are safe.
      */
     @Override
-    protected JsonNode processStatements(ArrayNode statements) throws HistoneException {
-        statements = (ArrayNode) statements.get(1);
+    protected JsonNode processStatements(ArrayNode ast) throws HistoneException {
+        ast = (ArrayNode) ast.get(1);
 
-        JsonNode[] statementsOut = new JsonNode[statements.size()];
-        for (int i = 0; i < statements.size(); i++) {
-            statementsOut[i] = processAstNode(statements.get(i));
+        JsonNode[] statementsOut = new JsonNode[ast.size()];
+        for (int i = 0; i < ast.size(); i++) {
+            statementsOut[i] = processAstNode(ast.get(i));
         }
         boolean isSafe = safeArray(statementsOut);
 
@@ -74,11 +74,11 @@ public class SafeASTNodesMarker extends AbstractASTWalker {
      * Var is safe, if its expression is safe.
      */
     @Override
-    protected JsonNode processVariable(ArrayNode variable) throws HistoneException {
-        Assert.isTrue(variable.size() == 3);
+    protected JsonNode processVariable(ArrayNode ast) throws HistoneException {
+        Assert.isTrue(ast.size() == 3);
 
-        JsonNode varName = variable.get(1);
-        JsonNode varExpression = variable.get(2);
+        JsonNode varName = ast.get(1);
+        JsonNode varExpression = ast.get(2);
         JsonNode processedVarExpression = processAstNode(varExpression);
 
         boolean isSafe = safeAstNode(processedVarExpression);
@@ -93,8 +93,8 @@ public class SafeASTNodesMarker extends AbstractASTWalker {
      * Map is safe if all its items are safe.
      */
     @Override
-    protected JsonNode processMap(ArrayNode map) throws HistoneException {
-        ArrayNode items = (ArrayNode) map.get(1);
+    protected JsonNode processMap(ArrayNode ast) throws HistoneException {
+        ArrayNode items = (ArrayNode) ast.get(1);
 
         ArrayNode processedItems = nodeFactory.jsonArray();
         for (JsonNode item : items) {
@@ -148,8 +148,8 @@ public class SafeASTNodesMarker extends AbstractASTWalker {
      * Imports are always not safe
      */
     @Override
-    protected JsonNode processImport(ArrayNode import_) throws HistoneException {
-        String resource = import_.get(1).asText();
+    protected JsonNode processImport(ArrayNode ast) throws HistoneException {
+        String resource = ast.get(1).asText();
 
         return ast(false, AstNodeType.IMPORT, nodeFactory.jsonString(resource));
     }
@@ -163,10 +163,10 @@ public class SafeASTNodesMarker extends AbstractASTWalker {
      * 4. All args are safe.
      */
     @Override
-    protected JsonNode processCall(ArrayNode call) throws HistoneException {
-        JsonNode target = call.get(1);
-        JsonNode name = call.get(2);
-        JsonNode args = call.get(3);
+    protected JsonNode processCall(ArrayNode ast) throws HistoneException {
+        JsonNode target = ast.get(1);
+        JsonNode name = ast.get(2);
+        JsonNode args = ast.get(3);
 
         if (!target.isNull()) {
             boolean targetIsSafe = safeAstNode(target);
@@ -209,8 +209,8 @@ public class SafeASTNodesMarker extends AbstractASTWalker {
      * Selector is safe if variable is safe or all children elements are safe.
      */
     @Override
-    protected JsonNode processSelector(ArrayNode selector) throws HistoneException {
-        JsonNode fullVariable = selector.get(1);
+    protected JsonNode processSelector(ArrayNode ast) throws HistoneException {
+        JsonNode fullVariable = ast.get(1);
 
         List<String> ss = new ArrayList<String>();
         for (JsonNode t : fullVariable) {
@@ -234,14 +234,14 @@ public class SafeASTNodesMarker extends AbstractASTWalker {
      * FOR is safe if all its statements are safe and collection, for iterarated over, is safe also.
      */
     @Override
-    protected JsonNode processFor(ArrayNode for_) throws HistoneException {
-        ArrayNode var = (ArrayNode) for_.get(1);
-        ArrayNode collection = (ArrayNode) for_.get(2);
-        ArrayNode statements = (ArrayNode) for_.get(3).get(0);
+    protected JsonNode processFor(ArrayNode ast) throws HistoneException {
+        ArrayNode var = (ArrayNode) ast.get(1);
+        ArrayNode collection = (ArrayNode) ast.get(2);
+        ArrayNode statements = (ArrayNode) ast.get(3).get(0);
 
         ArrayNode elseStatements = null;
-        if (for_.get(3).size() > 1) {
-            elseStatements = (ArrayNode) for_.get(3).get(1);
+        if (ast.get(3).size() > 1) {
+            elseStatements = (ArrayNode) ast.get(3).get(1);
         }
 
         boolean isSafe = true;
@@ -289,8 +289,8 @@ public class SafeASTNodesMarker extends AbstractASTWalker {
      * If is safe if for all conditions both expression and statements are safe.
      */
     @Override
-    protected JsonNode processIf(ArrayNode if_) throws HistoneException {
-        ArrayNode conditions = (ArrayNode) if_.get(1);
+    protected JsonNode processIf(ArrayNode ast) throws HistoneException {
+        ArrayNode conditions = (ArrayNode) ast.get(1);
 
         boolean isSafe = true;
         ArrayNode conditionsOut = nodeFactory.jsonArray();

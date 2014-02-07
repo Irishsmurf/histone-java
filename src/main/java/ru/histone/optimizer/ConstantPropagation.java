@@ -51,14 +51,14 @@ public class ConstantPropagation extends AbstractASTWalker {
     }
 
     @Override
-    protected JsonNode processFor(ArrayNode for_) throws HistoneException {
-        ArrayNode var = (ArrayNode) for_.get(1);
-        ArrayNode collection = (ArrayNode) for_.get(2);
-        ArrayNode statements = (ArrayNode) for_.get(3).get(0);
+    protected JsonNode processFor(ArrayNode ast) throws HistoneException {
+        ArrayNode var = (ArrayNode) ast.get(1);
+        ArrayNode collection = (ArrayNode) ast.get(2);
+        ArrayNode statements = (ArrayNode) ast.get(3).get(0);
 
         ArrayNode elseStatements = null;
-        if (for_.get(3).size() > 1) {
-            elseStatements = (ArrayNode) for_.get(3).get(1);
+        if (ast.get(3).size() > 1) {
+            elseStatements = (ArrayNode) ast.get(3).get(1);
         }
 
         pushContext();
@@ -88,8 +88,8 @@ public class ConstantPropagation extends AbstractASTWalker {
     }
 
     @Override
-    protected JsonNode processIf(ArrayNode if_) throws HistoneException {
-        ArrayNode conditions = (ArrayNode) if_.get(1);
+    protected JsonNode processIf(ArrayNode ast) throws HistoneException {
+        ArrayNode conditions = (ArrayNode) ast.get(1);
 
         ArrayNode conditionsOut = nodeFactory.jsonArray();
 
@@ -129,14 +129,14 @@ public class ConstantPropagation extends AbstractASTWalker {
         return nodeFactory.jsonArray(AstNodeType.MACRO, name, args, statements);
     }
 
-    protected JsonNode processVariable(ArrayNode variable) throws HistoneException {
-        Assert.isTrue(variable.size() == 3);
+    protected JsonNode processVariable(ArrayNode ast) throws HistoneException {
+        Assert.isTrue(ast.size() == 3);
 
-        JsonNode var = variable.get(1);
+        JsonNode var = ast.get(1);
         String varName = var.asText();
         context.removeVar(varName);
 
-        JsonNode preValue = variable.get(2);
+        JsonNode preValue = ast.get(2);
         JsonNode valueNode = processAstNode(preValue);
 
         if (valueNode.isArray()) {
@@ -149,8 +149,8 @@ public class ConstantPropagation extends AbstractASTWalker {
         return nodeFactory.jsonArray(AstNodeType.VAR, var, valueNode);
     }
 
-    protected JsonNode processSelector(ArrayNode selector) throws HistoneException {
-        JsonNode fullVariable = selector.get(1);
+    protected JsonNode processSelector(ArrayNode ast) throws HistoneException {
+        JsonNode fullVariable = ast.get(1);
 
         boolean arrayTokenFound = false;
         JsonNode[] processedTokens = new JsonNode[fullVariable.size()];
