@@ -54,11 +54,22 @@ public class SafeASTEvaluationTest extends AbstractOptimizersTest {
     @Test
     public void expr_complexIf() throws IOException, HistoneException {
         String input = "a {{if ZZZ is 'login'}} A{{'login'}}A {{elseif ZZZ is 'ttt'}} B{{123}}B {{else}} C{{true}}C {{/if}} b";
-        ArrayNode expectedAST = (ArrayNode) getJackson().readTree("[\"a \",[-1000,[[[3,[105,[\"ZZZ\"]],[103,\"login\"]],[\" AloginA \"]],[[3,[105,[\"ZZZ\"]],[103,\"ttt\"]],[\" B123B \"]],[[16],[\" CtrueC \"]]]],\" b\"]");
+        ArrayNode expectedAST = (ArrayNode) getJackson().readTree("[\"a \",[1000,[[[3,[105,[\"ZZZ\"]],[103,\"login\"]],[\" AloginA \"]],[[3,[105,[\"ZZZ\"]],[103,\"ttt\"]],[\" B123B \"]],[[16],[\" CtrueC \"]]]],\" b\"]");
         ObjectNode context = getNodeFactory().jsonObject();
         context.put("a", true);
         ArrayNode initialAST = getHistone().parseTemplateToAST(input);
-        ArrayNode optimizedAST = getHistone().optimizeAST(initialAST, context);//, OptimizationTypes.SAFE_CODE_EVALUATION);
+        ArrayNode optimizedAST = getHistone().optimizeAST(initialAST, context, OptimizationTypes.SAFE_CODE_EVALUATION);
+
+        assertEquals(expectedAST.toString(), optimizedAST.toString());
+    }
+    @Test
+    public void expr_complexFor() throws IOException, HistoneException {
+        String input = "a {{for x in items}} A{{x}}{{'ttt'}}A {{/for}} b";
+        ArrayNode expectedAST = (ArrayNode) getJackson().readTree("[\"a \",[1002,[\"x\"],[105,[\"items\"]],[[\" A\",[105,[\"x\"]],\"tttA \"]]],\" b\"]");
+        ObjectNode context = getNodeFactory().jsonObject();
+        context.put("a", true);
+        ArrayNode initialAST = getHistone().parseTemplateToAST(input);
+        ArrayNode optimizedAST = getHistone().optimizeAST(initialAST, context, OptimizationTypes.SAFE_CODE_EVALUATION);
 
         assertEquals(expectedAST.toString(), optimizedAST.toString());
     }
