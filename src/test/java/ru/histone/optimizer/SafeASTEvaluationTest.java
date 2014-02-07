@@ -58,7 +58,7 @@ public class SafeASTEvaluationTest extends AbstractOptimizersTest {
         ObjectNode context = getNodeFactory().jsonObject();
         context.put("a", true);
         ArrayNode initialAST = getHistone().parseTemplateToAST(input);
-        ArrayNode optimizedAST = getHistone().optimizeAST(initialAST, context, OptimizationTypes.SAFE_CODE_EVALUATION);
+        ArrayNode optimizedAST = getHistone().optimizeAST(initialAST, context);//, OptimizationTypes.SAFE_CODE_EVALUATION);
 
         assertEquals(expectedAST.toString(), optimizedAST.toString());
     }

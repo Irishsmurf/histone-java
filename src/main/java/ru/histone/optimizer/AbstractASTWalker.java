@@ -89,8 +89,6 @@ public abstract class AbstractASTWalker {
      * @return processed AST
      */
     protected ArrayNode processAST(ArrayNode ast) throws HistoneException {
-        ast = removeHistoneAstSignature(ast);
-
         ArrayNode result = nodeFactory.jsonArray();
         for (JsonNode node : ast) {
             JsonNode processedNode = processAstNode(node);
@@ -100,46 +98,46 @@ public abstract class AbstractASTWalker {
     }
 
     /**
-     * Process node as array of AST nodes if it's an array. Otherwise call {@link #processAstNode(com.fasterxml.jackson.databind.JsonNode)}.
+     * Process ast as array of AST nodes if it's an array. Otherwise call {@link #processAstNode(com.fasterxml.jackson.databind.JsonNode)}.
      *
      * @return an {@link ArrayNode}, if was processed as array.
      */
-    protected JsonNode processArrayOfAstNodes(JsonNode node) throws HistoneException {
-        if (node.isArray()) {
-            JsonNode[] result = new JsonNode[node.size()];
+    protected JsonNode processArrayOfAstNodes(JsonNode ast) throws HistoneException {
+        if (ast.isArray()) {
+            JsonNode[] result = new JsonNode[ast.size()];
             for (int i = 0; i < result.length; i++) {
-                result[i] = processAstNode(node.get(i));
+                result[i] = processAstNode(ast.get(i));
             }
             return nodeFactory.jsonArray(result);
         } else {
-            return processAstNode(node);
+            return processAstNode(ast);
         }
     }
 
     /**
-     * Process AST node.
+     * Process AST ast.
      * <p/>
      * <p>Node can be:
      * <ul>
      * <li>Test nodes (e.g. fragments)</li>
-     * <li>AST node, a node that have following structure: [[<operation code from {@link AstNodeType}>], <AST node params> ]</li>
+     * <li>AST ast, a ast that have following structure: [[<operation code from {@link AstNodeType}>], <AST ast params> ]</li>
      * </ul>
      *
-     * @param node
+     * @param ast
      * @return
      * @throws HistoneException
      */
-    protected JsonNode processAstNode(JsonNode node) throws HistoneException {
+    protected JsonNode processAstNode(JsonNode ast) throws HistoneException {
         // All text nodes are returned 'as it'
-        if (node.isTextual()) {
-            return node;
+        if (ast.isTextual()) {
+            return ast;
         }
 
-        // If this node is not array, so it NOT AST node and we return it 'as is'
-        if (!node.isArray()) {
-            return node;
+        // If this ast is not array, so it NOT AST ast and we return it 'as is'
+        if (!ast.isArray()) {
+            return ast;
         }
-        ArrayNode arr = (ArrayNode) node;
+        ArrayNode arr = (ArrayNode) ast;
 
         // We also skip empty arrays
         if (arr.size() == 0) {
@@ -148,12 +146,12 @@ public abstract class AbstractASTWalker {
 
         int nodeType = Math.abs(getNodeType(arr));
 
-        // Processing of AST node types, that are operations over number of arguments
+        // Processing of AST ast types, that are operations over number of arguments
         if (getOperationsOverArguments().contains(nodeType)) {
             return processOperationOverArguments(arr);
         }
 
-        // Processing of AST node types, that are control statements
+        // Processing of AST ast types, that are control statements
         switch (nodeType) {
             case AstNodeType.SELECTOR:
                 return processSelector(arr);
@@ -176,7 +174,7 @@ public abstract class AbstractASTWalker {
             case AstNodeType.MAP:
                 return processMap(arr);
             default:
-                return node;
+                return ast;
         }
     }
 
@@ -196,17 +194,18 @@ public abstract class AbstractASTWalker {
     public abstract void popContext();
 
     public ArrayNode process(ArrayNode ast) throws HistoneException{
+        ast = removeHistoneAstSignature(ast);
         return processAST(ast);
     }
     //</editor-fold>
 
     //<editor-fold desc="Recursive processing different types of nodes">
 
-    protected JsonNode processCall(ArrayNode call) throws HistoneException {
-        int type = call.get(0).asInt();
-        JsonNode target = call.get(1);
-        JsonNode functionName = call.get(2);
-        JsonNode args = call.get(3);
+    protected JsonNode processCall(ArrayNode ast) throws HistoneException {
+        int type = ast.get(0).asInt();
+        JsonNode target = ast.get(1);
+        JsonNode functionName = ast.get(2);
+        JsonNode args = ast.get(3);
 
         target = processAstNode(target);
         if (args.isArray() && args.size() > 0) {
@@ -216,9 +215,9 @@ public abstract class AbstractASTWalker {
         return nodeFactory.jsonArray(type, target, functionName, args);
     }
 
-    protected JsonNode processMap(ArrayNode map) throws HistoneException {
-        int type = map.get(0).asInt();
-        ArrayNode items = (ArrayNode) map.get(1);
+    protected JsonNode processMap(ArrayNode ast) throws HistoneException {
+        int type = ast.get(0).asInt();
+        ArrayNode items = (ArrayNode) ast.get(1);
 
         ArrayNode processedItems = nodeFactory.jsonArray();
         for (JsonNode item : items) {
@@ -254,29 +253,29 @@ public abstract class AbstractASTWalker {
         return nodeFactory.jsonArray(operationType, processedArguments);
     }
 
-    protected JsonNode processStatements(ArrayNode statements) throws HistoneException {
-        int type = statements.get(0).asInt();
-        statements = (ArrayNode) statements.get(1);
+    protected JsonNode processStatements(ArrayNode ast) throws HistoneException {
+        int type = ast.get(0).asInt();
+        ast = (ArrayNode) ast.get(1);
 
-        JsonNode[] statementsOut = new JsonNode[statements.size()];
-        for (int i = 0; i < statements.size(); i++) {
-            statementsOut[i] = processAstNode(statements.get(i));
+        JsonNode[] statementsOut = new JsonNode[ast.size()];
+        for (int i = 0; i < ast.size(); i++) {
+            statementsOut[i] = processAstNode(ast.get(i));
         }
 
         return nodeFactory.jsonArray(type, nodeFactory.jsonArray(statementsOut));
     }
 
-    protected JsonNode processImport(ArrayNode import_) throws HistoneException {
-        String resource = import_.get(1).asText();
-        return import_;
+    protected JsonNode processImport(ArrayNode ast) throws HistoneException {
+        String resource = ast.get(1).asText();
+        return ast;
     }
 
-    protected JsonNode processVariable(ArrayNode variable) throws HistoneException {
-        int type = variable.get(0).asInt();
-        Assert.isTrue(variable.size() == 3);
+    protected JsonNode processVariable(ArrayNode ast) throws HistoneException {
+        int type = ast.get(0).asInt();
+        Assert.isTrue(ast.size() == 3);
 
-        JsonNode var = variable.get(1);
-        JsonNode value = variable.get(2);
+        JsonNode var = ast.get(1);
+        JsonNode value = ast.get(2);
         JsonNode processedValue = processAstNode(value);
 
         return nodeFactory.jsonArray(type, var, processedValue);
@@ -296,9 +295,9 @@ public abstract class AbstractASTWalker {
         return nodeFactory.jsonArray(type, name, args, statements);
     }
 
-    protected JsonNode processIf(ArrayNode if_) throws HistoneException {
-        int type = if_.get(0).asInt();
-        ArrayNode conditions = (ArrayNode) if_.get(1);
+    protected JsonNode processIf(ArrayNode ast) throws HistoneException {
+        int type = ast.get(0).asInt();
+        ArrayNode conditions = (ArrayNode) ast.get(1);
 
         ArrayNode conditionsOut = nodeFactory.jsonArray();
 
@@ -324,15 +323,15 @@ public abstract class AbstractASTWalker {
         return nodeFactory.jsonArray(type, conditionsOut);
     }
 
-    protected JsonNode processFor(ArrayNode for_) throws HistoneException {
-        int type = for_.get(0).asInt();
-        ArrayNode var = (ArrayNode) for_.get(1);
-        ArrayNode collection = (ArrayNode) for_.get(2);
-        ArrayNode statements = (ArrayNode) for_.get(3).get(0);
+    protected JsonNode processFor(ArrayNode ast) throws HistoneException {
+        int type = ast.get(0).asInt();
+        ArrayNode var = (ArrayNode) ast.get(1);
+        ArrayNode collection = (ArrayNode) ast.get(2);
+        ArrayNode statements = (ArrayNode) ast.get(3).get(0);
 
         ArrayNode elseStatements = null;
-        if (for_.get(3).size() > 1) {
-            elseStatements = (ArrayNode) for_.get(3).get(1);
+        if (ast.get(3).size() > 1) {
+            elseStatements = (ArrayNode) ast.get(3).get(1);
         }
 
         String iterVal = var.get(0).asText();
@@ -362,9 +361,9 @@ public abstract class AbstractASTWalker {
         return nodeFactory.jsonArray(type, var, collection, statementsContainer);
     }
 
-    protected JsonNode processSelector(ArrayNode selector) throws HistoneException {
-        int type = selector.get(0).asInt();
-        JsonNode fullVariable = selector.get(1);
+    protected JsonNode processSelector(ArrayNode ast) throws HistoneException {
+        int type = ast.get(0).asInt();
+        JsonNode fullVariable = ast.get(1);
 
         JsonNode[] tokensOut = new JsonNode[fullVariable.size()];
         for (int i = 0; i < fullVariable.size(); i++) {

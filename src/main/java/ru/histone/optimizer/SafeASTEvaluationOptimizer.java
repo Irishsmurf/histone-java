@@ -21,7 +21,8 @@ import ru.histone.HistoneException;
 import ru.histone.evaluator.Evaluator;
 import ru.histone.evaluator.nodes.Node;
 import ru.histone.evaluator.nodes.NodeFactory;
-import ru.histone.parser.AstNodeType;
+
+import java.util.Arrays;
 
 /**
  * This optimization unit evaluates constant AST branches and replaces them by evaluation result (string constant AST node).
@@ -44,28 +45,65 @@ public class SafeASTEvaluationOptimizer extends AbstractASTWalker {
     }
 
     @Override
-    protected JsonNode processAstNode(JsonNode node) throws HistoneException {
-        if (SafeASTNodesMarker.safeAstNode(node)) {
-            if (node instanceof ArrayNode) {
-                int type = getNodeType((ArrayNode)node);
-                if (type == AstNodeType.INT
-                        || type == AstNodeType.TRUE
-                        || type == AstNodeType.FALSE
-                        || type == AstNodeType.NULL
-                        || type == AstNodeType.DOUBLE
-                        || type == AstNodeType.STRING) {
-                    return clearSafeFlag(super.processAstNode(node));
-                } else {
-                    JsonNode evaluated = evaluateAstOnCleanContext(node);
-                    return nodeFactory.jsonArray(evaluated);
-                }
-            } else {
-                JsonNode evaluated = evaluateAstOnCleanContext(node);
-                return nodeFactory.jsonArray(evaluated);
-            }
-        } else {
-            return clearSafeFlag(super.processAstNode(node));
+    protected JsonNode processIf(ArrayNode ast) throws HistoneException {
+        int type = ast.get(0).asInt();
+
+        if (type > 0) {
+            JsonNode evaluated = evaluateAstOnCleanContext(ast);
+            return nodeFactory.jsonArray(evaluated);
         }
+
+        ArrayNode conditions = (ArrayNode) ast.get(1);
+
+        ArrayNode conditionsOut = nodeFactory.jsonArray();
+
+        for (JsonNode condition : conditions) {
+            JsonNode expression = condition.get(0);
+            JsonNode statements = condition.get(1);
+
+            if (SafeASTNodesMarker.safeAstNode(expression)) {
+                JsonNode evaluated = evaluateAstOnCleanContext(expression);
+                expression = nodeFactory.jsonArray(evaluated);
+            } else {
+                expression = clearSafeFlag(super.processAstNode(expression));
+            }
+
+            pushContext();
+            ArrayNode statementsOut = processAST((ArrayNode) statements);
+            popContext();
+
+            ArrayNode conditionOut = nodeFactory.jsonArray();
+            conditionOut.add(expression);
+            conditionOut.add(statementsOut);
+            conditionsOut.add(conditionOut);
+        }
+
+        return nodeFactory.jsonArray(type, conditionsOut);
+    }
+
+    @Override
+    protected ArrayNode processAST(ArrayNode ast) throws HistoneException {
+        ArrayNode result = nodeFactory.jsonArray();
+        for (JsonNode node : ast) {
+            if (node.isTextual()) {
+                result.add(node);
+            } else if (!node.isArray()) {
+                result.add(node);
+            } else if (node.size() == 0) {
+                // We also skip empty arrays
+                result.add(node);
+            } else {
+                int type = getNodeType((ArrayNode) node);
+                if (type > 0) {
+                    JsonNode evaluated = evaluateAstOnCleanContext(node);
+                    result.add(nodeFactory.jsonArray(evaluated));
+                } else {
+                    JsonNode processedNode = processAstNode(node);
+                    result.add(processedNode);
+                }
+            }
+        }
+        return result;
     }
 
     public JsonNode evaluateAstOnCleanContext(JsonNode ast) throws HistoneException {
