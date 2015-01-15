@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>ru.histone</groupId>
+    <groupId>com.github.megafonweblab.histone</groupId>
     <artifactId>histone-java</artifactId>
     <version>1.2.10-SNAPSHOT</version>
     <packaging>jar</packaging>
@@ -27,43 +28,47 @@
             <organization>Megafon</organization>
             <organizationUrl>http://www.megafon.ru</organizationUrl>
         </developer>
-        <developer>
+    </developers>
+    <contributors>
+        <contributor>
             <name>Sergey Nazaryev</name>
             <email>sergey.nazaryev@gmail.com</email>
             <organization>Megafon</organization>
             <organizationUrl>http://www.megafon.ru</organizationUrl>
-        </developer>
-        <developer>
+        </contributor>
+        <contributor>
             <name>Kirill Sazonov</name>
             <email>sazonovkirill@gmail.com</email>
             <organization>BSC Ideas</organization>
             <organizationUrl>http://www.bsc-ideas.ru</organizationUrl>
-        </developer>
-    </developers>
+        </contributor>
+    </contributors>
+    <issueManagement>
+        <system>GitHub Issues</system>
+        <url>https://github.com/MegafonWebLab/histone-java/issues</url>
+    </issueManagement>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <histone-acceptance-test.version>1.2.13</histone-acceptance-test.version>
+        <histone-acceptance-test.version>1.2.14</histone-acceptance-test.version>
 
         <!-- deps versions -->
-        <!--<gson.version>2.1</gson.version> -->
-        <jackson.version>2.3.0</jackson.version>
-        <apache.httpcomponents.version>4.2.2</apache.httpcomponents.version>
-        <slf4j.version>1.6.1</slf4j.version>
-        <logback.version>1.0.0</logback.version>
-        <junit.version>4.11</junit.version>
-        <mockito.version>1.9.0</mockito.version>
+        <jackson.version>2.4.4</jackson.version>
+        <apache.httpcomponents.version>4.3.6</apache.httpcomponents.version>
+
+        <slf4j.version>1.7.10</slf4j.version>
+        <logback.version>1.1.2</logback.version>
+
+        <junit.version>4.12</junit.version>
+        <mockito.version>1.10.19</mockito.version>
         <javax.servlet.version>3.1-b02</javax.servlet.version>
         <jetty.version>8.1.8.v20121106</jetty.version>
         <google-reflections.version>0.9.8</google-reflections.version>
-        <spring.version>3.1.0.RELEASE</spring.version>
+        <spring.version>4.1.4.RELEASE</spring.version>
         <commons-io.version>2.4</commons-io.version>
         <commons-lang.version>2.6</commons-lang.version>
         <commons-collections.version>3.2.1</commons-collections.version>
     </properties>
-    <prerequisites>
-        <maven>2.2.1</maven>
-    </prerequisites>
     <build>
         <resources>
             <resource>
@@ -116,7 +121,7 @@
                         <configuration>
                             <artifactItems>
                                 <artifactItem>
-                                    <groupId>ru.histone</groupId>
+                                    <groupId>com.github.megafonweblab.histone</groupId>
                                     <artifactId>histone-acceptance-test-cases</artifactId>
                                     <version>${histone-acceptance-test.version}</version>
                                     <overWrite>true</overWrite>
@@ -199,11 +204,28 @@
                 </configuration>
             </plugin>
             <plugin>
-                <groupId>org.codehaus.gmaven</groupId>
-                <artifactId>gmaven-plugin</artifactId>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-gpg-plugin</artifactId>
                 <version>1.5</version>
+                <executions>
+                    <execution>
+                        <id>sign-artifacts</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>sign</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.sonatype.plugins</groupId>
+                <artifactId>nexus-staging-maven-plugin</artifactId>
+                <version>1.6.3</version>
+                <extensions>true</extensions>
                 <configuration>
-                    <source>println "##teamcity[buildNumber '"+project.version.substring(0,project.version.indexOf('-SNAPSHOT'))+"']"</source>
+                    <serverId>ossrh</serverId>
+                    <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                    <autoReleaseAfterClose>true</autoReleaseAfterClose>
                 </configuration>
             </plugin>
         </plugins>
@@ -303,6 +325,7 @@
             <groupId>org.reflections</groupId>
             <artifactId>reflections</artifactId>
             <version>${google-reflections.version}</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>
@@ -320,42 +343,18 @@
     </dependencies>
     <scm>
         <url>https://github.com/MegafonWebLab/histone-java</url>
-        <connection>scm:git:git://github.com/MegafonWebLab/histone-java.git</connection>
+        <connection>scm:git:https://github.com/MegafonWebLab/histone-java.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/MegafonWebLab/histone-java.git</developerConnection>
         <tag>HEAD</tag>
     </scm>
-
-    <repositories>
-        <repository>
-            <id>hq-weblab-release</id>
-            <url>https://hq-devlabs.megafon.ru/artifactory/weblab-release</url>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </repository>
-        <repository>
-            <id>hq-weblab-snapshot</id>
-            <url>https://hq-devlabs.megafon.ru/artifactory/weblab-snapshot</url>
-            <releases>
-                <enabled>false</enabled>
-            </releases>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </repository>
-    </repositories>
-
     <distributionManagement>
-        <repository>
-            <id>hq-weblab-release</id>
-            <url>https://hq-devlabs.megafon.ru/artifactory/weblab-release-local</url>
-        </repository>
         <snapshotRepository>
-            <id>hq-weblab-snapshot</id>
-            <url>https://hq-devlabs.megafon.ru/artifactory/weblab-snapshot-local</url>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
         </snapshotRepository>
+        <repository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
     </distributionManagement>
 </project>
