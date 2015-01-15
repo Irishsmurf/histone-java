@@ -49,6 +49,44 @@ public class SafeASTEvaluationOptimizer extends AbstractASTWalker {
     }
 
     @Override
+    protected JsonNode processFor(ArrayNode ast) throws HistoneException {
+        int type = ast.get(0).asInt();
+        ArrayNode var = (ArrayNode) ast.get(1);
+        ArrayNode collection = (ArrayNode) ast.get(2);
+        ArrayNode statements = (ArrayNode) ast.get(3).get(0);
+
+        ArrayNode elseStatements = null;
+        if (ast.get(3).size() > 1) {
+            elseStatements = (ArrayNode) ast.get(3).get(1);
+        }
+
+        String iterVal = var.get(0).asText();
+        String iterKey = (var.size() > 1) ? var.get(1).asText() : null;
+
+        collection = (ArrayNode) processAstNode(collection);
+
+        pushContext();
+        ArrayNode statementsOut = processAST((ArrayNode) statements);
+        popContext();
+
+//        JsonNode[] elseStatementsOut = null;
+        ArrayNode elseStatementsOut = null;
+        if (elseStatements != null) {
+            elseStatementsOut = processAST(elseStatements);
+//            elseStatementsOut = new JsonNode[elseStatements.size()];
+//            for (int i = 0; i < elseStatements.size(); i++) {
+//                elseStatementsOut[i] = processAstNode(elseStatements.get(i));
+//            }
+        }
+
+        ArrayNode statementsContainer = elseStatementsOut == null ?
+                nodeFactory.jsonArray(statementsOut) :
+                nodeFactory.jsonArray(statementsOut, elseStatementsOut);
+
+        return nodeFactory.jsonArray(type, var, collection, statementsContainer);
+    }
+
+    @Override
     protected JsonNode processIf(ArrayNode ast) throws HistoneException {
         int type = ast.get(0).asInt();
 

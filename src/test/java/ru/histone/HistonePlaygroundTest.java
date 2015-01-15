@@ -42,9 +42,12 @@ public class HistonePlaygroundTest {
     public void test() throws Exception {
         String input = "a {{min([[]], [[]])}} b";
         input="a {{var x = 10}}{{for r in range(1, 10)}}{{var x = x + 10}}{{x}} {{/for}} b";
+        input="a {{if ZZZ is 'login'}} A{{'login'}}A {{elseif ZZZ is 'ttt'}} B{{123}}B {{else}} C{{true}}C {{/if}} b";
+        input = "a {{for x in items}} A{{x}}{{'ttt'}}A {{else}} nono {{/for}} b";
+        input="[\" A\",[105,[\"x\"]],[103,\"ttt\"],\"A \"]";
 
         ArrayNode ast = histone.parseTemplateToAST(new StringReader(input));
-        ArrayNode astOpt = histone.optimizeAST(ast, OptimizationTypes.CONSTANTS_SUBSTITUTION);
+        ArrayNode astOpt = histone.optimizeAST(ast, OptimizationTypes.SAFE_CODE_EVALUATION);
         System.out.println("ast:   " + ast.get(1).toString());
         System.out.println("astOpt:" + astOpt.toString());
 

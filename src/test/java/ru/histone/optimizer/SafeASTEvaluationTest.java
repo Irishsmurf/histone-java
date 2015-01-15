@@ -64,7 +64,7 @@ public class SafeASTEvaluationTest extends AbstractOptimizersTest {
     }
     @Test
     public void expr_complexFor() throws IOException, HistoneException {
-        String input = "a {{for x in items}} A{{x}}{{'ttt'}}A {{/for}} b";
+        String input = "a {{var x = 123}} {{for y in items}} A{{y}}{{'ttt'}}A {{/for}} {{x}} b";
         ArrayNode expectedAST = (ArrayNode) getJackson().readTree("[\"a \",[1002,[\"x\"],[105,[\"items\"]],[[\" A\",[105,[\"x\"]],\"tttA \"]]],\" b\"]");
         ObjectNode context = getNodeFactory().jsonObject();
         context.put("a", true);

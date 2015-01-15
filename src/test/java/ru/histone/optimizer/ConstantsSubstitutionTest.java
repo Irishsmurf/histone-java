@@ -66,9 +66,22 @@ public class ConstantsSubstitutionTest {
 
         assertEquals(expectedAST.toString(), optimizedAST.toString());
     }
+
     @Test
     public void expr_var() throws IOException, HistoneException {
         String input = "a {{var x = 10}}{{for r in range(1, 10)}}{{var x = x + 10}}{{x}} {{/for}} b";
+        ArrayNode expectedAST = (ArrayNode) jackson.readTree("[\"a \",[1001,\"x\",[101,10]],[1002,[\"r\"],[106,null,\"range\",[[101,1],[101,10]]],[[[1001,\"x\",[9,[101,10],[101,10]]],[9,[101,10],[101,10]],\" \"]]],\" b\"]");
+        ObjectNode context = nodeFactory.jsonObject();
+        context.put("a", true);
+        ArrayNode initialAST = histone.parseTemplateToAST(input);
+        ArrayNode optimizedAST = histone.optimizeAST(initialAST, context, OptimizationTypes.CONSTANTS_SUBSTITUTION);
+
+        assertEquals(expectedAST.toString(), optimizedAST.toString());
+    }
+
+    @Test
+    public void expr_if2() throws IOException, HistoneException {
+        String input = "a {{if this.page.prefs.action is 'login'}} A {{/if}} b";
         ArrayNode expectedAST = (ArrayNode) jackson.readTree("[\"a \",[1001,\"x\",[101,10]],[1002,[\"r\"],[106,null,\"range\",[[101,1],[101,10]]],[[[1001,\"x\",[9,[101,10],[101,10]]],[9,[101,10],[101,10]],\" \"]]],\" b\"]");
         ObjectNode context = nodeFactory.jsonObject();
         context.put("a", true);
