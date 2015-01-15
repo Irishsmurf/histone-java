@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import ru.histone.Histone;
 import ru.histone.HistoneBuilder;
@@ -29,6 +30,7 @@ import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
 
+@Ignore
 public class ConstantsSubstitutionTest {
     private Histone histone;
     private NodeFactory nodeFactory;

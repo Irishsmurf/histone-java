@@ -17,12 +17,14 @@ package ru.histone.optimizer;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
 
+@Ignore
 public class ASTTreeElementsCounterTest {
     private ASTTreeElementsCounter counter = new ASTTreeElementsCounter();
     private ObjectMapper jackson = new ObjectMapper();

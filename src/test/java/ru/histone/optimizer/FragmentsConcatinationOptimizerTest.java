@@ -16,6 +16,7 @@
 package ru.histone.optimizer;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import org.junit.Ignore;
 import org.junit.Test;
 import ru.histone.HistoneException;
 
@@ -23,6 +24,7 @@ import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
 
+@Ignore
 public class FragmentsConcatinationOptimizerTest extends AbstractOptimizersTest {
 
     @Test

@@ -24,6 +24,7 @@ import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
 
+@Ignore
 public class EliminateSingleNodeArrayOptimizationTest extends AbstractOptimizersTest {
 
     @Test

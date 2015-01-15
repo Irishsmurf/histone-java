@@ -30,6 +30,7 @@ import java.io.StringWriter;
  * User: sazonovkirill@gmail.com
  * Date: 24.12.12
  */
+@Ignore
 public class SafeASTNodesMarkerTest extends AbstractOptimizersTest {
     @Test
     public void safeIf() throws HistoneException, IOException {

@@ -25,6 +25,7 @@ import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
 
+@Ignore
 public class SafeASTEvaluationTest extends AbstractOptimizersTest {
 
 //    @Ignore("TODO")

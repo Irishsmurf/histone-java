@@ -16,6 +16,7 @@
 package ru.histone.optimizer;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import org.junit.Ignore;
 import org.junit.Test;
 import ru.histone.HistoneException;
 
@@ -24,6 +25,7 @@ import java.io.StringReader;
 
 import static org.junit.Assert.assertEquals;
 
+@Ignore
 public class InlineMacroOptimizerTest extends AbstractOptimizersTest {
 //    @Test
 //    public void inlineMacro() throws HistoneException, IOException {
