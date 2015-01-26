@@ -6,7 +6,7 @@
     <artifactId>histone-java</artifactId>
     <version>1.2.10-SNAPSHOT</version>
     <packaging>jar</packaging>
-    <url>http://weblab.megafon.ru/histone/</url>
+    <url>https://github.com/MegafonWebLab/histone-java/</url>
     <licenses>
         <license>
             <name>The Apache Software License, Version 2.0</name>
@@ -50,7 +50,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <histone-acceptance-test.version>1.2.15</histone-acceptance-test.version>
+        <histone-acceptance-test.version>1.2.16</histone-acceptance-test.version>
 
         <!-- deps versions -->
         <jackson.version>2.4.4</jackson.version>
