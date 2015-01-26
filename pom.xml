@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.github.megafonweblab.histone</groupId>
     <artifactId>histone-java</artifactId>
-    <version>1.2.10</version>
+    <version>1.2.11-SNAPSHOT</version>
     <packaging>jar</packaging>
     <url>https://github.com/MegafonWebLab/histone-java/</url>
     <licenses>
@@ -344,7 +344,7 @@
         <url>https://github.com/MegafonWebLab/histone-java</url>
         <connection>scm:git:https://github.com/MegafonWebLab/histone-java.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/MegafonWebLab/histone-java.git</developerConnection>
-        <tag>v1.2.10</tag>
+        <tag>HEAD</tag>
     </scm>
     <distributionManagement>
         <snapshotRepository>
