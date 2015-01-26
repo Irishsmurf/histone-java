@@ -5,6 +5,8 @@
     <artifactId>histone-java</artifactId>
     <version>1.2.12-SNAPSHOT</version>
     <packaging>jar</packaging>
+    <name>Histone - Java Implementation</name>
+    <description>Java implementation for Histone Template Engine</description>
     <url>https://github.com/MegafonWebLab/histone-java/</url>
     <licenses>
         <license>
